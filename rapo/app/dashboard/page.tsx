@@ -38,12 +38,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* HEADER */}
-      <div className="bg-blue-900 text-white px-6 py-4 border border-black rounded-md mb-4">
-  <h1 className="text-xl font-bold tracking-wide">
-    RAPO | RoPA Management System
-  </h1>
-</div>
+      
 
       {/* OVERVIEW */}
       <div className="bg-white border border-black px-5 py-4 rounded-b-md mb-4">
