@@ -1,0 +1,300 @@
+"use client";
+import { useState } from "react";
+
+export default function UsersPage() {
+  const [open, setOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [users, setUsers] = useState<any[]>([
+    {
+      name: "Porranack",
+      email: "porranack@company.com",
+      phone: "099-999-9989",
+      department: "Data Processor",
+      role: "Admin",
+      status: "Active"
+    }
+  ]);
+  const [menuIndex, setMenuIndex] = useState<number | null>(null);
+  const [search, setSearch] = useState("");
+  const handleSave = () => {
+    if (selectedUser._index !== undefined) {
+      // EDIT
+      const updated = [...users];
+      updated[selectedUser._index] = selectedUser;
+      setUsers(updated);
+    } else {
+      // CREATE
+      setUsers([
+        ...users,
+        { ...selectedUser, status: "Review" }
+      ]);
+    }
+
+    setOpen(false);
+  };
+  const filteredUsers = users.filter((user) =>
+    [user.name, user.email, user.department, user.role]
+      .join(" ")
+      .toLowerCase()
+      .includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="bg-white rounded-xl overflow-hidden">
+
+      {/* Black Header */}
+      <div className="bg-black text-white px-6 py-3">
+        User Management
+      </div>
+
+      <div className="p-6">
+
+        {/* Search + Button */}
+        <div className="flex justify-between mb-4">
+          <input
+            type="text"
+            placeholder="Search user..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border rounded-lg px-4 py-2 w-1/3"
+          />
+
+          <button
+            onClick={() => {
+              setSelectedUser({
+                name: "",
+                email: "",
+                phone: "",
+                department: "",
+                role: "",
+              });
+              setOpen(true);
+            }}
+            className="fixed bottom-6 right-6 bg-[#203690] text-white px-5 py-3 rounded-lg shadow-lg hover:shadow-xl transition"
+          >
+            + Add New User
+          </button>
+
+        </div>
+
+        {/* table (User List) */}
+        <div className="border rounded-lg overflow-hidden">
+
+          <div className="overflow-x-auto">
+            <div className="min-w-[900px]">
+
+              {/* Header */}
+              <div className="grid grid-cols-[1.2fr_2fr_1.2fr_1fr_1fr_0.6fr] bg-gray-50 text-sm text-gray-600 font-medium border-b sticky top-0 z-10 shadow-sm">
+                <div className="p-3">Name</div>
+                <div className="p-3">Contact</div>
+                <div className="p-3">Department</div>
+                <div className="p-3">Role</div>
+                <div className="p-3">Status</div>
+                <div className="p-3">Action</div>
+              </div>
+
+              {/* Rows */}
+              <div className="h-[calc(100vh-260px)] overflow-y-auto">
+                {filteredUsers.map((user, index) => (
+                  <div
+                    key={index}
+                    className={`grid grid-cols-[1.2fr_2fr_1.2fr_1fr_1fr_0.6fr] items-center
+  ${index % 2 === 0 ? "bg-white" : "bg-gray-200" } hover:bg-blue-50 transition
+`}
+                  >
+                    <div className="p-3 font-medium">
+                      {user.name}
+                    </div>
+
+                    <div className="p-3 text-sm">
+                      <div>{user.email}</div>
+                      <div className="text-gray-500">{user.phone}</div>
+                    </div>
+
+                    <div className="p-3">
+                      {user.department}
+                    </div>
+
+                    <div className="p-3">
+                      {user.role}
+                    </div>
+
+                    <div className="p-3">
+                      <span
+                        className={`px-2 py-1 rounded text-xs font-medium
+                  ${user.status === "Active" && "bg-green-100 text-green-700"}
+                  ${user.status === "Review" && "bg-yellow-100 text-yellow-700"}
+                  ${user.status === "Expire" && "bg-red-100 text-red-700"}
+                `}
+                      >
+                        {user.status}
+                      </span>
+                    </div>
+
+                    <div className="p-3 relative">
+                      <button
+                        onClick={() => setMenuIndex(index)}
+                        className="text-xl hover:bg-gray-100 rounded px-2"
+                      >
+                        ⋮
+                      </button>
+
+                      {menuIndex === index && (
+                        <div className="absolute right-0 top-8 z-50 bg-white border rounded shadow-md">
+                          <button
+                            className="block px-4 py-2 text-blue-600 hover:bg-gray-100 w-full text-left"
+                            onClick={() => {
+                              setSelectedUser({ ...user, _index: index });
+                              setOpen(true);
+                              setMenuIndex(null);
+                            }}
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            className="block px-4 py-2 text-red-500 hover:bg-gray-100 w-full text-left"
+                            onClick={() => {
+                              setUsers(users.filter((_, i) => i !== index));
+                              setMenuIndex(null);
+                            }}
+                          >
+                            Delete
+                          </button>
+
+                          <button
+                            className={`block px-4 py-2 hover:bg-gray-100 w-full text-left
+                      ${user.status === "Active" ? "text-orange-500" : "text-green-600"}
+                    `}
+                            onClick={() => {
+                              const updated = [...users];
+                              updated[index].status =
+                                user.status === "Active" ? "Expire" : "Active";
+                              setUsers(updated);
+                              setMenuIndex(null);
+                            }}
+                          >
+                            {user.status === "Active" ? "Disable" : "Enable"}
+                          </button>
+
+                        </div>
+                      )}
+
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+        {menuIndex !== null && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setMenuIndex(null)}
+          />
+        )}
+
+        {/* Modal */}
+        {open && (
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
+            <div className="bg-white rounded-xl w-[500px] p-6">
+
+              <h2 className="text-lg font-semibold mb-4">
+                {selectedUser?.name ? "Edit User" : "Add New User"}
+              </h2>
+
+              <div className="space-y-3">
+
+                <input
+                  placeholder="Name"
+                  value={selectedUser?.name || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, name: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+
+                <input
+                  placeholder="Email"
+                  value={selectedUser?.email || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, email: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+
+                <input
+                  placeholder="Phone"
+                  value={selectedUser?.phone || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, phone: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+
+                <input
+                  placeholder="Password"
+                  type="password"
+                  value={selectedUser?.password || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, password: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                />
+
+                <select
+                  value={selectedUser?.department || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, department: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  <option value="">Department</option>
+                  <option value="Legal">Legal</option>
+                  <option value="IT">IT</option>
+                  <option value="HR">HR</option>
+                </select>
+
+                <select
+                  value={selectedUser?.role || ""}
+                  onChange={(e) =>
+                    setSelectedUser({ ...selectedUser, role: e.target.value })
+                  }
+                  className="w-full border rounded-lg px-3 py-2"
+                >
+                  <option value="">Role</option>
+                  <option value="Admin">Admin</option>
+                  <option value="DataOwner">Data Owner</option>
+                  <option value="DPO">DPO</option>
+                  <option value="Auditor">Auditor</option>
+                  <option value="Executive">Executive</option>
+                </select>
+
+              </div>
+
+              <div className="flex justify-end gap-2 mt-6">
+                <button
+                  onClick={() => setOpen(false)}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleSave}
+                  className="bg-[#203690] text-white px-4 py-2 rounded-lg"
+                >
+                  Save
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
