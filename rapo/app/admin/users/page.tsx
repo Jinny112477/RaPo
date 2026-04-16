@@ -11,7 +11,6 @@ export default function UsersPage() {
       phone: "099-999-9989",
       department: "Data Processor",
       role: "Admin",
-      status: "Active"
     }
   ]);
   const [menuIndex, setMenuIndex] = useState<number | null>(null);
@@ -26,7 +25,7 @@ export default function UsersPage() {
       // CREATE
       setUsers([
         ...users,
-        { ...selectedUser, status: "Review" }
+        selectedUser
       ]);
     }
 
@@ -70,7 +69,7 @@ export default function UsersPage() {
               });
               setOpen(true);
             }}
-            className="fixed bottom-6 right-6 bg-[#203690] text-white px-5 py-3 rounded-lg shadow-lg hover:shadow-xl transition"
+            className="fixed bottom-6 right-6 z-50 bg-[#203690] text-white px-5 py-3 rounded-lg shadow-lg hover:shadow-xl transition"
           >
             + Add New User
           </button>
@@ -84,12 +83,11 @@ export default function UsersPage() {
             <div className="min-w-[900px]">
 
               {/* Header */}
-              <div className="grid grid-cols-[1.2fr_2fr_1.2fr_1fr_1fr_0.6fr] bg-gray-50 text-sm text-gray-600 font-medium border-b sticky top-0 z-10 shadow-sm">
+              <div className="grid grid-cols-[1.2fr_2fr_1.2fr_1fr_0.6fr] bg-gray-50 text-sm text-gray-600 font-medium border-b sticky top-0 z-10 shadow-sm">
                 <div className="p-3">Name</div>
                 <div className="p-3">Contact</div>
                 <div className="p-3">Department</div>
                 <div className="p-3">Role</div>
-                <div className="p-3">Status</div>
                 <div className="p-3">Action</div>
               </div>
 
@@ -98,8 +96,8 @@ export default function UsersPage() {
                 {filteredUsers.map((user, index) => (
                   <div
                     key={index}
-                    className={`grid grid-cols-[1.2fr_2fr_1.2fr_1fr_1fr_0.6fr] items-center
-  ${index % 2 === 0 ? "bg-white" : "bg-gray-200" } hover:bg-blue-50 transition
+                    className={`grid grid-cols-[1.2fr_2fr_1.2fr_1fr_0.6fr] items-center
+  ${index % 2 === 0 ? "bg-white" : "bg-gray-200"} hover:bg-blue-50 transition
 `}
                   >
                     <div className="p-3 font-medium">
@@ -119,69 +117,27 @@ export default function UsersPage() {
                       {user.role}
                     </div>
 
-                    <div className="p-3">
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium
-                  ${user.status === "Active" && "bg-green-100 text-green-700"}
-                  ${user.status === "Review" && "bg-yellow-100 text-yellow-700"}
-                  ${user.status === "Expire" && "bg-red-100 text-red-700"}
-                `}
-                      >
-                        {user.status}
-                      </span>
-                    </div>
 
-                    <div className="p-3 relative">
+                    <div className="p-3 flex gap-2">
                       <button
-                        onClick={() => setMenuIndex(index)}
-                        className="text-xl hover:bg-gray-100 rounded px-2"
+                        className="px-3 py-1 text-sm text-blue-600 border border-blue-600 rounded hover:bg-blue-50"
+                        onClick={() => {
+                          setSelectedUser({ ...user, _index: index });
+                          setOpen(true);
+                        }}
                       >
-                        ⋮
+                        Edit
                       </button>
 
-                      {menuIndex === index && (
-                        <div className="absolute right-0 top-8 z-50 bg-white border rounded shadow-md">
-                          <button
-                            className="block px-4 py-2 text-blue-600 hover:bg-gray-100 w-full text-left"
-                            onClick={() => {
-                              setSelectedUser({ ...user, _index: index });
-                              setOpen(true);
-                              setMenuIndex(null);
-                            }}
-                          >
-                            Edit
-                          </button>
-
-                          <button
-                            className="block px-4 py-2 text-red-500 hover:bg-gray-100 w-full text-left"
-                            onClick={() => {
-                              setUsers(users.filter((_, i) => i !== index));
-                              setMenuIndex(null);
-                            }}
-                          >
-                            Delete
-                          </button>
-
-                          <button
-                            className={`block px-4 py-2 hover:bg-gray-100 w-full text-left
-                      ${user.status === "Active" ? "text-orange-500" : "text-green-600"}
-                    `}
-                            onClick={() => {
-                              const updated = [...users];
-                              updated[index].status =
-                                user.status === "Active" ? "Expire" : "Active";
-                              setUsers(updated);
-                              setMenuIndex(null);
-                            }}
-                          >
-                            {user.status === "Active" ? "Disable" : "Enable"}
-                          </button>
-
-                        </div>
-                      )}
-
+                      <button
+                        className="px-3 py-1 text-sm text-red-500 border border-red-500 rounded hover:bg-red-50"
+                        onClick={() => {
+                          setUsers(users.filter((_, i) => i !== index));
+                        }}
+                      >
+                        Delete
+                      </button>
                     </div>
-
                   </div>
                 ))}
               </div>
@@ -199,8 +155,8 @@ export default function UsersPage() {
 
         {/* Modal */}
         {open && (
-          <div className="fixed inset-0 bg-black/30 flex items-center justify-center">
-            <div className="bg-white rounded-xl w-[500px] p-6">
+          <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+            <div className="bg-white rounded-xl w-[500px] p-6 relative z-50">
 
               <h2 className="text-lg font-semibold mb-4">
                 {selectedUser?.name ? "Edit User" : "Add New User"}
