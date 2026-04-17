@@ -24,11 +24,6 @@ export default function CreateActivityPage() {
   return (
     <div className="min-h-screen bg-gray-100 p-6">
 
-      {/* HEADER */}
-      <div className="bg-blue-900 text-white px-6 py-4 border border-black rounded-md mb-4">
-        <h1 className="text-xl font-bold">RAPO | Create Activity</h1>
-      </div>
-
       {/* FORM */}
       <form
         onSubmit={handleSubmit}
