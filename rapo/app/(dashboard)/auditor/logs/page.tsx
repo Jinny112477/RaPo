@@ -16,16 +16,102 @@ interface AuditLog {
 }
 
 const mockLogs: AuditLog[] = [
-  { id: 'LOG-001', timestamp: '2024-03-15 14:32:01', user: 'Sarah Chen', role: 'admin', action: 'USER_CREATED', entity: 'User', entityId: 'USR-006', details: 'New user account created for james.lee@company.com', ip: '10.0.1.24', severity: 'info' },
-  { id: 'LOG-002', timestamp: '2024-03-15 13:45:22', user: 'Elena Vasquez', role: 'dpo', action: 'ACTIVITY_APPROVED', entity: 'Activity', entityId: 'ACT-001', details: 'Employee Payroll Processing approved and set to ACTIVE', ip: '10.0.1.18', severity: 'info' },
-  { id: 'LOG-003', timestamp: '2024-03-15 12:10:05', user: 'Michael Torres', role: 'dataOwner', action: 'ACTIVITY_SUBMITTED', entity: 'Activity', entityId: 'ACT-002', details: 'Customer Analytics Platform submitted for review', ip: '10.0.2.55', severity: 'info' },
-  { id: 'LOG-004', timestamp: '2024-03-15 11:32:44', user: 'Sarah Chen', role: 'admin', action: 'PERMISSION_CHANGED', entity: 'User', entityId: 'USR-003', details: 'User role updated from dataOwner to dpo', ip: '10.0.1.24', severity: 'warning' },
-  { id: 'LOG-005', timestamp: '2024-03-15 10:05:30', user: 'Unknown', role: 'N/A', action: 'LOGIN_FAILED', entity: 'System', entityId: 'AUTH', details: 'Failed login attempt for email: admin@company.com (3 attempts)', ip: '203.45.67.89', severity: 'critical' },
-  { id: 'LOG-006', timestamp: '2024-03-15 09:48:12', user: 'Anna Williams', role: 'dataOwner', action: 'ACTIVITY_DELETED', entity: 'Activity', entityId: 'ACT-009', details: 'Draft activity "Internal HR Survey" deleted', ip: '10.0.3.12', severity: 'warning' },
-  { id: 'LOG-007', timestamp: '2024-03-14 17:22:09', user: 'Robert Nguyen', role: 'auditor', action: 'REPORT_EXPORTED', entity: 'Report', entityId: 'RPT-007', details: 'Full ROPA export downloaded as PDF', ip: '10.0.1.30', severity: 'info' },
-  { id: 'LOG-008', timestamp: '2024-03-14 16:05:55', user: 'Elena Vasquez', role: 'dpo', action: 'ACTIVITY_REJECTED', entity: 'Activity', entityId: 'ACT-007', details: 'CRM Lead Management rejected: insufficient legal basis documentation', ip: '10.0.1.18', severity: 'info' },
-  { id: 'LOG-009', timestamp: '2024-03-14 14:30:00', user: 'Sarah Chen', role: 'admin', action: 'SYSTEM_CONFIG_CHANGED', entity: 'System', entityId: 'CONFIG', details: 'Retention policy default updated from 3yr to 5yr', ip: '10.0.1.24', severity: 'warning' },
-  { id: 'LOG-010', timestamp: '2024-03-14 11:15:20', user: 'Priya Sharma', role: 'dataOwner', action: 'ACTIVITY_CREATED', entity: 'Activity', entityId: 'ACT-004', details: 'New draft activity created: Vendor Contract Management', ip: '10.0.2.77', severity: 'info' },
+  {
+    id: 'LOG-001',
+    timestamp: '2568-03-15 14:32:01',
+    user: 'jikko',
+    role: 'admin',
+    action: 'USER_CREATED',
+    entity: 'User',
+    entityId: 'USR-002',
+    details: 'สร้างบัญชีผู้ใช้ใหม่สำหรับ meimei@company.com',
+    ip: '10.0.1.24',
+    severity: 'info',
+  },
+  {
+    id: 'LOG-002',
+    timestamp: '2568-03-15 13:45:22',
+    user: 'jin',
+    role: 'dpo',
+    action: 'ACTIVITY_APPROVED',
+    entity: 'Activity',
+    entityId: 'ACT-001',
+    details: 'การจัดเก็บข้อมูลพนักงาน ได้รับการอนุมัติและเปลี่ยนเป็น ACTIVE',
+    ip: '10.0.1.18',
+    severity: 'info',
+  },
+  {
+    id: 'LOG-003',
+    timestamp: '2568-03-15 12:10:05',
+    user: 'meimei',
+    role: 'dataOwner',
+    action: 'ACTIVITY_SUBMITTED',
+    entity: 'Activity',
+    entityId: 'ACT-002',
+    details: 'การจัดงาน Event และกิจกรรมส่งเสริมการขาย ถูกส่งเพื่อรอตรวจสอบ',
+    ip: '10.0.2.55',
+    severity: 'info',
+  },
+  {
+    id: 'LOG-004',
+    timestamp: '2568-03-15 11:32:44',
+    user: 'jikko',
+    role: 'admin',
+    action: 'PERMISSION_CHANGED',
+    entity: 'User',
+    entityId: 'USR-003',
+    details: 'เปลี่ยน role ของ jin จาก dataOwner เป็น dpo',
+    ip: '10.0.1.24',
+    severity: 'warning',
+  },
+  {
+    id: 'LOG-005',
+    timestamp: '2568-03-15 10:05:30',
+    user: 'Unknown',
+    role: 'N/A',
+    action: 'LOGIN_FAILED',
+    entity: 'System',
+    entityId: 'AUTH',
+    details: 'พยายามเข้าสู่ระบบล้มเหลว 3 ครั้ง สำหรับ kk@company.com',
+    ip: '203.45.67.89',
+    severity: 'critical',
+  },
+  {
+    id: 'LOG-006',
+    timestamp: '2568-03-14 17:22:09',
+    user: 'kk',
+    role: 'auditor',
+    action: 'REPORT_EXPORTED',
+    entity: 'Report',
+    entityId: 'RPT-001',
+    details: 'ส่งออกรายงาน ROPA ทั้งหมดในรูปแบบ PDF',
+    ip: '10.0.1.30',
+    severity: 'info',
+  },
+  {
+    id: 'LOG-007',
+    timestamp: '2568-03-14 14:30:00',
+    user: 'jikko',
+    role: 'admin',
+    action: 'SYSTEM_CONFIG_CHANGED',
+    entity: 'System',
+    entityId: 'CONFIG',
+    details: 'เปลี่ยนค่าระยะเวลาเก็บรักษาข้อมูลเริ่มต้นจาก 3 ปี เป็น 5 ปี',
+    ip: '10.0.1.24',
+    severity: 'warning',
+  },
+  {
+    id: 'LOG-008',
+    timestamp: '2568-03-14 11:15:20',
+    user: 'somshy',
+    role: 'executive',
+    action: 'ACTIVITY_CREATED',
+    entity: 'Activity',
+    entityId: 'ACT-002',
+    details: 'สร้างกิจกรรมใหม่: การจัดงาน Event และกิจกรรมส่งเสริมการขาย',
+    ip: '10.0.2.77',
+    severity: 'info',
+  },
 ];
 
 const severityConfig = {
@@ -102,9 +188,8 @@ export default function AuditLogsPage() {
           <button
             key={s.key}
             onClick={() => setSeverity((prev) => prev === s.key ? 'all' : s.key)}
-            className={`text-left p-4 rounded-xl border shadow-sm bg-white transition-all ${
-              severity === s.key ? 'ring-2 ring-blue-400 ring-offset-1' : s.bg
-            } hover:shadow-md`}
+            className={`text-left p-4 rounded-xl border shadow-sm bg-white transition-all ${severity === s.key ? 'ring-2 ring-blue-400 ring-offset-1' : s.bg
+              } hover:shadow-md`}
           >
             <p className={`text-2xl font-bold ${s.color}`}>{s.count}</p>
             <p className="text-xs text-slate-500 mt-0.5">{s.label} events</p>

@@ -16,11 +16,30 @@ interface Processor {
 }
 
 const mockProcessors: Processor[] = [
-  { id: 'PRC-001', name: 'AWS (Amazon Web Services)', type: 'Cloud Provider', country: 'USA', contract: '2025-12-31', dpa: true, activities: 12, status: 'active', contact: 'aws-dpa@amazon.com', updatedAt: '2024-03-01' },
-  { id: 'PRC-002', name: 'Salesforce Inc.', type: 'SaaS', country: 'USA', contract: '2024-09-30', dpa: true, activities: 4, status: 'active', contact: 'privacy@salesforce.com', updatedAt: '2024-02-15' },
-  { id: 'PRC-003', name: 'Cognizant Technology', type: 'Contractor', country: 'India', contract: '2024-06-30', dpa: false, activities: 2, status: 'review', contact: 'legal@cognizant.com', updatedAt: '2024-03-10' },
-  { id: 'PRC-004', name: 'Microsoft Azure', type: 'Cloud Provider', country: 'USA', contract: '2025-06-30', dpa: true, activities: 8, status: 'active', contact: 'azure-dpa@microsoft.com', updatedAt: '2024-01-20' },
-  { id: 'PRC-005', name: 'Accenture Ltd.', type: 'Partner', country: 'Ireland', contract: '2024-03-31', dpa: true, activities: 3, status: 'inactive', contact: 'dpa@accenture.com', updatedAt: '2024-03-12' },
+  {
+    id: 'PRC-001',
+    name: 'บริษัท jikko จำกัด',
+    type: 'Cloud Provider',
+    country: 'ไทย',
+    contract: '2568-12-31',
+    dpa: true,
+    activities: 2,
+    status: 'active',
+    contact: 'jikko@company.com',
+    updatedAt: '2568-03-01',
+  },
+  {
+    id: 'PRC-002',
+    name: 'บริษัท kk Solutions จำกัด',
+    type: 'Contractor',
+    country: 'ไทย',
+    contract: '2568-09-30',
+    dpa: false,
+    activities: 1,
+    status: 'review',
+    contact: 'kk@solutions.com',
+    updatedAt: '2568-03-10',
+  },
 ];
 
 const typeColors: Record<string, string> = {
