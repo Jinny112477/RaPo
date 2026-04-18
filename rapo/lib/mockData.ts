@@ -39,7 +39,7 @@ export const mockUsers: User[] = [
   {
     id: 'USR-001',
     name: 'jikko',
-    email: 'sarah.chen@company.com',
+    email: 'jikko@company.com',
     role: 'admin',
     department: 'IT',
     avatarInitials: 'JK',
@@ -49,7 +49,7 @@ export const mockUsers: User[] = [
   {
     id: 'USR-002',
     name: 'meimei',
-    email: 'm.torres@company.com',
+    email: 'meimei@company.com',
     role: 'dataOwner',
     department: 'การตลาด',
     avatarInitials: 'MM',
@@ -59,7 +59,7 @@ export const mockUsers: User[] = [
   {
     id: 'USR-003',
     name: 'jin',
-    email: 'e.vasquez@company.com',
+    email: 'jin@company.com',
     role: 'dpo',
     department: 'กฎหมาย',
     avatarInitials: 'JN',
@@ -69,7 +69,7 @@ export const mockUsers: User[] = [
   {
     id: 'USR-004',
     name: 'kk',
-    email: 'r.nguyen@company.com',
+    email: 'kk@company.com',
     role: 'auditor',
     department: 'ตรวจสอบ',
     avatarInitials: 'KK',
@@ -79,7 +79,7 @@ export const mockUsers: User[] = [
   {
     id: 'USR-005',
     name: 'somshy',
-    email: 'c.blake@company.com',
+    email: 'somshy@company.com',
     role: 'executive',
     department: 'ผู้บริหาร',
     avatarInitials: 'SS',

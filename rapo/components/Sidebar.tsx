@@ -111,10 +111,11 @@ const ChevronLeftIcon = () => (
   </svg>
 );
 
+// ลิ้งหน้า
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
-  { label: 'User Management', href: '/admin/users', icon: <UsersIcon />, roles: ['admin'] },
-  { label: 'Create Activity', href: '/createactivity', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
+  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
+  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
   { label: 'My Activities', href: '/admin/activities', icon: <ListIcon />, roles: ['dataOwner'] },
   { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['admin'] },
   { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
@@ -148,6 +149,7 @@ export function Sidebar() {
           'fixed top-16 bottom-0 left-0 z-40 flex flex-col',
           'bg-[#203690] text-white border-r border-[#182a73]',
           'transition-all duration-200 ease-in-out',
+          'overflow-hidden',
           isCollapsed ? 'w-[64px]' : 'w-[240px]',
         ].join(' ')}
       >
@@ -162,7 +164,7 @@ export function Sidebar() {
         )}
 
         {/* Nav Items */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
           <ul className="space-y-0.5">
             {filtered.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
