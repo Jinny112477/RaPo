@@ -94,27 +94,19 @@ export function Topbar() {
   };
 
   return (
-    <header className="fixed top-0 right-0 left-0 lg:left-auto h-16 bg-white border-b border-slate-200 z-30 flex items-center justify-between px-4 lg:px-6 transition-all duration-200">
+    <header className="fixed top-0 right-0 left-0 h-16 bg-[#203690] border-b border-[#182a73] z-30 flex items-center justify-between px-4 lg:px-6 transition-all duration-200">
       {/* Left: Hamburger + Title */}
       <div className="flex items-center gap-3">
         <button
-          onClick={() => {
-            if (window.innerWidth < 1024) {
-              toggleMobile();
-            } else {
-              toggleCollapsed();
-            }
-          }}
+          onClick={toggleCollapsed}
           className="p-2 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors duration-200"
           aria-label="Toggle sidebar"
         >
           <MenuIcon />
         </button>
-        <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold text-slate-800 hidden sm:block">
-            ROPA Management
-          </h1>         
-        </div>
+        <h1 className="text-lg font-semibold text-white">
+          RAPo | RoPA Management System
+        </h1>
       </div>
 
       {/* Right: Actions */}

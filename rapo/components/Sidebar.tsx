@@ -134,7 +134,7 @@ const roleLabelMap: Record<Role, string> = {
 };
 
 export function Sidebar() {
-  const { isCollapsed, isMobileOpen, toggleCollapsed, closeMobile } = useSidebar();
+  const { isCollapsed, toggleCollapsed} = useSidebar();
   const { user, role } = useAuth();
   const pathname = usePathname();
 
@@ -142,46 +142,15 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 lg:hidden"
-          onClick={closeMobile}
-        />
-      )}
-
       {/* Sidebar */}
       <aside
         className={[
-          'fixed top-0 left-0 h-full z-50 flex flex-col',
-          'bg-[#0f1e36] text-white',
+          'fixed top-16 bottom-0 left-0 z-40 flex flex-col',
+          'bg-[#203690] text-white border-r border-[#182a73]',
           'transition-all duration-200 ease-in-out',
-          // Desktop
-          'lg:static lg:translate-x-0',
-          isCollapsed ? 'lg:w-[64px]' : 'lg:w-[240px]',
-          // Mobile
-          isMobileOpen ? 'translate-x-0 w-[240px]' : '-translate-x-full w-[240px]',
-          'lg:translate-x-0',
+          isCollapsed ? 'w-[64px]' : 'w-[240px]',
         ].join(' ')}
       >
-        {/* Logo */}
-        <div
-          className={`flex items-center h-16 border-b border-white/10 flex-shrink-0 ${
-            isCollapsed ? 'justify-center px-0' : 'px-5 gap-3'
-          }`}
-        >
-          <div className="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center">
-            <ShieldIcon />
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white tracking-tight leading-tight truncate">
-                ROPA
-              </p>
-              <p className="text-xs text-slate-400 truncate">Management System</p>
-            </div>
-          )}
-        </div>
 
         {/* Role Label */}
         {!isCollapsed && role && (
@@ -201,7 +170,6 @@ export function Sidebar() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    onClick={closeMobile}
                     title={isCollapsed ? item.label : undefined}
                     className={[
                       'flex items-center rounded-lg transition-all duration-200',
@@ -248,7 +216,7 @@ export function Sidebar() {
           {/* Collapse button — desktop only */}
           <button
             onClick={toggleCollapsed}
-            className={`hidden lg:flex items-center justify-center w-full rounded-lg p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-200 ${isCollapsed ? '' : 'gap-2'}`}
+            className={`flex items-center justify-center w-full rounded-lg p-2 text-slate-400 hover:text-white hover:bg-white/10 transition-all duration-200 ${isCollapsed ? '' : 'gap-2'}`}
           >
             <span className={`transition-transform duration-200 ${isCollapsed ? 'rotate-180' : ''}`}>
               <ChevronLeftIcon />

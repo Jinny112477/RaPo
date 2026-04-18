@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { mockActivities, mockStats } from '@/lib/mockData';
+import { Plus } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, role } = useAuth();
@@ -19,25 +20,53 @@ export default function DashboardPage() {
   });
 
   const stats = [
-    { title: 'ALL ACTIVITIES', value: mockStats.total,    sub: 'กิจกรรมทั้งหมด', color: 'text-black' },
-    { title: 'ACTIVE',         value: mockStats.active,   sub: 'กำลังใช้งาน',    color: 'text-green-600' },
-    { title: 'REVIEW',         value: mockStats.review,   sub: 'รอทบทวน',        color: 'text-red-600' },
-    { title: 'DRAFT',          value: mockStats.draft,    sub: 'แบบร่าง',         color: 'text-gray-500' },
+    {
+      key: 'ALL',
+      title: 'Total Activities',
+      value: mockStats.total,
+      sub: 'กิจกรรมทั้งหมด',
+      extra: '+3 this month',
+      color: 'text-gray-900'
+    },
+    {
+      key: 'ACTIVE',
+      title: 'Active',
+      value: mockStats.active,
+      sub: 'กำลังใช้งาน',
+      extra: '+1 this week',
+      color: 'text-green-600'
+    },
+    {
+      key: 'REVIEW',
+      title: 'Under Review',
+      value: mockStats.review,
+      sub: 'รอทบทวน',
+      extra: 'Needs attention',
+      color: 'text-yellow-600'
+    },
+    {
+      key: 'DRAFT',
+      title: 'Draft',
+      value: mockStats.draft,
+      sub: 'แบบร่าง',
+      extra: 'In progress',
+      color: 'text-gray-500'
+    },
   ];
 
   const statusBadge = (status: string) => {
-    if (status === 'ACTIVE')   return 'bg-green-100 text-green-700';
-    if (status === 'REVIEW')   return 'bg-yellow-100 text-yellow-700';
-    if (status === 'DRAFT')    return 'bg-gray-100 text-gray-600';
+    if (status === 'ACTIVE') return 'bg-green-100 text-green-700';
+    if (status === 'REVIEW') return 'bg-yellow-100 text-yellow-700';
+    if (status === 'DRAFT') return 'bg-gray-100 text-gray-600';
     if (status === 'REJECTED') return 'bg-red-100 text-red-700';
     if (status === 'ARCHIVED') return 'bg-slate-100 text-slate-500';
     return 'bg-gray-100 text-gray-600';
   };
 
   const riskBadge = (risk: string) => {
-    if (risk === 'LOW')      return 'bg-green-50 text-green-700';
-    if (risk === 'MEDIUM')   return 'bg-yellow-50 text-yellow-700';
-    if (risk === 'HIGH')     return 'bg-orange-50 text-orange-700';
+    if (risk === 'LOW') return 'bg-green-50 text-green-700';
+    if (risk === 'MEDIUM') return 'bg-yellow-50 text-yellow-700';
+    if (risk === 'HIGH') return 'bg-orange-50 text-orange-700';
     if (risk === 'CRITICAL') return 'bg-red-50 text-red-700';
     return '';
   };
@@ -46,30 +75,48 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-gray-100 p-6">
 
       {/* OVERVIEW BOX */}
-      <div className="bg-white border border-black px-5 py-4 rounded-md mb-4">
-        <p className="text-xs font-semibold text-gray-700 mb-1">Overview</p>
-        <p className="text-[11px] text-gray-500 mb-4">
-          ข้อมูล ณ วันนี้
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold text-gray-900">
+          Overview
+        </h1>
+
+        <p className="text-sm text-gray-500 mt-1">
+          ภาพรวมกิจกรรมและสถานะล่าสุด
         </p>
       </div>
 
-      {/* STATS */}
-      <div className="grid grid-cols-4 gap-3 mb-6">
+      {/* STATS block grid*/}
+      <div className="grid grid-cols-4 gap-4 mb-6">
         {stats.map((s) => {
-          const filterValue = s.title === 'ALL ACTIVITIES' ? 'ALL' : s.title;
-          const isActive = statusFilter === filterValue;
+          const isActive = statusFilter === s.key;
+
           return (
             <button
-              key={s.title}
-              onClick={() => setStatusFilter(filterValue)}
-              className={`bg-white border rounded-md px-4 py-3 text-left transition-all
-                hover:shadow-md hover:border-blue-400
-                ${isActive ? 'border-[#203690] ring-2 ring-[#203690]' : 'border-black'}
-              `}
+              key={s.key}
+              onClick={() => setStatusFilter(s.key)}
+              className={`
+          bg-white border rounded-xl p-4 text-left transition-all
+          hover:shadow-md hover:border-[#203690]
+          ${isActive
+                  ? 'border-[#203690] ring-2 ring-[#203690]'
+                  : 'border-gray-200'}
+        `}
             >
-              <p className="text-[11px] text-black">{s.title}</p>
-              <p className={`text-xl font-semibold mt-1 ${s.color}`}>{s.value}</p>
-              <p className="text-[11px] text-gray-400">{s.sub}</p>
+              <p className="text-xs text-gray-500">
+                {s.title}
+              </p>
+
+              <p className={`text-2xl font-semibold mt-1 ${s.color}`}>
+                {s.value}
+              </p>
+
+              <p className="text-xs text-gray-400 mt-1">
+                {s.extra}
+              </p>
+
+              <div className="mt-3 text-[11px] text-gray-400">
+                {s.sub}
+              </div>
             </button>
           );
         })}
@@ -84,21 +131,17 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-gray-700">กิจกรรมล่าสุด</p>
             <p className="text-xs text-gray-400">{filtered.length} รายการ</p>
           </div>
-          <div className="flex items-center gap-2">
-            {/* ปุ่ม Add New ROPA */}
-            
-            <input
-              type="text"
-              placeholder="ค้นหากิจกรรม..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border border-gray-400 rounded px-3 py-1.5 text-sm w-56
-                focus:outline-none focus:ring-1 focus:ring-[#203690]"
-            />
-          </div>
+
+          <input
+            type="text"
+            placeholder="ค้นหากิจกรรม..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border border-gray-400 rounded px-3 py-1.5 text-sm w-56
+      focus:outline-none focus:ring-1 focus:ring-[#203690]"
+          />
         </div>
 
-        {/* TABLE */}
         <table className="w-full">
           <thead className="bg-gray-100 text-[11px] text-gray-500 uppercase">
             <tr>
@@ -160,22 +203,32 @@ export default function DashboardPage() {
         </table>
       </div>
 
+
       {/* Floating Add Button */}
       {(role === 'admin' || role === 'dataOwner') && (
         <div className="fixed bottom-6 right-6 z-50 group">
           <button
             onClick={() => router.push('/ropa/create')}
             className="bg-[#203690] text-white w-14 h-14 flex items-center justify-center
-              rounded-full shadow-lg hover:bg-[#182a73] hover:scale-110 hover:shadow-xl transition duration-200"
+              rounded-xl shadow-lg hover:bg-[#182a73]
+              hover:shadow-xl transition duration-200"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-6 h-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
             </svg>
           </button>
+
           <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
-            text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
-            Add New ROPA
+            text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100
+            transition whitespace-nowrap">
+            Add New Record
           </div>
         </div>
       )}

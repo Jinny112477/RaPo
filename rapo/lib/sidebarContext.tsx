@@ -26,13 +26,6 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setIsMobileOpen(false);
-        setIsCollapsed(false);
-      } else if (window.innerWidth >= 768) {
-        setIsCollapsed(true);
-        setIsMobileOpen(false);
-      } else {
-        setIsCollapsed(false);
-        setIsMobileOpen(false);
       }
     };
 
