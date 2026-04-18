@@ -51,20 +51,6 @@ export default function DashboardPage() {
         <p className="text-[11px] text-gray-500 mb-4">
           ข้อมูล ณ วันนี้
         </p>
-        <div className="grid grid-cols-5 gap-2 text-[11px]">
-          {[
-            { label: 'DATA CONTROLLER', value: '-' },
-            { label: 'DATA PROCESSOR',  value: '-' },
-            { label: 'DPO',             value: '-' },
-            { label: 'Personal Data Act', value: '-' },
-            { label: 'HIGH RISK',       value: mockStats.highRisk },
-          ].map(item => (
-            <div key={item.label} className="bg-gray-50 px-2 py-2 rounded border text-center">
-              <p className="text-gray-500 mb-1">{item.label}</p>
-              <p className="font-semibold text-black">{item.value}</p>
-            </div>
-          ))}
-        </div>
       </div>
 
       {/* STATS */}
@@ -91,23 +77,6 @@ export default function DashboardPage() {
 
       {/* TABLE */}
       <div className="bg-white border border-black rounded-md overflow-hidden">
-
-        {/* STATUS FILTER TABS */}
-        <div className="flex gap-2 px-4 py-2 border-b border-gray-200">
-          {['ALL', 'ACTIVE', 'REVIEW', 'DRAFT', 'REJECTED', 'ARCHIVED'].map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`px-3 py-1 text-xs rounded border transition
-                ${statusFilter === s
-                  ? 'bg-[#203690] text-white border-[#203690]'
-                  : 'bg-white text-gray-600 hover:bg-gray-100'}
-              `}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
 
         {/* HEADER + SEARCH */}
         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
