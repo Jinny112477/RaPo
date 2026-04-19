@@ -115,7 +115,7 @@ const ChevronLeftIcon = () => (
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
   { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
-  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
+  { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
   { label: 'My Activities', href: '/admin/activities', icon: <ListIcon />, roles: ['dataOwner'] },
   { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['admin'] },
   { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
@@ -124,6 +124,8 @@ const navItems: NavItem[] = [
   { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
   { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['executive'] },
   { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] },
+  // { label: 'รายการ Activity', href: '/activities', roles: ['processor'] },
+  // { label: 'คำขอเข้าถึง', href: '/dc/requests', roles: ['dataOwner'] },
 ];
 
 const roleLabelMap: Record<Role, string> = {
@@ -135,7 +137,7 @@ const roleLabelMap: Record<Role, string> = {
 };
 
 export function Sidebar() {
-  const { isCollapsed, toggleCollapsed} = useSidebar();
+  const { isCollapsed, toggleCollapsed } = useSidebar();
   const { user, role } = useAuth();
   const pathname = usePathname();
 

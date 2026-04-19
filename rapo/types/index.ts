@@ -9,7 +9,7 @@ export type ActivityStatus =
   | 'REJECTED'
   | 'ARCHIVED';
 
-export type LegalBasis = string ;
+export type LegalBasis = string;
 
 export interface User {
   id: string;
@@ -38,6 +38,11 @@ export interface Activity {
   updatedAt: string;
   owner?: string;
   reviewedBy?: string;
+
+  accessRequests?: {
+    requestedBy: string   // user id ของ DP
+    status: 'pending' | 'approved' | 'rejected'
+  }[]
 }
 
 export interface NavItem {

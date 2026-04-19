@@ -228,7 +228,7 @@ export default function DashboardPage() {
           <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
             text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100
             transition whitespace-nowrap">
-            Add New Record
+            Add New ROPA
           </div>
         </div>
       )}
