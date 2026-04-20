@@ -25,7 +25,7 @@ export default function DashboardPage() {
   const stats = [
     {
       key: 'ALL',
-      title: 'Total Activities',
+      title: 'Total ROPA',
       value: mockStats.total,
       sub: 'กิจกรรมทั้งหมด',
       extra: '+3 this month',
