@@ -101,8 +101,7 @@ function MultiCheck({ options, selected, onChange, cols = 2 }: {
         const on = selected.includes(o);
         return (
           <button key={o} type="button" onClick={() => toggle(o)}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm text-left transition-all ${
-              on ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm text-left transition-all ${on ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}>
             <span className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors ${on ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
               {on && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
             </span>
@@ -121,8 +120,7 @@ function YesNo({ value, onChange, options = ['มี', 'ไม่มี'] }: {
     <div className="flex gap-2">
       {options.map(v => (
         <button key={v} type="button" onClick={() => onChange(v)}
-          className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${
-            value === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'}`}>
+          className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${value === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'}`}>
           {v}
         </button>
       ))}
@@ -199,11 +197,11 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {/* 1. วัตถุประสงค์ */}
           <Field label="วัตถุประสงค์ของการประมวลผล" required>
             <textarea rows={2} value={sub.purpose} onChange={e => set('purpose', e.target.value)}
-              placeholder="เช่น เพื่อเก็บข้อมูลผู้เข้าร่วมงาน Event สำหรับการออกบัตรเข้างาน..." className={txa} />
+               className={txa} />
           </Field>
 
           {/* 2. ข้อมูลที่จัดเก็บ */}
-          <Field label="ข้อมูลส่วนบุคคลที่จัดเก็บ" required hint="เลือกทุกประเภทข้อมูลที่มีการเก็บรวบรวมในวัตถุประสงค์นี้">
+          <Field label="ข้อมูลส่วนบุคคลที่จัดเก็บ" required >
             <MultiCheck options={PERSONAL_DATA_EXAMPLES} selected={sub.personalDataItems} onChange={v => set('personalDataItems', v)} cols={3} />
           </Field>
 
@@ -223,17 +221,24 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           </Field>
 
           {/* 6. แหล่งที่มา */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label={isCtrl ? 'แหล่งที่มา: จากเจ้าของข้อมูลโดยตรง' : 'แหล่งที่มา: จากผู้ควบคุมข้อมูลโดยตรง'}
-              hint="ระบุช่องทาง เช่น ใบลงทะเบียน, เว็บไซต์, แอปพลิเคชัน">
-              <textarea rows={2} value={sub.sourceFromOwner} onChange={e => set('sourceFromOwner', e.target.value)}
-                placeholder="เช่น ใบลงทะเบียนงาน, แบบฟอร์มออนไลน์, Application..." className={txa} />
-            </Field>
-            <Field label="แหล่งที่มา: จากแหล่งอื่น" hint="หากได้รับจากบุคคล/หน่วยงานอื่น โปรดระบุ">
-              <textarea rows={2} value={sub.sourceFromOther} onChange={e => set('sourceFromOther', e.target.value)}
-                placeholder="เช่น บริษัทพาร์ทเนอร์, ข้อมูลสาธารณะ, Social Media..." className={txa} />
-            </Field>
-          </div>
+          <Field label="แหล่งที่ได้มาซึ่งข้อมูล" required>
+            <div className="flex gap-3">
+              {['จากเจ้าของข้อมูลโดยตรง', 'จากแหล่งอื่น'].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => set('sourceFromOwner', v)}
+                  className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all
+                  ${sub.sourceFromOwner === v
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'
+                    }`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </Field>
 
           {/* 7. ฐานการประมวลผล */}
           <Field label="ฐานในการประมวลผล" required>
@@ -242,22 +247,21 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 
           {/* 8. ผู้เยาว์ (Controller เท่านั้น) */}
           {isCtrl && (
-            <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-600 text-base">👶</span>
-                <span className="text-sm font-semibold text-amber-800">การขอความยินยอมของผู้เยาว์</span>
-                <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span>
+            <div className="p-4 rounded-xl border border-amber-200 bg-50 space-y-4">
+              <div className="flex items-center gap-2">         
+                <span className="text-sm font-semibold text-800">การขอความยินยอมของผู้เยาว์</span>
+                {/* <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span> */}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="อายุไม่เกิน 10 ปี" hint="วิธีการขอความยินยอมจากผู้ใช้อำนาจปกครอง">
+                <Field label="อายุไม่เกิน 10 ปี" >
                   <textarea rows={2} value={sub.minorConsentUnder10}
                     onChange={e => set('minorConsentUnder10', e.target.value)}
-                    placeholder="เช่น ต้องขอความยินยอมจากบิดา มารดา หรือผู้ปกครองเท่านั้น..." className={txa} />
+                     className={txa} />
                 </Field>
-                <Field label="อายุ 10–20 ปี" hint="วิธีการขอความยินยอม">
+                <Field label="อายุ 10–20 ปี" >
                   <textarea rows={2} value={sub.minorConsentAge10to20}
                     onChange={e => set('minorConsentAge10to20', e.target.value)}
-                    placeholder="เช่น ขอความยินยอมจากเจ้าของข้อมูลและผู้ปกครองร่วมกัน..." className={txa} />
+                     className={txa} />
                 </Field>
               </div>
             </div>
@@ -281,11 +285,11 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="ประเทศปลายทาง" required>
                     <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)}
-                      placeholder="เช่น สหรัฐอเมริกา, สิงคโปร์, ญี่ปุ่น..." className={inp} />
+                      className={inp} />
                   </Field>
                   <Field label="วิธีการโอนข้อมูล">
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)}
-                      placeholder="เช่น API, Email, Cloud Storage, SFTP..." className={inp} />
+                       className={inp} />
                   </Field>
                 </div>
                 <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่">
@@ -294,13 +298,13 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 {sub.transferAffiliate === 'ใช่' && (
                   <Field label="ชื่อบริษัทในเครือ">
                     <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)}
-                      placeholder="ระบุชื่อบริษัท..." className={inp} />
+                       className={inp} />
                   </Field>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง">
                     <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)}
-                      placeholder="เช่น GDPR, PDPA, ISO 27001..." className={inp} />
+                       className={inp} />
                   </Field>
                   <Field label="ข้อยกเว้นตามมาตรา 28">
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
@@ -325,23 +329,23 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               <MultiCheck options={STORAGE_TYPES} selected={sub.storageType} onChange={v => set('storageType', v)} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="วิธีการเก็บรักษาข้อมูล" hint="ระบุวิธีการรักษาความปลอดภัยของข้อมูลที่จัดเก็บ">
+              <Field label="วิธีการเก็บรักษาข้อมูล">
                 <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)}
-                  placeholder="เช่น เข้ารหัสไฟล์ด้วย AES-256, ล็อกตู้เอกสาร, Cloud Storage ที่มีการเข้ารหัส..." className={txa} />
+                   className={txa} />
               </Field>
               <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
                 <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)}
-                  placeholder="เช่น 5 ปีนับจากวันสิ้นสุดสัญญา, 3 ปีหลังเสร็จสิ้นกิจกรรม..." className={inp} />
+                   className={inp} />
               </Field>
             </div>
             <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล"
-              hint="ระบุเงื่อนไขและหน่วยงาน/บุคคลที่มีสิทธิ์เข้าถึง">
+             >
               <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)}
-                placeholder="เช่น จำกัดสิทธิเฉพาะฝ่ายขายและการตลาด ต้องขออนุมัติจากผู้จัดการก่อนเข้าถึง..." className={txa} />
+                 className={txa} />
             </Field>
             <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
               <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)}
-                placeholder="เช่น ลบข้อมูลถาวรออกจากระบบ, ทำลายด้วยเครื่องทำลายเอกสาร (Shredder), Degaussing..." className={txa} />
+                 className={txa} />
             </Field>
           </div>
 
@@ -352,14 +356,14 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">เฉพาะ Data Controller</span>
               </div>
               <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม"
-                hint="ระบุให้สอดคล้องกับฐานการประมวลผลที่เลือก">
+               >
                 <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)}
-                  placeholder="เช่น เปิดเผยต่อหน่วยงานภายในที่เกี่ยวข้องเท่านั้น / เปิดเผยสู่สาธารณะผ่านสื่อประชาสัมพันธ์..." className={txa} />
+                   className={txa} />
               </Field>
               <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล"
-                hint="ลงข้อมูลเมื่อมีเหตุการณ์การปฏิเสธสิทธิเกิดขึ้น">
+                >
                 <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)}
-                  placeholder="ระบุกรณีและเหตุผลในการปฏิเสธการใช้สิทธิ (กรอกเมื่อมีเหตุการณ์)..." className={txa} />
+                   className={txa} />
               </Field>
             </div>
           )}
@@ -463,10 +467,9 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           {STEPS.map(s => (
             <div key={s.id} className="flex flex-col items-center gap-1.5 z-10">
               <button onClick={() => s.id < step && setStep(s.id)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${
-                  s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' :
-                  s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
-                  'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' :
+                    s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
+                      'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
                 {s.id < step
                   ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
                   : s.id}
@@ -560,20 +563,20 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="ชื่อ-นามสกุล / ชื่อองค์กร" required>
               <input type="text" value={rec.name} onChange={e => setRec(r => ({ ...r, name: e.target.value }))}
-                placeholder="เช่น นางสาวสมหญิง ดีงาม / บริษัท A จำกัด" className={inp} />
+                 className={inp} />
             </Field>
             <Field label="เบอร์โทรศัพท์" required>
               <input type="tel" value={rec.phone} onChange={e => setRec(r => ({ ...r, phone: e.target.value }))}
-                placeholder="เช่น 02-xxx-xxxx, 08x-xxx-xxxx" className={inp} />
+                 className={inp} />
             </Field>
           </div>
-          <Field label="ที่อยู่" required hint="ระบุที่อยู่สำหรับติดต่อ">
+          <Field label="ที่อยู่" required >
             <textarea rows={2} value={rec.address} onChange={e => setRec(r => ({ ...r, address: e.target.value }))}
-              placeholder="เลขที่ ถนน แขวง/ตำบล เขต/อำเภอ จังหวัด รหัสไปรษณีย์" className={txa} />
+               className={txa} />
           </Field>
           <Field label="อีเมล" required>
             <input type="email" value={rec.email} onChange={e => setRec(r => ({ ...r, email: e.target.value }))}
-              placeholder="example@company.com" className={inp} />
+               className={inp} />
           </Field>
         </div>
       )}
@@ -592,36 +595,28 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             </div>
 
             {isCtrl ? (
-              <Field label="ชื่อเจ้าของข้อมูลส่วนบุคคล" required hint="ระบุชื่อบุคคล หรือชื่อองค์กรที่เป็น Data Controller">
+              <Field label="ชื่อเจ้าของข้อมูลส่วนบุคคล" required >
                 <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)}
-                  placeholder="เช่น บริษัท A จำกัด" className={inp} />
+                   className={inp} />
               </Field>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Field label="ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" required hint="ชื่อองค์กร/บริษัทของท่าน">
+                <Field label="ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" required >
                   <input type="text" value={processorName} onChange={e => setProcessorName(e.target.value)}
-                    placeholder="เช่น บริษัท B (ผู้รับจ้าง) จำกัด" className={inp} />
+                     className={inp} />
                 </Field>
-                <Field label="ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" required hint="ชื่อและที่อยู่ของผู้ว่าจ้าง">
+                <Field label="ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" required >
                   <input type="text" value={ctrlAddress} onChange={e => setCtrlAddress(e.target.value)}
-                    placeholder="เช่น บริษัท A จำกัด 123 ถนน..." className={inp} />
+                     className={inp} />
                 </Field>
               </div>
             )}
 
-            <Field label="กิจกรรมการประมวลผลหลัก" required hint="ระบุชื่อกิจกรรมหลักที่ครอบคลุมวัตถุประสงค์ย่อยทั้งหมด">
+            <Field label="กิจกรรมการประมวลผลหลัก" required >
               <input type="text" value={mainActivity} onChange={e => setMainActivity(e.target.value)}
-                placeholder="เช่น การจัดงาน Event และกิจกรรมส่งเสริมการขาย" className={inp} />
+                 className={inp} />
             </Field>
-
-            <div className="flex items-start gap-3 p-3.5 bg-amber-50 border border-amber-100 rounded-lg">
-              <span className="text-amber-500 mt-0.5 flex-shrink-0">💡</span>
-              <p className="text-xs text-amber-700 leading-relaxed">
-                <span className="font-semibold">คำแนะนำ:</span> กิจกรรมหลักหนึ่งรายการสามารถมีหลายวัตถุประสงค์ย่อยได้
-                ตัวอย่างเช่น "การจัดงาน Event" มีได้ 3 วัตถุประสงค์ย่อย ได้แก่ การเก็บข้อมูลผู้เข้าร่วม, การประชาสัมพันธ์, และการสัมภาษณ์รายบุคคล
-                โดยแต่ละวัตถุประสงค์อาจมีฐานในการประมวลผลที่แตกต่างกัน
-              </p>
-            </div>
+           
           </div>
 
           {/* Sub-activity cards */}
@@ -650,33 +645,32 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">🔒</div>
             <div>
               <p className="text-sm font-semibold text-slate-800">คำอธิบายเกี่ยวกับมาตรการรักษาความมั่นคงปลอดภัย</p>
-              <p className="text-xs text-slate-400">ระบุมาตรการทั้งด้านองค์กร เทคนิค และกายภาพ</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="มาตรการเชิงองค์กร (Organizational)" hint="นโยบาย, การอบรม, แนวปฏิบัติภายใน">
+            <Field label="มาตรการเชิงองค์กร (Organizational)" >
               <textarea rows={4} value={secOrg} onChange={e => setSecOrg(e.target.value)}
-                placeholder="เช่น มีนโยบายการคุ้มครองข้อมูลส่วนบุคคล, จัดอบรมพนักงานทุกปี, กำหนดขั้นตอนการรายงานเหตุการณ์ละเมิดข้อมูล..." className={txa} />
+                className={txa} />
             </Field>
-            <Field label="มาตรการเชิงเทคนิค (Technical)" hint="การเข้ารหัส, Firewall, การสำรองข้อมูล">
+            <Field label="มาตรการเชิงเทคนิค (Technical)" >
               <textarea rows={4} value={secTech} onChange={e => setSecTech(e.target.value)}
-                placeholder="เช่น เข้ารหัสข้อมูล AES-256, ใช้ SSL/TLS, ระบบ Firewall, สำรองข้อมูลทุกวัน, Antivirus..." className={txa} />
+                className={txa} />
             </Field>
-            <Field label="มาตรการทางกายภาพ (Physical)" hint="ระบบล็อก, กล้อง CCTV, การควบคุมพื้นที่">
+            <Field label="มาตรการทางกายภาพ (Physical)" >
               <textarea rows={4} value={secPhysical} onChange={e => setSecPhysical(e.target.value)}
-                placeholder="เช่น ล็อกห้องเซิร์ฟเวอร์, ระบบบัตรแสดงตัวตน, กล้อง CCTV ตลอด 24 ชม., ตู้ล็อกเอกสาร..." className={txa} />
+                className={txa} />
             </Field>
-            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" hint="Role-Based Access, Password Policy">
+            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" >
               <textarea rows={4} value={secAccess} onChange={e => setSecAccess(e.target.value)}
-                placeholder="เช่น กำหนด Role-Based Access Control, ใช้ Two-Factor Authentication, เปลี่ยนรหัสผ่านทุก 90 วัน..." className={txa} />
+                className={txa} />
             </Field>
-            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" hint="ระบุว่าใครมีสิทธิ์เข้าถึงและรับผิดชอบส่วนใด">
+            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" >
               <textarea rows={4} value={secUser} onChange={e => setSecUser(e.target.value)}
-                placeholder="เช่น ผู้ดูแลระบบรับผิดชอบการจัดการสิทธิ์, ฝ่ายขายเข้าถึงได้เฉพาะข้อมูลลูกค้าของตนเอง..." className={txa} />
+                className={txa} />
             </Field>
-            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" hint="ระบบบันทึก Log การเข้าถึงและแก้ไขข้อมูล">
+            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" >
               <textarea rows={4} value={secAudit} onChange={e => setSecAudit(e.target.value)}
-                placeholder="เช่น บันทึก Access Log ทุกครั้งที่เข้าถึงข้อมูล เก็บไว้ 1 ปี, ตรวจสอบ Log ทุกเดือน..." className={txa} />
+                className={txa} />
             </Field>
           </div>
         </div>
