@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -12,11 +13,13 @@ export default function DashboardPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [deptFilter, setDeptFilter] = useState('ALL');
 
   const filtered = mockActivities.filter(a => {
     const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchDept = deptFilter === 'ALL' || a.department === deptFilter;
+    return matchSearch && matchStatus && matchDept;
   });
 
   const stats = [
@@ -127,19 +130,36 @@ export default function DashboardPage() {
 
         {/* HEADER + SEARCH */}
         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
+          {/* ฝั่งซ้าย: หัวข้อ */}
           <div>
             <p className="text-sm font-semibold text-gray-700">กิจกรรมล่าสุด</p>
             <p className="text-xs text-gray-400">{filtered.length} รายการ</p>
           </div>
 
-          <input
-            type="text"
-            placeholder="ค้นหากิจกรรม..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border border-gray-400 rounded px-3 py-1.5 text-sm w-56
-      focus:outline-none focus:ring-1 focus:ring-[#203690]"
-          />
+          {/* ฝั่งขวา: Filter และ Search มัดรวมกัน */}
+          <div className="flex items-center gap-3">
+            <select
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              className="border border-gray-400 rounded px-3 py-1.5 text-sm
+            focus:outline-none focus:ring-1 focus:ring-[#203690]"
+            >
+              <option value="ALL">ทุกแผนก</option>
+              {/* แก้ value ให้ตรงกับข้อมูล department ใน mockActivities */}
+              <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
+              <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
+              <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>             
+            </select>
+
+            <input
+              type="text"
+              placeholder="ค้นหากิจกรรม..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border border-gray-400 rounded px-3 py-1.5 text-sm w-56
+        focus:outline-none focus:ring-1 focus:ring-[#203690]"
+            />
+          </div>
         </div>
 
         <table className="w-full">
@@ -151,7 +171,9 @@ export default function DashboardPage() {
               <th className="px-4 py-2 text-left">ความเสี่ยง</th>
               <th className="px-4 py-2 text-left">สถานะ</th>
               <th className="px-4 py-2 text-left">อัปเดตล่าสุด</th>
-              <th className="px-4 py-2 text-left">จัดการ</th>
+              {role !== 'dataOwner' && (
+                <th className="px-4 py-2 text-left">จัดการ</th>
+              )}
             </tr>
           </thead>
           <tbody className="text-sm text-gray-700">
@@ -172,24 +194,27 @@ export default function DashboardPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => router.push(`/admin?view=${a.id}`)}
-                        className="text-xs text-blue-600 hover:underline"
-                      >
-                        ดู
-                      </button>
-                      {(role === 'admin' || role === 'dataOwner') && (
+                  {role !== 'dataOwner' && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-2">
                         <button
-                          onClick={() => router.push(`/createactivity?edit=${a.id}`)}
-                          className="text-xs text-gray-500 hover:underline"
+                          onClick={() => router.push(`/admin?view=${a.id}`)}
+                          className="text-xs text-blue-600 hover:underline"
                         >
-                          แก้ไข
+                          ดู
                         </button>
-                      )}
-                    </div>
-                  </td>
+
+                        {(role === 'admin') && (
+                          <button
+                            onClick={() => router.push(`/createactivity?edit=${a.id}`)}
+                            className="text-xs text-gray-500 hover:underline"
+                          >
+                            แก้ไข
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             ) : (
