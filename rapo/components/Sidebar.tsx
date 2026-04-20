@@ -113,10 +113,10 @@ const ChevronLeftIcon = () => (
 
 // ลิ้งหน้า
 const navItems: NavItem[] = [
+  { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
   { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
   { label: 'My ROPA', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner', 'admin'] },
-  { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
   { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['admin'] },
   { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
   { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },
@@ -124,6 +124,7 @@ const navItems: NavItem[] = [
   { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
   { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['executive'] },
   { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] },
+  { label: 'ROPA status', href: '/dc/status', icon: <ClipboardIcon />, roles: ['dataOwner'] },
   // { label: 'รายการ Activity', href: '/activities', roles: ['processor'] },
   // { label: 'คำขอเข้าถึง', href: '/dc/requests', roles: ['dataOwner'] },
 ];
