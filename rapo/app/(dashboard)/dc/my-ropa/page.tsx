@@ -8,60 +8,144 @@ import { mockActivities } from '@/lib/mockData';
 export default function MyRopaPage() {
   const { user } = useAuth();
   const router = useRouter();
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [deptFilter, setDeptFilter] = useState('ALL');
 
+  // ดึงเฉพาะ ROPA ที่ User คนนี้เป็นเจ้าของ (Owner)
   const myActivities = mockActivities.filter(a => a.owner === user?.name);
 
+  // ระบบกรองข้อมูล (ค้นหา + สถานะ + แผนก)
   const filtered = myActivities.filter(a => {
     const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-    return matchSearch && matchStatus;
+    const matchDept = deptFilter === 'ALL' || a.department === deptFilter;
+    return matchSearch && matchStatus && matchDept;
   });
 
+  // คำนวณสถิติจากรายการของ User คนนี้
   const stats = [
-    { title: 'ALL', value: myActivities.length, sub: 'ทั้งหมด', color: 'text-black' },
-    { title: 'ACTIVE', value: myActivities.filter(a => a.status === 'ACTIVE').length, sub: 'ใช้งานอยู่', color: 'text-green-600' },
-    { title: 'REVIEW', value: myActivities.filter(a => a.status === 'REVIEW').length, sub: 'รอตรวจ', color: 'text-yellow-600' },
-    { title: 'DRAFT', value: myActivities.filter(a => a.status === 'DRAFT').length, sub: 'ร่าง', color: 'text-gray-500' },
+    {
+      key: 'ALL',
+      title: 'Total ROPA',
+      value: myActivities.length,
+      sub: 'ทั้งหมด',
+      extra: 'รายการของคุณ',
+      color: 'text-gray-900'
+    },
+    {
+      key: 'ACTIVE',
+      title: 'Active',
+      value: myActivities.filter(a => a.status === 'ACTIVE').length,
+      sub: 'กำลังใช้งาน',
+      extra: '',
+      color: 'text-green-600'
+    },
+    {
+      key: 'REVIEW',
+      title: 'Under Review',
+      value: myActivities.filter(a => a.status === 'REVIEW').length,
+      sub: 'รอทบทวน',
+      extra: '',
+      color: 'text-yellow-600'
+    },
+    {
+      key: 'DRAFT',
+      title: 'Draft',
+      value: myActivities.filter(a => a.status === 'DRAFT').length,
+      sub: 'แบบร่าง',
+      extra: '',
+      color: 'text-gray-500'
+    },
   ];
 
   const statusBadge = (status: string) => {
-    if (status === 'ACTIVE')   return 'bg-green-100 text-green-700';
-    if (status === 'REVIEW')   return 'bg-yellow-100 text-yellow-700';
-    if (status === 'DRAFT')    return 'bg-gray-100 text-gray-600';
+    if (status === 'ACTIVE') return 'bg-green-100 text-green-700';
+    if (status === 'REVIEW') return 'bg-yellow-100 text-yellow-700';
+    if (status === 'DRAFT') return 'bg-gray-100 text-gray-600';
     if (status === 'REJECTED') return 'bg-red-100 text-red-700';
     if (status === 'ARCHIVED') return 'bg-slate-100 text-slate-500';
     return 'bg-gray-100 text-gray-600';
   };
 
+  const riskBadge = (risk: string) => {
+    if (risk === 'LOW') return 'bg-green-50 text-green-700';
+    if (risk === 'MEDIUM') return 'bg-yellow-50 text-yellow-700';
+    if (risk === 'HIGH') return 'bg-orange-50 text-orange-700';
+    if (risk === 'CRITICAL') return 'bg-red-50 text-red-700';
+    return '';
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6">
 
-      <div className="bg-white border border-black px-5 py-4 rounded-md mb-4">
-        <p className="text-xs font-semibold text-gray-700 mb-1">My ROPA</p>
-        <p className="text-[11px] text-gray-500">ROPA ที่คุณสร้าง — {user?.name}</p>
-      </div>
-      <div className="grid grid-cols-4 gap-3 mb-6">
-        {stats.map(s => (
-          <button key={s.title} onClick={() => setStatusFilter(s.title)}
-            className={`bg-white border rounded-md px-4 py-3 text-left transition-all
-              hover:shadow-md hover:border-blue-400
-              ${statusFilter === s.title ? 'border-[#203690] ring-2 ring-[#203690]' : 'border-black'}`}>
-            <p className="text-[11px] text-black">{s.title}</p>
-            <p className={`text-xl font-semibold mt-1 ${s.color}`}>{s.value}</p>
-            <p className="text-[11px] text-gray-400">{s.sub}</p>
-          </button>
-        ))}
+      {/* HEADER BOX (ตัวใหญ่ ไม่มีกรอบ ตามที่ต้องการ) */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          My Ropa
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          ROPA ที่คุณ {user?.name} สร้าง 
+        </p>
       </div>
 
+      {/* STATS block grid */}
+      <div className="grid grid-cols-4 gap-4 mb-6">
+        {stats.map((s) => {
+          const isActive = statusFilter === s.key;
+
+          return (
+            <button
+              key={s.key}
+              onClick={() => setStatusFilter(s.key)}
+              className={`
+                bg-white border rounded-xl p-4 text-left transition-all
+                hover:shadow-md hover:border-[#203690]
+                ${isActive ? 'border-[#203690] ring-2 ring-[#203690]' : 'border-gray-200'}
+              `}
+            >
+              <p className="text-xs text-gray-500">{s.title}</p>
+              <p className={`text-2xl font-semibold mt-1 ${s.color}`}>{s.value}</p>
+              <p className="text-xs text-gray-400 mt-1">{s.extra}</p>
+              <div className="mt-3 text-[11px] text-gray-400">{s.sub}</div>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* TABLE AREA */}
       <div className="bg-white border border-black rounded-md overflow-hidden">
+
+        {/* HEADER + SEARCH & FILTER */}
         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
-          <p className="text-sm font-semibold text-gray-700">ROPA ของฉัน ({filtered.length} รายการ)</p>
-          <input type="text" placeholder="ค้นหา..." value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="border border-gray-400 rounded px-3 py-1.5 text-sm w-48
-              focus:outline-none focus:ring-1 focus:ring-[#203690]" />
+          <div>
+            <p className="text-sm font-semibold text-gray-700">ROPA ของฉัน</p>
+            <p className="text-xs text-gray-400">{filtered.length} รายการ</p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <select
+              value={deptFilter}
+              onChange={(e) => setDeptFilter(e.target.value)}
+              className="border border-gray-400 rounded px-3 py-1.5 text-sm
+                focus:outline-none focus:ring-1 focus:ring-[#203690]"
+            >
+              <option value="ALL">ทุกแผนก</option>
+              <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
+              <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
+              <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
+            </select>
+
+            <input
+              type="text"
+              placeholder="ค้นหากิจกรรม..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border border-gray-400 rounded px-3 py-1.5 text-sm w-56
+                focus:outline-none focus:ring-1 focus:ring-[#203690]"
+            />
+          </div>
         </div>
 
         <table className="w-full">
@@ -69,45 +153,96 @@ export default function MyRopaPage() {
             <tr>
               <th className="px-4 py-2 text-left">ชื่อกิจกรรม</th>
               <th className="px-4 py-2 text-left">แผนก</th>
+              <th className="px-4 py-2 text-left">ฐานกฎหมาย</th>
+              <th className="px-4 py-2 text-left">ความเสี่ยง</th>
               <th className="px-4 py-2 text-left">สถานะ</th>
               <th className="px-4 py-2 text-left">อัปเดตล่าสุด</th>
               <th className="px-4 py-2 text-left">จัดการ</th>
             </tr>
           </thead>
           <tbody className="text-sm text-gray-700">
-            {filtered.length > 0 ? filtered.map(a => (
-              <tr key={a.id} className="border-t hover:bg-gray-50 transition">
-                <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
-                <td className="px-4 py-3 text-gray-500">{a.department}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(a.status)}`}>
-                    {a.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-2">
-                    <button onClick={() => router.push(`/ropa/${a.id}`)}
-                      className="text-xs text-blue-600 hover:underline">ดู</button>
-                    <button onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
-                      className="text-xs text-gray-500 hover:underline">แก้ไข</button>
-                    {a.status === 'ACTIVE' && (
-                      <button onClick={() => router.push(`/ropa/create?type=dp&activityId=${a.id}`)}
-                        className="text-xs text-emerald-600 hover:underline font-medium">
-                        + DP
+            {filtered.length > 0 ? (
+              filtered.map((a) => (
+                <tr key={a.id} className="border-t hover:bg-gray-50 transition">
+                  <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
+                  <td className="px-4 py-3 text-gray-500">{a.department}</td>
+                  <td className="px-4 py-3 text-gray-500 text-xs">{a.legalBasis}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${riskBadge(a.riskLevel)}`}>
+                      {a.riskLevel}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(a.status)}`}>
+                      {a.status}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => router.push(`/ropa/${a.id}`)}
+                        className="text-xs text-blue-600 hover:underline"
+                      >
+                        ดู
                       </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )) : (
+                      <button
+                        onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
+                        className="text-xs text-gray-500 hover:underline"
+                      >
+                        แก้ไข
+                      </button>
+                      {a.status === 'ACTIVE' && (
+                        <button
+                          onClick={() => router.push(`/ropa/create?type=dp&activityId=${a.id}`)}
+                          className="text-xs text-emerald-600 hover:underline font-medium"
+                        >
+                          + DP
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
               <tr>
-                <td colSpan={5} className="text-center py-10 text-gray-400">ไม่พบข้อมูล</td>
+                <td colSpan={7} className="text-center py-10 text-gray-400">
+                  ไม่พบข้อมูลกิจกรรม
+                </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Floating Add Button */}
+      <div className="fixed bottom-6 right-6 z-50 group">
+        <button
+          onClick={() => router.push('/ropa/create')}
+          className="bg-[#203690] text-white w-14 h-14 flex items-center justify-center
+            rounded-xl shadow-lg hover:bg-[#182a73]
+            hover:shadow-xl transition duration-200"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="w-6 h-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+          </svg>
+        </button>
+
+        {/* Tooltip เมื่อเอาเมาส์ชี้ */}
+        <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
+          text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100
+          transition whitespace-nowrap pointer-events-none">
+          Add New ROPA
+        </div>
+      </div>
+
     </div>
   );
 }
