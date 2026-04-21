@@ -82,7 +82,7 @@ export default function LoginPage() {
 
             <div className="space-y-4">
               {[
-                { icon: '🔒', label: 'GDPR Compliant Workflows' },
+                { icon: '3', label: 'GDPR Compliant Workflows' },
                 { icon: '📋', label: 'Automated Risk Assessment' },
                 { icon: '👥', label: 'Role-Based Access Control' },
                 { icon: '📊', label: 'Real-time Analytics & Reports' },

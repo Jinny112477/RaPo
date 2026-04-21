@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { Clock8 } from 'lucide-react';
+import { SearchAlert } from 'lucide-react';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,11 +65,10 @@ const TRANSFER_EXCEPTIONS = [
 ];
 
 const STEPS = [
-  { id: 1, label: 'เลือกประเภท', short: 'ประเภท' },
-  { id: 2, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
-  { id: 3, label: 'กิจกรรมการประมวลผล', short: 'กิจกรรม' },
-  { id: 4, label: 'มาตรการรักษาความปลอดภัย', short: 'ความปลอดภัย' },
-  { id: 5, label: 'สรุปและส่ง', short: 'สรุป' },
+  { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
+  { id: 2, label: 'กิจกรรมการประมวลผล', short: 'กิจกรรม' },
+  { id: 3, label: 'มาตรการรักษาความปลอดภัย', short: 'ความปลอดภัย' },
+  { id: 4, label: 'สรุปและส่ง', short: 'สรุป' },
 ];
 
 // ─── Small helper components ───────────────────────────────────────────────────
@@ -197,7 +198,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {/* 1. วัตถุประสงค์ */}
           <Field label="วัตถุประสงค์ของการประมวลผล" required>
             <textarea rows={2} value={sub.purpose} onChange={e => set('purpose', e.target.value)}
-               className={txa} />
+              className={txa} />
           </Field>
 
           {/* 2. ข้อมูลที่จัดเก็บ */}
@@ -248,7 +249,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {/* 8. ผู้เยาว์ (Controller เท่านั้น) */}
           {isCtrl && (
             <div className="p-4 rounded-xl border border-amber-200 bg-50 space-y-4">
-              <div className="flex items-center gap-2">         
+              <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-800">การขอความยินยอมของผู้เยาว์</span>
                 {/* <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span> */}
               </div>
@@ -256,12 +257,12 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 <Field label="อายุไม่เกิน 10 ปี" >
                   <textarea rows={2} value={sub.minorConsentUnder10}
                     onChange={e => set('minorConsentUnder10', e.target.value)}
-                     className={txa} />
+                    className={txa} />
                 </Field>
                 <Field label="อายุ 10–20 ปี" >
                   <textarea rows={2} value={sub.minorConsentAge10to20}
                     onChange={e => set('minorConsentAge10to20', e.target.value)}
-                     className={txa} />
+                    className={txa} />
                 </Field>
               </div>
             </div>
@@ -289,7 +290,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                   </Field>
                   <Field label="วิธีการโอนข้อมูล">
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)}
-                       className={inp} />
+                      className={inp} />
                   </Field>
                 </div>
                 <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่">
@@ -298,13 +299,13 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 {sub.transferAffiliate === 'ใช่' && (
                   <Field label="ชื่อบริษัทในเครือ">
                     <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)}
-                       className={inp} />
+                      className={inp} />
                   </Field>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง">
                     <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)}
-                       className={inp} />
+                      className={inp} />
                   </Field>
                   <Field label="ข้อยกเว้นตามมาตรา 28">
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
@@ -331,21 +332,21 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="วิธีการเก็บรักษาข้อมูล">
                 <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)}
-                   className={txa} />
+                  className={txa} />
               </Field>
               <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
                 <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)}
-                   className={inp} />
+                  className={inp} />
               </Field>
             </div>
             <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล"
-             >
+            >
               <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)}
-                 className={txa} />
+                className={txa} />
             </Field>
             <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
               <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)}
-                 className={txa} />
+                className={txa} />
             </Field>
           </div>
 
@@ -356,14 +357,14 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">เฉพาะ Data Controller</span>
               </div>
               <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม"
-               >
+              >
                 <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)}
-                   className={txa} />
+                  className={txa} />
               </Field>
               <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล"
-                >
+              >
                 <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)}
-                   className={txa} />
+                  className={txa} />
               </Field>
             </div>
           )}
@@ -380,9 +381,9 @@ interface RopaFormProps {
   onSaveDraft?: (data: Record<string, unknown>) => void;
 }
 
-export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
+export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   const [step, setStep] = useState(1);
-  const [formType, setFormType] = useState<FormType>(null);
+  const [formType] = useState<FormType>('controller');
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
 
@@ -409,13 +410,12 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   const isCtrl = formType === 'controller';
 
   const canNext = () => {
-    if (step === 1) return formType !== null;
-    if (step === 2) return rec.name.trim() !== '' && rec.email.trim() !== '';
-    if (step === 3) return mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
+    if (step === 1) return rec.name.trim() !== '' && rec.email.trim() !== '';
+    if (step === 2) return mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
     return true;
   };
 
-  const next = () => { if (canNext()) setStep(s => Math.min(5, s + 1)); };
+  const next = () => { if (canNext()) setStep(s => Math.min(4, s + 1)); };
   const prev = () => setStep(s => Math.max(1, s - 1));
 
   const handleSaveDraft = () => {
@@ -441,11 +441,11 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         <h3 className="text-xl font-bold text-slate-800 mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
         <p className="text-sm text-slate-500 mb-3">กิจกรรมการประมวลผลถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-sm text-blue-700 font-medium mb-6">
-          {isCtrl ? '📋 Data Controller' : '⚙️ Data Processor'} · {mainActivity}
+          {isCtrl ? 'Data Controller' : 'Data Processor'} · {mainActivity}
         </div>
         <br />
         <button onClick={() => {
-          setStep(1); setFormType(null); setSubmitted(false);
+          setStep(1); setSubmitted(false);
           setRec({ name: '', address: '', email: '', phone: '' });
           setMainActivity(''); setSubs([newSub(0)]);
           setOwnerName(''); setProcessorName(''); setCtrlAddress('');
@@ -468,8 +468,8 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             <div key={s.id} className="flex flex-col items-center gap-1.5 z-10">
               <button onClick={() => s.id < step && setStep(s.id)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' :
-                    s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
-                      'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
+                  s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
+                    'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
                 {s.id < step
                   ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
                   : s.id}
@@ -483,78 +483,21 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         <div className="mt-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-slate-800">{STEPS[step - 1].label}</h2>
-            <p className="text-xs text-slate-400">ขั้นตอน {step} / {STEPS.length}</p>
+            <p className="text-xs text-slate-400">ส่วนที่ {step} / {STEPS.length}</p>
           </div>
           {formType && (
             <span className={`flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border ${isCtrl ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-              {isCtrl ? '📋 Data Controller' : '⚙️ Data Processor'}
+              {isCtrl ? 'Data Controller Form' : 'Data Processor Form'}
             </span>
           )}
         </div>
       </div>
 
-      {/* ─ Step 1: เลือกประเภท ─ */}
+      {/* ─ Step 2: ผู้ลงบันทึก ─ */}
       {step === 1 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
-          <div className="p-4 bg-blue-50 border border-blue-100 rounded-xl">
-            <p className="text-sm font-semibold text-blue-800 mb-1">📌 กรุณาเลือกประเภทของฟอร์ม ROPA</p>
-            <p className="text-xs text-blue-600 leading-relaxed">
-              ฟอร์มจะปรับเนื้อหาตามบทบาทของท่าน ตาม พ.ร.บ. คุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562 (PDPA)
-            </p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Controller */}
-            <button type="button" onClick={() => setFormType('controller')}
-              className={`text-left p-5 rounded-xl border-2 transition-all duration-200 ${formType === 'controller' ? 'border-blue-500 bg-blue-50 shadow-md shadow-blue-100' : 'border-slate-200 bg-white hover:border-blue-300 hover:shadow-sm'}`}>
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 transition-colors ${formType === 'controller' ? 'bg-blue-600' : 'bg-slate-100'}`}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={formType === 'controller' ? 'white' : '#94a3b8'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
-                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                </svg>
-              </div>
-              <p className={`font-bold text-base mb-0.5 ${formType === 'controller' ? 'text-blue-700' : 'text-slate-800'}`}>Data Controller</p>
-              <p className="text-sm text-slate-500 font-medium mb-2">ผู้ควบคุมข้อมูลส่วนบุคคล</p>
-              <p className="text-xs text-slate-400 leading-relaxed mb-3">บุคคล/นิติบุคคลที่มีอำนาจตัดสินใจเกี่ยวกับการประมวลผลข้อมูลส่วนบุคคล</p>
-              <div className="space-y-1.5">
-                {['มีส่วนขอความยินยอมผู้เยาว์', 'มีส่วนการยกเว้นการเปิดเผย', 'มีส่วนการปฏิเสธสิทธิ'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5">
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${formType === 'controller' ? 'bg-blue-200 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>✓</span>
-                    <span className="text-xs text-slate-500">{f}</span>
-                  </div>
-                ))}
-              </div>
-            </button>
-
-            {/* Processor */}
-            <button type="button" onClick={() => setFormType('processor')}
-              className={`text-left p-5 rounded-xl border-2 transition-all duration-200 ${formType === 'processor' ? 'border-emerald-500 bg-emerald-50 shadow-md shadow-emerald-100' : 'border-slate-200 bg-white hover:border-emerald-300 hover:shadow-sm'}`}>
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 transition-colors ${formType === 'processor' ? 'bg-emerald-600' : 'bg-slate-100'}`}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke={formType === 'processor' ? 'white' : '#94a3b8'} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="2" width="20" height="8" rx="2" /><rect x="2" y="14" width="20" height="8" rx="2" />
-                  <line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" />
-                </svg>
-              </div>
-              <p className={`font-bold text-base mb-0.5 ${formType === 'processor' ? 'text-emerald-700' : 'text-slate-800'}`}>Data Processor</p>
-              <p className="text-sm text-slate-500 font-medium mb-2">ผู้ประมวลผลข้อมูลส่วนบุคคล</p>
-              <p className="text-xs text-slate-400 leading-relaxed mb-3">บุคคล/นิติบุคคลที่ประมวลผลข้อมูลในนามของผู้ควบคุมข้อมูล (ผู้รับจ้าง)</p>
-              <div className="space-y-1.5">
-                {['มีช่องระบุผู้ควบคุมข้อมูล (ผู้ว่าจ้าง)', 'ไม่มีส่วนขอความยินยอมผู้เยาว์', 'ไม่มีส่วนการปฏิเสธสิทธิ'].map(f => (
-                  <div key={f} className="flex items-center gap-1.5">
-                    <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs flex-shrink-0 ${formType === 'processor' ? 'bg-emerald-200 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>✓</span>
-                    <span className="text-xs text-slate-500">{f}</span>
-                  </div>
-                ))}
-              </div>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ─ Step 2: ผู้ลงบันทึก ─ */}
-      {step === 2 && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">ส.1</div>
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">1</div>
             <div>
               <p className="text-sm font-semibold text-slate-800">ส่วนที่ 1: รายละเอียดของผู้ลงบันทึก ROPA</p>
               <p className="text-xs text-slate-400">ข้อมูลผู้รับผิดชอบการบันทึกกิจกรรมนี้</p>
@@ -563,31 +506,31 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="ชื่อ-นามสกุล / ชื่อองค์กร" required>
               <input type="text" value={rec.name} onChange={e => setRec(r => ({ ...r, name: e.target.value }))}
-                 className={inp} />
+                className={inp} />
             </Field>
             <Field label="เบอร์โทรศัพท์" required>
               <input type="tel" value={rec.phone} onChange={e => setRec(r => ({ ...r, phone: e.target.value }))}
-                 className={inp} />
+                className={inp} />
             </Field>
           </div>
           <Field label="ที่อยู่" required >
             <textarea rows={2} value={rec.address} onChange={e => setRec(r => ({ ...r, address: e.target.value }))}
-               className={txa} />
+              className={txa} />
           </Field>
           <Field label="อีเมล" required>
             <input type="email" value={rec.email} onChange={e => setRec(r => ({ ...r, email: e.target.value }))}
-               className={inp} />
+              className={inp} />
           </Field>
         </div>
       )}
 
       {/* ─ Step 3: กิจกรรมการประมวลผล ─ */}
-      {step === 3 && (
+      {step === 2 && (
         <div className="space-y-4">
           {/* Header card */}
           <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">ส.2</div>
+              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">2</div>
               <div>
                 <p className="text-sm font-semibold text-slate-800">ส่วนที่ 2: ตารางข้อมูลกิจกรรมการประมวลผล</p>
                 <p className="text-xs text-slate-400">ระบุกิจกรรมหลักและวัตถุประสงค์ย่อยทั้งหมด</p>
@@ -597,26 +540,26 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             {isCtrl ? (
               <Field label="ชื่อเจ้าของข้อมูลส่วนบุคคล" required >
                 <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)}
-                   className={inp} />
+                  className={inp} />
               </Field>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" required >
                   <input type="text" value={processorName} onChange={e => setProcessorName(e.target.value)}
-                     className={inp} />
+                    className={inp} />
                 </Field>
                 <Field label="ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" required >
                   <input type="text" value={ctrlAddress} onChange={e => setCtrlAddress(e.target.value)}
-                     className={inp} />
+                    className={inp} />
                 </Field>
               </div>
             )}
 
             <Field label="กิจกรรมการประมวลผลหลัก" required >
               <input type="text" value={mainActivity} onChange={e => setMainActivity(e.target.value)}
-                 className={inp} />
+                className={inp} />
             </Field>
-           
+
           </div>
 
           {/* Sub-activity cards */}
@@ -639,12 +582,12 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
       )}
 
       {/* ─ Step 4: มาตรการรักษาความปลอดภัย ─ */}
-      {step === 4 && (
+      {step === 3 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">🔒</div>
+            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">3</div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">คำอธิบายเกี่ยวกับมาตรการรักษาความมั่นคงปลอดภัย</p>
+              <p className="text-sm font-semibold text-slate-800">ส่วนที่ 3: คำอธิบายเกี่ยวกับมาตรการรักษาความมั่นคงปลอดภัย</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -677,7 +620,7 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
       )}
 
       {/* ─ Step 5: สรุป ─ */}
-      {step === 5 && (
+      {step === 4 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
             <p className="text-sm font-semibold text-slate-800">สรุปข้อมูลก่อนส่ง</p>
@@ -688,7 +631,7 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
                 <p className="text-xs text-slate-400 mb-1">ประเภทฟอร์ม</p>
                 <span className={`text-sm font-bold ${isCtrl ? 'text-blue-700' : 'text-emerald-700'}`}>
-                  {isCtrl ? '📋 Data Controller (ผู้ควบคุมข้อมูล)' : '⚙️ Data Processor (ผู้ประมวลผลข้อมูล)'}
+                  {isCtrl ? 'Data Controller (ผู้ควบคุมข้อมูล)' : 'Data Processor (ผู้ประมวลผลข้อมูล)'}
                 </span>
               </div>
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
@@ -723,8 +666,9 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
                           <span key={l} className="text-xs px-2 py-0.5 bg-white border border-slate-200 rounded-full text-slate-600">{l}</span>
                         ))}
                         {s.retentionPeriod && (
-                          <span className="text-xs px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-amber-700">
-                            🗂 {s.retentionPeriod}
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 bg-amber-50 border border-amber-200 rounded-full text-amber-700">
+                            <Clock8 className="w-3.5 h-3.5" />
+                            {s.retentionPeriod}
                           </span>
                         )}
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${s.transferAbroad === 'มี' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
@@ -738,7 +682,10 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             </div>
 
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
-              <span className="font-semibold">⚠️ หมายเหตุ:</span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
+              <span className="font-semibold flex items-center gap-1">
+  <SearchAlert className="w-4 h-4 text-amber-600" /> 
+  หมายเหตุ:
+</span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
               และ DPO จะต้องตรวจสอบและอนุมัติก่อนจึงจะมีสถานะ ACTIVE
             </div>
           </div>
@@ -760,7 +707,7 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               ← ย้อนกลับ
             </button>
           )}
-          {step < 5 ? (
+          {step < 4 ? (
             <button type="button" onClick={next} disabled={!canNext()}
               className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               ถัดไป →

@@ -79,7 +79,7 @@ export default function DashboardPage() {
       {/* OVERVIEW BOX */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">
-          ALL Activity
+          All Activity
         </h1>
 
         <p className="text-sm text-gray-500 mt-1">
@@ -252,7 +252,7 @@ export default function DashboardPage() {
           <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
             text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100
             transition whitespace-nowrap">
-            Add New ROPA
+            Create DC Form
           </div>
         </div>
       )}
