@@ -123,8 +123,7 @@ const navItems: NavItem[] = [
   { label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['dpo'] },
   { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
   { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['executive'] },
-  { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] },
-  { label: 'ROPA status', href: '/dc/status', icon: <ClipboardIcon />, roles: ['dataOwner'] },
+  { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] }
   // { label: 'รายการ Activity', href: '/activities', roles: ['processor'] },
   // { label: 'คำขอเข้าถึง', href: '/dc/requests', roles: ['dataOwner'] },
 ];

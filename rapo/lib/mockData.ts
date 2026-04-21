@@ -1,4 +1,5 @@
 import { Activity, User, Notification, DashboardStats } from '@/types';
+import { DpRecord } from '@/types';
 
 export const mockActivities: Activity[] = [
   {
@@ -154,4 +155,16 @@ export const PROCESSING_ACTIVITIES = [
 export const RETENTION_PERIODS = [
   '5 ปี',
   '7 ปี',
+];
+
+export const mockDpRecords: DpRecord[] = [
+  {
+    id: 'DP-001',
+    activityId: 'ACT-003',
+    processorName: 'บริษัท kk Solutions จำกัด',
+    purpose: 'ประมวลผลข้อมูลลูกค้าเพื่อจัดงาน Event',
+    status: 'PENDING',
+    createdAt: '2568-03-15',
+    createdBy: 'meimei',
+  },
 ];

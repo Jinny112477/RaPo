@@ -77,3 +77,14 @@ export interface DpRecord {
   createdAt: string;
   createdBy: string;
 }
+export const mockDpRecords: DpRecord[] = [
+  {
+    id: 'DP-001',
+    activityId: 'ACT-003',         // ผูกกับ DC record ที่ ACTIVE
+    processorName: 'บริษัท meimei จำกัด',
+    purpose: 'ประมวลผลข้อมูลลูกค้าเพื่อจัดงาน Event',
+    status: 'PENDING',
+    createdAt: '2568-03-15',
+    createdBy: 'meimei',
+  },
+];
