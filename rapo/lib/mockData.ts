@@ -33,6 +33,22 @@ export const mockActivities: Activity[] = [
     updatedAt: '2567-03-14',
     owner: 'meimei',
   },
+  {
+    id: 'ACT-003',
+    department: 'ฝ่ายการตลาด',
+    activityName: 'ทดสอบ DP Flow',
+    purpose: 'test',
+    legalBasis: 'ฐานความยินยอม (Consent)',
+    dataSubject: ['ลูกค้า'],
+    personalData: ['ชื่อ-นามสกุล'],
+    processing: ['การเก็บรวบรวม'],
+    riskLevel: 'LOW',
+    retentionPeriod: '5 ปี',
+    status: 'ACTIVE',
+    createdAt: '2567-03-01',
+    updatedAt: '2567-03-15',
+    owner: 'meimei', // ต้องตรงกับ user ที่ login
+  },
 ];
 
 export const mockUsers: User[] = [

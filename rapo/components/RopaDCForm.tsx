@@ -751,7 +751,7 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
           {draftSaved
             ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกร่างแล้ว!</span></>
-            : '💾 save draft'}
+            : 'save draft'}
         </button>
         <div className="flex items-center gap-2">
           {step > 1 && (

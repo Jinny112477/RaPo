@@ -86,7 +86,7 @@ export default function MyRopaPage() {
           My Ropa
         </h1>
         <p className="text-sm text-gray-500 mt-1">
-          ROPA ที่คุณ {user?.name} สร้าง 
+          ROPA ที่คุณ {user?.name} สร้าง
         </p>
       </div>
 
@@ -194,7 +194,7 @@ export default function MyRopaPage() {
                       </button>
                       {a.status === 'ACTIVE' && (
                         <button
-                          onClick={() => router.push(`/ropa/create?type=dp&activityId=${a.id}`)}
+                          onClick={() => router.push(`/dc/create-dp/${a.id}`)}
                           className="text-xs text-emerald-600 hover:underline font-medium"
                         >
                           + DP

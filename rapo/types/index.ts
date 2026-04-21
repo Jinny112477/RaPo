@@ -67,3 +67,13 @@ export interface Notification {
   read: boolean;
   type: 'info' | 'warning' | 'success';
 }
+
+export interface DpRecord {
+  id: string;
+  activityId: string; // link ไป DC record
+  processorName: string;
+  purpose: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  createdAt: string;
+  createdBy: string;
+}

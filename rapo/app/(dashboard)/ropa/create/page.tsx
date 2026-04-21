@@ -1,4 +1,4 @@
-import { RopaForm } from '@/components/RopaForm'
+import { RopaForm } from '@/components/RopaDCForm'
 
 export default function CreateRopaPage() {
   return (
