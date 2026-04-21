@@ -1,9 +1,19 @@
-const express = require('express')
+import express from "express"
+import cors from "cors"
+
+// import Routes
+
 const app = express()
 
-const ropaRoutes = require('./routes/ropa.routes')
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+    credentials: true,
+  })
+)
+
+// API Routes
 
 app.use(express.json())
-app.use('/api', ropaRoutes)
 
-module.exports = app
+export default app

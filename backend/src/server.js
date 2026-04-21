@@ -1,9 +1,13 @@
-require('dotenv').config()
+import dotenv from "dotenv"
+import http from "http"
+import app from "./app.js"
 
-const app = require('./app')
+dotenv.config()
 
-const PORT = 5001
+const server = http.createServer(app)
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`)
+const PORT = process.env.PORT || 5001
+
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`)
 })
