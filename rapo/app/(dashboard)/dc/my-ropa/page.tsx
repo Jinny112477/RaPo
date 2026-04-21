@@ -13,6 +13,9 @@ export default function MyRopaPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [deptFilter, setDeptFilter] = useState('ALL');
 
+  const [menuIndex, setMenuIndex] = useState<number | null>(null);
+  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+
   // ดึงเฉพาะ ROPA ที่ User คนนี้เป็นเจ้าของ (Owner)
   const myActivities = mockActivities.filter(a => a.owner === user?.name);
 
@@ -125,7 +128,7 @@ export default function MyRopaPage() {
           </div>
 
           <div className="flex items-center gap-3">
-            <select
+            {/* <select
               value={deptFilter}
               onChange={(e) => setDeptFilter(e.target.value)}
               className="border border-gray-400 rounded px-3 py-1.5 text-sm
@@ -135,7 +138,7 @@ export default function MyRopaPage() {
               <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
               <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
               <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
-            </select>
+            </select> */}
 
             <input
               type="text"
@@ -162,7 +165,7 @@ export default function MyRopaPage() {
           </thead>
           <tbody className="text-sm text-gray-700">
             {filtered.length > 0 ? (
-              filtered.map((a) => (
+              filtered.map((a,index) => (
                 <tr key={a.id} className="border-t hover:bg-gray-50 transition">
                   <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
                   <td className="px-4 py-3 text-gray-500">{a.department}</td>
@@ -179,26 +182,58 @@ export default function MyRopaPage() {
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
+                    <div className="relative">
                       <button
-                        onClick={() => router.push(`/ropa/${a.id}`)}
-                        className="text-xs text-blue-600 hover:underline"
+                        onClick={(e) => {
+                          const rect = (e.target as HTMLElement).getBoundingClientRect();
+                          setMenuPosition({
+                            top: rect.bottom,
+                            left: rect.left
+                          });
+                          setMenuIndex(menuIndex === index ? null : index);
+                        }}
+                        className="p-2 rounded hover:bg-gray-200"
                       >
-                        ดู
+                        ⋮
                       </button>
-                      <button
-                        onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
-                        className="text-xs text-gray-500 hover:underline"
-                      >
-                        แก้ไข
-                      </button>
-                      {a.status === 'ACTIVE' && (
-                        <button
-                          onClick={() => router.push(`/dc/create-dp/${a.id}`)}
-                          className="text-xs text-emerald-600 hover:underline font-medium"
+
+                      {menuIndex === index && (
+                        <div
+                          style={{ top: menuPosition.top, left: menuPosition.left }}
+                          className="fixed w-40 bg-white border rounded-lg shadow-lg z-[9999]"
                         >
-                          + DP
-                        </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                            onClick={() => {
+                              router.push(`/ropa/${a.id}`);
+                              setMenuIndex(null);
+                            }}
+                          >
+                            View
+                          </button>
+
+                          <button
+                            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+                            onClick={() => {
+                              router.push(`/ropa/create?edit=${a.id}`);
+                              setMenuIndex(null);
+                            }}
+                          >
+                            Edit
+                          </button>
+
+                          {a.status?.trim().toUpperCase() === 'ACTIVE' && (
+                            <button
+                              className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-emerald-600"
+                              onClick={() => {
+                                router.push(`/dc/create-dp/${a.id}`);
+                                setMenuIndex(null);
+                              }}
+                            >
+                              Create DP Form
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </td>
@@ -243,6 +278,12 @@ export default function MyRopaPage() {
         </div>
       </div>
 
+      {menuIndex !== null && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setMenuIndex(null)}
+        />
+      )}
     </div>
   );
 }

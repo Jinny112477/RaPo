@@ -13,7 +13,7 @@ export default function UsersPage() {
       name: "Porranack",
       email: "porranack@company.com",
       phone: "099-999-9989",
-      department: "Data Processor",
+      department: "ฝ่ายทรัพยากรบุคคล",
       role: "Admin",
     }
   ]);
@@ -75,11 +75,10 @@ export default function UsersPage() {
               onChange={(e) => setDepartmentFilter(e.target.value)}
               className="border rounded-lg px-3 py-2"
             >
-              <option value="All">All Department</option>
-              <option value="Legal">Legal</option>
-              <option value="IT">IT</option>
-              <option value="HR">HR</option>
-              <option value="Data Processor">Data Processor</option>
+              <option value="All">ทุกแผนก (All Department)</option>
+              <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
+              <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
+              <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
             </select>
 
           </div>
@@ -303,10 +302,14 @@ export default function UsersPage() {
                 }
                 className="w-full border rounded-lg px-3 py-2"
               >
-                <option value="">Department</option>
+                {/* <option value="">Department</option>
                 <option value="Legal">Legal</option>
                 <option value="IT">IT</option>
-                <option value="HR">HR</option>
+                <option value="HR">HR</option> */}
+                <option value="">ทุกแผนก</option>
+                <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
+                <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
+                <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
               </select>
 
               <select
@@ -390,11 +393,15 @@ export default function UsersPage() {
                     }
                     className="w-full border rounded-lg px-3 py-2"
                   >
-                    <option value="">Department</option>
+                    {/* <option value="">Department</option>
                     <option value="Legal">Legal</option>
                     <option value="IT">IT</option>
                     <option value="HR">HR</option>
-                    <option value="Data Processor">Data Processor</option>
+                    <option value="Data Processor">Data Processor</option> */}
+                    <option value="">ทุกแผนก</option>
+                    <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
+                    <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
+                    <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
                   </select>
 
                 </div>
