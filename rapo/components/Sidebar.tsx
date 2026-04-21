@@ -113,10 +113,10 @@ const ChevronLeftIcon = () => (
 
 // ลิ้งหน้า
 const navItems: NavItem[] = [
-  { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
+  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
   { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
-  { label: 'My ROPA', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner', 'admin'] },
+  { label: 'My Activity', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner', 'admin'] },
   { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['admin'] },
   { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
   { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },

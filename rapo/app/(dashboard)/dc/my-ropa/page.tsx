@@ -80,8 +80,8 @@ export default function MyRopaPage() {
 
       {/* HEADER */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">My ROPA</h1>
-        <p className="text-sm text-gray-500 mt-1">ROPA ที่คุณ {user?.name} สร้าง</p>
+        <h1 className="text-2xl font-bold text-gray-900">My Activity</h1>
+        <p className="text-sm text-gray-500 mt-1">กิจกรรมที่คุณ {user?.name} สร้าง</p>
       </div>
 
       {/* TABS */}
