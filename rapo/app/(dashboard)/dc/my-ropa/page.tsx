@@ -122,7 +122,7 @@ export default function MyRopaPage() {
         <div className="flex justify-between items-center px-4 py-3 border-b border-gray-200">
           <div>
             <p className="text-sm font-semibold text-gray-700">
-              {activeTab === 'dc' ? 'DC Form ของฉัน' : 'DP Form ของฉัน'}
+              {activeTab === 'dc' ? 'DC Form' : 'DP Form'}
             </p>
             <p className="text-xs text-gray-400">
               {activeTab === 'dc' ? filteredDC.length : filteredDP.length} รายการ
