@@ -377,11 +377,12 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 // ─── Main export ───────────────────────────────────────────────────────────────
 
 interface RopaFormProps {
+  activityId?: string
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
 }
 
-export default function RopaDPForm({ onSubmit, onSaveDraft }: RopaFormProps) {
+export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFormProps) {
   const [step, setStep] = useState(1);
   const [formType] = useState<FormType>('processor');
   const [submitted, setSubmitted] = useState(false);
