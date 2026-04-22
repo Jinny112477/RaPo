@@ -16,7 +16,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
-  department: string;
+  department?: string;
   avatarInitials: string;
   status: 'active' | 'inactive';
   createdAt: string;
@@ -43,6 +43,7 @@ export interface Activity {
     requestedBy: string   // user id ของ DP
     status: 'pending' | 'approved' | 'rejected'
   }[]
+  rejectionReason?: string;
 }
 
 export interface NavItem {
@@ -73,9 +74,10 @@ export interface DpRecord {
   activityId: string; // link ไป DC record
   processorName: string;
   purpose: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
   createdAt: string;
   createdBy: string;
+  rejectionReason?: string;
 }
 export const mockDpRecords: DpRecord[] = [
   {

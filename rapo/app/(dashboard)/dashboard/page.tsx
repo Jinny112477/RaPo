@@ -41,10 +41,10 @@ export default function DashboardPage() {
       color: 'text-yellow-600'
     },
     {
-      key: 'DRAFT',
-      title: 'Draft',
-      value: mockActivities.filter(a => a.status === 'DRAFT').length,
-      color: 'text-gray-500'
+      key: 'REJECTED',
+      title: 'Rejected',
+      value: mockActivities.filter(a => a.status === 'REJECTED').length,
+      color: 'text-red-600'
     },
   ];
 
@@ -73,7 +73,6 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-bold text-gray-900">
           All Activity
         </h1>
-
         <p className="text-sm text-gray-500 mt-1">
           กิจกรรมทั้งหมดในระบบ
         </p>
@@ -192,7 +191,7 @@ export default function DashboardPage() {
                             onClick={() => router.push(`/createactivity?edit=${a.id}`)}
                             className="text-xs text-gray-500 hover:underline"
                           >
-                            แก้ไข
+                            Edit
                           </button>
                         )}
                       </div>

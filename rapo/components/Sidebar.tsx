@@ -113,19 +113,14 @@ const ChevronLeftIcon = () => (
 
 // ลิ้งหน้า
 const navItems: NavItem[] = [
-  // { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
   { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
   { label: 'My ROPA', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner', 'admin'] },
   { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['admin'] },
-  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
   { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },
-  { label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['dpo'] },
+  { label: 'Risk Assessment', href: '/executive/analytics', icon: <AlertTriangleIcon />, roles: ['dpo'] },
   { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
-  { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['executive'] },
   { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] }
-  // { label: 'รายการ Activity', href: '/activities', roles: ['processor'] },
-  // { label: 'คำขอเข้าถึง', href: '/dc/requests', roles: ['dataOwner'] },
 ];
 
 const roleLabelMap: Record<Role, string> = {
@@ -212,7 +207,9 @@ export function Sidebar() {
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-medium text-white truncate">{user.name}</p>
-                <p className="text-xs text-slate-400 truncate">{user.department}</p>
+                {user.role === 'dataOwner' && user.department && (
+                  <p className="text-xs text-slate-400 truncate">{user.department}</p>
+                )}
               </div>
             </div>
           )}

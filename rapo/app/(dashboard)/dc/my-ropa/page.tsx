@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import { mockActivities, mockDpRecords } from '@/lib/mockData';
 import { DpRecord } from '@/types';
+import { MessageSquareWarning } from 'lucide-react';
 
 export default function MyRopaPage() {
   const { user } = useAuth();
@@ -13,8 +14,6 @@ export default function MyRopaPage() {
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [menuIndex, setMenuIndex] = useState<number | null>(null);
-  const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
 
   // ── DC data ──────────────────────────────────────────────────────────────────
   const myDC = mockActivities.filter(a => a.owner === user?.name);
@@ -29,22 +28,24 @@ export default function MyRopaPage() {
   const filteredDP = myDP.filter((d: DpRecord) => {
     const matchSearch = d.processorName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || d.status === statusFilter;
-    return matchSearch;
+    return matchSearch && matchStatus;
   });
 
   // ── Stats ────────────────────────────────────────────────────────────────────
   const dcStats = [
-    { key: 'ALL',      title: 'Total',        value: myDC.length,                                   color: 'text-gray-900' },
-    { key: 'ACTIVE',   title: 'Active',        value: myDC.filter(a => a.status === 'ACTIVE').length, color: 'text-green-600' },
-    { key: 'REVIEW',   title: 'Under Review',  value: myDC.filter(a => a.status === 'REVIEW').length, color: 'text-yellow-600' },
-    { key: 'DRAFT',    title: 'Draft',         value: myDC.filter(a => a.status === 'DRAFT').length,  color: 'text-gray-500' },
+    { key: 'ALL', title: 'Total', value: myDC.length, color: 'text-gray-900' },
+    { key: 'ACTIVE', title: 'Approved', value: myDC.filter(a => a.status === 'ACTIVE').length, color: 'text-green-600' },
+    { key: 'REVIEW', title: 'Pending', value: myDC.filter(a => a.status === 'REVIEW').length, color: 'text-yellow-600' },
+    { key: 'REJECTED', title: 'Rejected', value: myDC.filter(a => a.status === 'REJECTED').length, color: 'text-red-600' },
+    { key: 'DRAFT', title: 'Draft', value: myDC.filter(a => a.status === 'DRAFT').length, color: 'text-gray-500' },
   ];
 
   const dpStats = [
-    { key: 'ALL',      title: 'Total',    value: myDP.length,                                           color: 'text-gray-900' },
-    { key: 'PENDING',  title: 'Pending',  value: myDP.filter(d => d.status === 'PENDING').length,       color: 'text-yellow-600' },
-    { key: 'APPROVED', title: 'Approved', value: myDP.filter(d => d.status === 'APPROVED').length,      color: 'text-green-600' },
-    { key: 'REJECTED', title: 'Rejected', value: myDP.filter(d => d.status === 'REJECTED').length,      color: 'text-red-600' },
+    { key: 'ALL', title: 'Total', value: myDP.length, color: 'text-gray-900' },
+    { key: 'APPROVED', title: 'Approved', value: myDP.filter(d => d.status === 'APPROVED').length, color: 'text-green-600' },
+    { key: 'PENDING', title: 'Pending', value: myDP.filter(d => d.status === 'PENDING').length, color: 'text-yellow-600' },
+    { key: 'REJECTED', title: 'Rejected', value: myDP.filter(d => d.status === 'REJECTED').length, color: 'text-red-600' },
+    { key: 'DRAFT', title: 'Draft', value: myDP.filter(d => d.status === 'DRAFT').length, color: 'text-gray-500' },
   ];
 
   const activeStats = activeTab === 'dc' ? dcStats : dpStats;
@@ -52,17 +53,17 @@ export default function MyRopaPage() {
   // ── Badges ───────────────────────────────────────────────────────────────────
   const statusBadge = (status: string) => {
     if (status === 'ACTIVE' || status === 'APPROVED') return 'bg-green-100 text-green-700';
-    if (status === 'REVIEW' || status === 'PENDING')  return 'bg-yellow-100 text-yellow-700';
-    if (status === 'DRAFT')    return 'bg-gray-100 text-gray-600';
+    if (status === 'REVIEW' || status === 'PENDING') return 'bg-yellow-100 text-yellow-700';
+    if (status === 'DRAFT') return 'bg-gray-100 text-gray-600';
     if (status === 'REJECTED') return 'bg-red-100 text-red-700';
     if (status === 'ARCHIVED') return 'bg-slate-100 text-slate-500';
     return 'bg-gray-100 text-gray-600';
   };
 
   const riskBadge = (risk: string) => {
-    if (risk === 'LOW')      return 'bg-green-50 text-green-700';
-    if (risk === 'MEDIUM')   return 'bg-yellow-50 text-yellow-700';
-    if (risk === 'HIGH')     return 'bg-orange-50 text-orange-700';
+    if (risk === 'LOW') return 'bg-green-50 text-green-700';
+    if (risk === 'MEDIUM') return 'bg-yellow-50 text-yellow-700';
+    if (risk === 'HIGH') return 'bg-orange-50 text-orange-700';
     if (risk === 'CRITICAL') return 'bg-red-50 text-red-700';
     return '';
   };
@@ -72,7 +73,6 @@ export default function MyRopaPage() {
     setActiveTab(tab);
     setStatusFilter('ALL');
     setSearch('');
-    setMenuIndex(null);
   };
 
   return (
@@ -149,8 +149,12 @@ export default function MyRopaPage() {
               </tr>
             </thead>
             <tbody className="text-sm text-gray-700">
-              {filteredDC.length > 0 ? filteredDC.map((a, index) => (
-                <tr key={a.id} className="border-t hover:bg-gray-50 transition">
+              {filteredDC.length > 0 ? filteredDC.map((a) => (
+                <tr
+                  key={a.id}
+                  onClick={() => router.push(`/ropa/${a.id}`)}
+                  className="border-t hover:bg-blue-50 transition cursor-pointer"
+                >
                   <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
                   <td className="px-4 py-3 text-gray-500">{a.department}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{a.legalBasis}</td>
@@ -165,41 +169,48 @@ export default function MyRopaPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
-                  <td className="px-4 py-3">
-                    <div className="relative">
-                      <button
-                        onClick={e => {
-                          const rect = (e.target as HTMLElement).getBoundingClientRect();
-                          setMenuPosition({ top: rect.bottom, left: rect.left });
-                          setMenuIndex(menuIndex === index ? null : index);
-                        }}
-                        className="p-2 rounded hover:bg-gray-200">⋮</button>
-                      {menuIndex === index && (
-                        <div style={{ top: menuPosition.top, left: menuPosition.left }}
-                          className="fixed w-44 bg-white border rounded-lg shadow-lg z-[9999]">
-                          <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            onClick={() => { router.push(`/ropa/${a.id}`); setMenuIndex(null); }}>
-                            ดูรายละเอียด
-                          </button>
-                          <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                            onClick={() => { router.push(`/ropa/create?edit=${a.id}`); setMenuIndex(null); }}>
-                            แก้ไข
-                          </button>
-                          {a.status === 'ACTIVE' && (
-                            <button className="block w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-gray-100"
-                              onClick={() => { router.push(`/dc/create-dp/${a.id}`); setMenuIndex(null); }}>
-                              + สร้าง DP Form
-                            </button>
-                          )}
-                          {a.status === 'REJECTED' && (
-                            <button className="block w-full text-left px-4 py-2 text-sm text-[#203690] hover:bg-gray-100"
-                              onClick={() => { router.push(`/ropa/create?edit=${a.id}`); setMenuIndex(null); }}>
-                              แก้ไขและส่งใหม่
-                            </button>
-                          )}
-                        </div>
+                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                    <div className="flex gap-2 flex-wrap">
+
+                      {/* DRAFT — ปุ่มEdit */}
+                      {a.status === 'DRAFT' && (
+                        <button
+                          onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
+                          className="text-xs text-gray-600 border border-gray-300 px-2.5 py-1 rounded hover:bg-gray-50 transition">
+                          Edit
+                        </button>
                       )}
+
+                      {/* REJECTED — ปุ่มสไตล์เดียวกับ + DP Form */}
+                      {a.status === 'REJECTED' && (
+                        <button
+                          onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
+                          className="text-xs text-red-600 border border-red-300 px-2.5 py-1 rounded hover:bg-red-50 transition">
+                          Edit
+                        </button>
+                      )}
+
+                      {/* ACTIVE — ปุ่ม Create DP Form */}
+                      {a.status === 'ACTIVE' && (
+                        <button
+                          onClick={() => router.push(`/dc/create-dp/${a.id}`)}
+                          className="text-xs text-emerald-600 border border-emerald-300 px-2.5 py-1 rounded hover:bg-emerald-50 transition">
+                          Create DP Form
+                        </button>
+                      )}
+
                     </div>
+
+                    {/* แสดงเหตุผล reject */}
+                    {a.status === 'REJECTED' && a.rejectionReason && (
+                      <div
+                        className="mt-2 text-xs text-red-500 max-w-[160px] flex items-center gap-1"
+                        title={a.rejectionReason}
+                      >
+                        <MessageSquareWarning className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span className="truncate">{a.rejectionReason}</span>
+                      </div>
+                    )}
                   </td>
                 </tr>
               )) : (
@@ -218,14 +229,13 @@ export default function MyRopaPage() {
                 <th className="px-4 py-2 text-left">DC Record ที่ผูกอยู่</th>
                 <th className="px-4 py-2 text-left">วัตถุประสงค์</th>
                 <th className="px-4 py-2 text-left">สถานะ</th>
-                <th className="px-4 py-2 text-left">วันที่สร้าง</th>
+                <th className="px-4 py-2 text-left">อัปเดตล่าสุด</th>
                 <th className="px-4 py-2 text-left">จัดการ</th>
               </tr>
             </thead>
             <tbody className="text-sm text-gray-700">
-              {filteredDP.length > 0 ? filteredDP.map((d: DpRecord, index: number) => {
+              {filteredDP.length > 0 ? filteredDP.map((d: DpRecord) => {
                 const linked = mockActivities.find(a => a.id === d.activityId);
-                const dpIndex = index + 1000; // offset ไม่ให้ชนกับ DC index
                 return (
                   <tr key={d.id} className="border-t hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium text-gray-900">{d.processorName}</td>
@@ -242,33 +252,41 @@ export default function MyRopaPage() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs">{d.createdAt}</td>
-                    <td className="px-4 py-3">
-                      <div className="relative">
-                        <button
-                          onClick={e => {
-                            const rect = (e.target as HTMLElement).getBoundingClientRect();
-                            setMenuPosition({ top: rect.bottom, left: rect.left });
-                            setMenuIndex(menuIndex === dpIndex ? null : dpIndex);
-                          }}
-                          className="p-2 rounded hover:bg-gray-200">⋮</button>
-                        {menuIndex === dpIndex && (
-                          <div style={{ top: menuPosition.top, left: menuPosition.left }}
-                            className="fixed w-44 bg-white border rounded-lg shadow-lg z-[9999]">
-                            {d.status === 'REJECTED' && (
-                              <button className="block w-full text-left px-4 py-2 text-sm text-[#203690] hover:bg-gray-100"
-                                onClick={() => { router.push(`/dc/create-dp/${d.activityId}`); setMenuIndex(null); }}>
-                                แก้ไขและส่งใหม่
-                              </button>
-                            )}
-                            {d.status !== 'REJECTED' && (
-                              <button className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                                onClick={() => setMenuIndex(null)}>
-                                ดูรายละเอียด
-                              </button>
-                            )}
-                          </div>
+
+                    {/* จุดที่เปลี่ยนโค้ดสำหรับจัดการ DP */}
+                    <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
+                      <div className="flex gap-2 flex-wrap">
+
+                        {/* DRAFT — ปุ่มEdit */}
+                        {d.status === 'DRAFT' && (
+                          <button
+                            onClick={() => router.push(`/dc/create-dp/${d.activityId}?edit=${d.id}`)}
+                            className="text-xs text-gray-600 border border-gray-300 px-2.5 py-1 rounded hover:bg-gray-50 transition">
+                            Edit
+                          </button>
                         )}
+
+                        {/* REJECTED — ปุ่มสไตล์เดียวกับ + DP Form */}
+                        {d.status === 'REJECTED' && (
+                          <button
+                            onClick={() => router.push(`/dc/create-dp/${d.activityId}?edit=${d.id}`)}
+                            className="text-xs text-red-600 border border-red-300 px-2.5 py-1 rounded hover:bg-red-50 transition">
+                            Edit
+                          </button>
+                        )}
+
                       </div>
+
+                      {/* เพิ่มการแสดงเหตุผล reject สำหรับ DP เหมือนของ DC */}
+                      {d.status === 'REJECTED' && d.rejectionReason && (
+                        <div
+                          className="mt-2 text-xs text-red-500 max-w-[160px] flex items-center gap-1"
+                          title={d.rejectionReason}
+                        >
+                          <MessageSquareWarning className="w-3.5 h-3.5 flex-shrink-0" />
+                          <span className="truncate">{d.rejectionReason}</span>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );
@@ -297,9 +315,6 @@ export default function MyRopaPage() {
         </div>
       </div>
 
-      {menuIndex !== null && (
-        <div className="fixed inset-0 z-40" onClick={() => setMenuIndex(null)} />
-      )}
     </div>
   );
 }

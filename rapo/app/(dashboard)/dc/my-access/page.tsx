@@ -119,13 +119,13 @@ export default function MyAccessPage() {
                         ดู
                       </button>
 
-                      {/* แก้ไข เฉพาะ DRAFT */}
+                      {/* Edit เฉพาะ DRAFT */}
                       {a.status === 'DRAFT' && (
                         <button
                           onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
                           className="text-xs text-gray-500 hover:underline"
                         >
-                          แก้ไข
+                          Edit
                         </button>
                       )}
 
