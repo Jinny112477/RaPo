@@ -47,7 +47,7 @@ export default function ExecutiveAnalyticsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-800">Analytics & Risk Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Executive-level overview of ROPA compliance posture</p>
+        <p className="text-sm text-slate-500 mt-0.5">Overview of ROPA compliance posture</p>
       </div>
 
       {/* KPI Row */}
