@@ -255,16 +255,20 @@ export default function DPOReviewPage() {
     <div className="min-h-screen bg-gray-100 p-6">
 
       {/* HEADER */}
-      <div className="bg-white border border-black px-5 py-4 rounded-md mb-4">
-        <p className="text-xs font-semibold text-gray-700 mb-1">Approval Dashboard</p>
-        <p className="text-[11px] text-gray-500">ตรวจสอบและอนุมัติ ROPA Form ของ DC และ DP</p>
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">
+          Approval Dashboard
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          ตรวจสอบและอนุมัติ ROPA Form ของ DC และ DP
+        </p>
       </div>
 
       {/* STATS */}
       <div className="grid grid-cols-4 gap-3 mb-5">
         {[
-          { label: 'DC รออนุมัติ', value: dcQueue.length, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
-          { label: 'DP รออนุมัติ', value: dpQueue.length, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
+          { label: 'Form DC รออนุมัติ', value: dcQueue.length, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
+          { label: 'Form DP รออนุมัติ', value: dpQueue.length, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
           { label: 'อนุมัติวันนี้', value: dcProcessed.filter(p => p.action === 'approved').length + dpProcessed.filter(p => p.action === 'approved').length, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
           { label: 'ปฏิเสธวันนี้', value: dcProcessed.filter(p => p.action === 'rejected').length + dpProcessed.filter(p => p.action === 'rejected').length, color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
         ].map(s => (

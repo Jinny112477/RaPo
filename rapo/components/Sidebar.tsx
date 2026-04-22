@@ -117,7 +117,6 @@ const navItems: NavItem[] = [
   { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
   { label: 'My ROPA', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner'] },
   { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },
-  { label: 'Risk Assessment', href: '/executive/analytics', icon: <AlertTriangleIcon />, roles: ['dpo'] },
   { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
   { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] }
 ];
