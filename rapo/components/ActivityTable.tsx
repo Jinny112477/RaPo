@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Activity, ActivityStatus } from '@/types';
 import { StatusBadge, RiskBadge } from './StatusBadge';
+import { useRopa } from '@/lib/ropaContext'
 
 interface ActivityTableProps {
   activities: Activity[];
@@ -14,6 +15,7 @@ interface ActivityTableProps {
 type SortKey = 'activityName' | 'department' | 'status' | 'riskLevel' | 'updatedAt';
 type SortDir = 'asc' | 'desc';
 
+// ... (Icons Code: SearchIcon, SortIcon, EditIcon, EyeIcon, TrashIcon, ChevronIcon คงเดิม)
 const SearchIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
@@ -61,6 +63,8 @@ const statusOptions: (ActivityStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'REVIEW', 'D
 const PAGE_SIZE = 5;
 
 export function ActivityTable({ activities, onEdit, onView, onDelete }: ActivityTableProps) {
+  const { deleteActivity } = useRopa(); 
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<ActivityStatus | 'ALL'>('ALL');
   const [sortKey, setSortKey] = useState<SortKey>('updatedAt');
@@ -198,7 +202,11 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs text-slate-500">Delete?</span>
                           <button
-                            onClick={() => { onDelete?.(activity.id); setDeleteConfirm(null); }}
+                            onClick={() => { 
+                              deleteActivity(activity.id); // สั่งลบใน Context
+                              onDelete?.(activity.id);     // สั่งลบผ่าน Props (ถ้ามี)
+                              setDeleteConfirm(null);      // ปิดกล่องยืนยัน
+                            }}
                             className="px-2 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                           >Yes</button>
                           <button
@@ -240,7 +248,7 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
         </table>
       </div>
 
-      {/* Pagination */}
+      {/* Pagination ... (โค้ดส่วนที่เหลือคงเดิม) */}
       <div className="flex flex-col sm:flex-row items-center justify-between px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 gap-3">
         <p className="text-xs text-slate-500">
           Showing{' '}

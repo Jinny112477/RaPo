@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Clock8 } from 'lucide-react';
 import { SearchAlert } from 'lucide-react';
+import { useRopa } from '@/lib/ropaContext'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -70,6 +71,21 @@ const STEPS = [
   { id: 3, label: 'มาตรการรักษาความปลอดภัย', short: 'ความปลอดภัย' },
   { id: 4, label: 'สรุปและส่ง', short: 'สรุป' },
 ];
+
+const { addActivity } = useRopa()
+
+const handleSubmit = () => {
+  addActivity({
+    id: Date.now().toString(),
+    activityName: mainActivity,
+    purpose: subs[0]?.purpose,
+    status: 'REVIEW',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  })
+
+  setSubmitted(true)
+}
 
 // ─── Small helper components ───────────────────────────────────────────────────
 
@@ -683,9 +699,9 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
 
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
               <span className="font-semibold flex items-center gap-1">
-  <SearchAlert className="w-4 h-4 text-amber-600" /> 
-  หมายเหตุ:
-</span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
+                <SearchAlert className="w-4 h-4 text-amber-600" />
+                หมายเหตุ:
+              </span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
               และ DPO จะต้องตรวจสอบและอนุมัติก่อนจึงจะมีสถานะ ACTIVE
             </div>
           </div>

@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
-import { mockActivities, mockStats } from '@/lib/mockData';
+import { useRopa } from '@/lib/ropaContext';
 import { Plus } from "lucide-react";
 
 export default function DashboardPage() {
+  const { deleteActivity } = useRopa()
+  const { activities } = useRopa();
   const { user, role } = useAuth();
   const router = useRouter();
 
@@ -14,7 +16,7 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [deptFilter, setDeptFilter] = useState('ALL');
 
-  const filtered = mockActivities.filter(a => {
+  const filtered = activities.filter(a => {
     const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
     const matchDept = deptFilter === 'ALL' || a.department === deptFilter;
@@ -25,25 +27,25 @@ export default function DashboardPage() {
     {
       key: 'ALL',
       title: 'Total ROPA',
-      value: mockActivities.length,
+      value: activities.length,
       color: 'text-gray-900'
     },
     {
       key: 'ACTIVE',
       title: 'Active',
-      value: mockActivities.filter(a => a.status === 'ACTIVE').length,
+      value: activities.filter(a => a.status === 'ACTIVE').length,
       color: 'text-green-600'
     },
     {
       key: 'REVIEW',
       title: 'Under Review',
-      value: mockActivities.filter(a => a.status === 'REVIEW').length,
+      value: activities.filter(a => a.status === 'REVIEW').length,
       color: 'text-yellow-600'
     },
     {
       key: 'REJECTED',
       title: 'Rejected',
-      value: mockActivities.filter(a => a.status === 'REJECTED').length,
+      value: activities.filter(a => a.status === 'REJECTED').length,
       color: 'text-red-600'
     },
   ];
@@ -179,21 +181,34 @@ export default function DashboardPage() {
                   {role !== 'dataOwner' && (
                     <td className="px-4 py-3">
                       <div className="flex gap-2">
+
+                        {/* ดู */}
                         <button
-                          onClick={() => router.push(`/admin?view=${a.id}`)}
+                          onClick={() => router.push(`/ropa/${a.id}`)}
                           className="text-xs text-blue-600 hover:underline"
                         >
                           ดู
                         </button>
 
-                        {(role === 'admin') && (
+                        {/* Edit */}
+                        {role === 'admin' && (
                           <button
-                            onClick={() => router.push(`/createactivity?edit=${a.id}`)}
+                            onClick={() => router.push(`/ropa/edit/${a.id}`)}
                             className="text-xs text-gray-500 hover:underline"
                           >
                             Edit
                           </button>
                         )}
+
+                        {role === 'admin' && (
+                          <button
+                            onClick={() => deleteActivity(a.id)}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        )}
+
                       </div>
                     </td>
                   )}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { mockActivities, mockDpRecords } from '@/lib/mockData';
+import { useRopa } from '@/lib/ropaContext';
 import { StatusBadge, RiskBadge } from '@/components/StatusBadge';
 import { Activity, DpRecord } from '@/types';
 
@@ -118,9 +118,11 @@ function DPModal({ dp, onClose, onApprove, onReject }: {
   onApprove: (id: string) => void;
   onReject: (id: string, reason: string) => void;
 }) {
+  // นำเข้า activities จาก Context เพื่อค้นหา DC record ที่ผูกอยู่
+  const { activities } = useRopa();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
-  const linkedActivity = mockActivities.find(a => a.id === dp.activityId);
+  const linkedActivity = activities.find(a => a.id === dp.activityId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -207,36 +209,44 @@ function DPModal({ dp, onClose, onApprove, onReject }: {
 export default function DPOReviewPage() {
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
 
-  // DC queue
-  const [dcQueue, setDcQueue] = useState(mockActivities.filter(a => a.status === 'REVIEW'));
+  // ดึงข้อมูลและฟังก์ชันจาก Context
+  const { activities, dpRecords, updateActivity, updateDpRecord } = useRopa();
+
+  // เปลี่ยนมาใช้ข้อมูลจาก Context แทน mockData
+  const [dcQueue, setDcQueue] = useState(activities.filter(a => a.status === 'REVIEW'));
   const [dcProcessed, setDcProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDC, setViewingDC] = useState<Activity | null>(null);
 
-  // DP queue
-  const [dpQueue, setDpQueue] = useState(mockDpRecords.filter(d => d.status === 'PENDING'));
+  const [dpQueue, setDpQueue] = useState(dpRecords.filter(d => d.status === 'PENDING'));
   const [dpProcessed, setDpProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDP, setViewingDP] = useState<DpRecord | null>(null);
 
-  // DC handlers
+  // DC handlers (อัปเดตลง Global Context ด้วย)
   const handleDCApprove = (id: string) => {
-    setDcQueue((q: Activity[]) => q.filter((a: Activity) => a.id !== id));
+    updateActivity(id, { status: 'ACTIVE' });
+    setDcQueue(q => q.filter(a => a.id !== id));
     setDcProcessed(p => [...p, { id, action: 'approved' }]);
     setViewingDC(null);
   };
-  const handleDCReject = (id: string, _reason: string) => {
-    setDcQueue((q: Activity[]) => q.filter((a: Activity) => a.id !== id));
+  
+  const handleDCReject = (id: string, reason: string) => {
+    updateActivity(id, { status: 'REJECTED', rejectionReason: reason });
+    setDcQueue(q => q.filter(a => a.id !== id));
     setDcProcessed(p => [...p, { id, action: 'rejected' }]);
     setViewingDC(null);
   };
 
-  // DP handlers
+  // DP handlers (อัปเดตลง Global Context ด้วย)
   const handleDPApprove = (id: string) => {
-    setDpQueue((q: DpRecord[]) => q.filter((d: DpRecord) => d.id !== id));
+    updateDpRecord(id, { status: 'APPROVED' });
+    setDpQueue(q => q.filter(d => d.id !== id));
     setDpProcessed(p => [...p, { id, action: 'approved' }]);
     setViewingDP(null);
   };
-  const handleDPReject = (id: string, _reason: string) => {
-    setDpQueue((q: DpRecord[]) => q.filter((d: DpRecord) => d.id !== id));
+  
+  const handleDPReject = (id: string, reason: string) => {
+    updateDpRecord(id, { status: 'REJECTED', rejectionReason: reason });
+    setDpQueue(q => q.filter(d => d.id !== id));
     setDpProcessed(p => [...p, { id, action: 'rejected' }]);
     setViewingDP(null);
   };
@@ -345,7 +355,7 @@ export default function DPOReviewPage() {
                 <p className="text-xs font-semibold text-gray-500 uppercase">ดำเนินการแล้ว</p>
               </div>
               {dcProcessed.map(({ id, action }) => {
-                const act = mockActivities.find(a => a.id === id);
+                const act = activities.find(a => a.id === id); // ใช้ activities จาก Context
                 if (!act) return null;
                 return (
                   <div key={id} className="flex items-center gap-3 px-5 py-3 border-t">
@@ -384,7 +394,7 @@ export default function DPOReviewPage() {
           ) : (
             <div className="divide-y">
               {dpQueue.map(dp => {
-                const linked = mockActivities.find(a => a.id === dp.activityId);
+                const linked = activities.find(a => a.id === dp.activityId); // ใช้ activities จาก Context
                 return (
                   <div key={dp.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
                     <div className="flex-1 min-w-0">
@@ -425,7 +435,7 @@ export default function DPOReviewPage() {
                 <p className="text-xs font-semibold text-gray-500 uppercase">ดำเนินการแล้ว</p>
               </div>
               {dpProcessed.map(({ id, action }) => {
-                const dp = mockDpRecords.find((d: DpRecord) => d.id === id);
+                const dp = dpRecords.find((d: DpRecord) => d.id === id); // ใช้ dpRecords จาก Context
                 if (!dp) return null;
                 return (
                   <div key={id} className="flex items-center gap-3 px-5 py-3 border-t">

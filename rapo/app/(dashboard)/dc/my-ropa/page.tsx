@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
-import { mockActivities, mockDpRecords } from '@/lib/mockData';
+// 1. ตรวจสอบให้แน่ใจว่า import useRopa มาแล้ว
+import { useRopa } from '@/lib/ropaContext'
 import { DpRecord } from '@/types';
 import { MessageSquareWarning } from 'lucide-react';
 
@@ -11,12 +12,16 @@ export default function MyRopaPage() {
   const { user } = useAuth();
   const router = useRouter();
 
+  // 2. เรียกใช้ state และฟังก์ชันจาก Context
+  const { activities, dpRecords, deleteActivity, deleteDpRecord } = useRopa();
+
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   // ── DC data ──────────────────────────────────────────────────────────────────
-  const myDC = mockActivities.filter(a => a.owner === user?.name);
+  // 3. เปลี่ยนไปใช้ activities จาก Context แทน mockActivities
+  const myDC = activities.filter(a => a.owner === user?.name);
   const filteredDC = myDC.filter(a => {
     const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
@@ -24,7 +29,8 @@ export default function MyRopaPage() {
   });
 
   // ── DP data ──────────────────────────────────────────────────────────────────
-  const myDP: DpRecord[] = mockDpRecords.filter((d: DpRecord) => d.createdBy === user?.name);
+  // 4. เปลี่ยนไปใช้ dpRecords จาก Context แทน mockDpRecords
+  const myDP: DpRecord[] = dpRecords.filter((d: DpRecord) => d.createdBy === user?.name);
   const filteredDP = myDP.filter((d: DpRecord) => {
     const matchSearch = d.processorName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || d.status === statusFilter;
@@ -175,7 +181,7 @@ export default function MyRopaPage() {
                       {/* DRAFT — ปุ่มEdit */}
                       {a.status === 'DRAFT' && (
                         <button
-                          onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
+                          onClick={() => router.push(`/ropa/edit/${a.id}`)}
                           className="text-xs text-gray-600 border border-gray-300 px-2.5 py-1 rounded hover:bg-gray-50 transition">
                           Edit
                         </button>
@@ -184,7 +190,7 @@ export default function MyRopaPage() {
                       {/* REJECTED — ปุ่มสไตล์เดียวกับ + DP Form */}
                       {a.status === 'REJECTED' && (
                         <button
-                          onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
+                          onClick={() => router.push(`/ropa/edit/${a.id}`)}
                           className="text-xs text-red-600 border border-red-300 px-2.5 py-1 rounded hover:bg-red-50 transition">
                           Edit
                         </button>
@@ -196,6 +202,18 @@ export default function MyRopaPage() {
                           onClick={() => router.push(`/dc/create-dp/${a.id}`)}
                           className="text-xs text-emerald-600 border border-emerald-300 px-2.5 py-1 rounded hover:bg-emerald-50 transition">
                           Create DP Form
+                        </button>
+                      )}
+
+                      {/* 5. เพิ่มปุ่มลบ (เฉพาะ DRAFT และ REJECTED) */}
+                      {(a.status === 'DRAFT' || a.status === 'REJECTED') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (confirm(`ลบ "${a.activityName}" ใช่ไหม?`)) deleteActivity(a.id)
+                          }}
+                          className="text-xs text-red-400 border border-red-200 px-2.5 py-1 rounded hover:bg-red-50 transition">
+                          ลบ
                         </button>
                       )}
 
@@ -235,7 +253,8 @@ export default function MyRopaPage() {
             </thead>
             <tbody className="text-sm text-gray-700">
               {filteredDP.length > 0 ? filteredDP.map((d: DpRecord) => {
-                const linked = mockActivities.find(a => a.id === d.activityId);
+                // 6. เปลี่ยนเป็น activities จาก Context แทน mockActivities
+                const linked = activities.find(a => a.id === d.activityId);
                 return (
                   <tr key={d.id} className="border-t hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium text-gray-900">{d.processorName}</td>
@@ -274,6 +293,18 @@ export default function MyRopaPage() {
                             Edit
                           </button>
                         )}
+
+                        {/* ถ้าต้องการเพิ่มปุ่มลบในตาราง DP ด้วย (เป็น option เสริม): */}
+                        {/* {(d.status === 'DRAFT' || d.status === 'REJECTED') && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              if (confirm(`ลบ DP ของ "${d.processorName}" ใช่ไหม?`)) deleteDpRecord(d.id)
+                            }}
+                            className="text-xs text-red-400 border border-red-200 px-2.5 py-1 rounded hover:bg-red-50 transition">
+                            ลบ
+                          </button>
+                        )} */}
 
                       </div>
 

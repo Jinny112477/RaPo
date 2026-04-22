@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/authContext';
 import { useSidebar } from '@/lib/sidebarContext';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
+import { RopaProvider } from '@/lib/ropaContext'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -61,6 +62,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ].join(' ')}
         >
           <div className="p-5 lg:p-6 h-full">{children}</div>
+          <RopaProvider>
+            {children}
+          </RopaProvider>
         </main>
       </div>
     </div>
