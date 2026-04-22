@@ -1,3 +1,4 @@
+// เก็บ user/role ที่ login — ดึงจาก localStorage เมื่อ refresh
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';

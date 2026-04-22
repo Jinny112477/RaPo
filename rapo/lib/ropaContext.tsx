@@ -1,3 +1,4 @@
+// Global state สำหรับ activities[] และ dpRecords[] พร้อม CRUD functions
 "use client"
 
 import { createContext, useContext, useState } from "react"
