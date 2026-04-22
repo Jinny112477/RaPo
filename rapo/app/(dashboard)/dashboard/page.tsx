@@ -25,33 +25,25 @@ export default function DashboardPage() {
     {
       key: 'ALL',
       title: 'Total ROPA',
-      value: mockStats.total,
-      sub: 'กิจกรรมทั้งหมด',
-      extra: '+3 this month',
+      value: mockActivities.length,
       color: 'text-gray-900'
     },
     {
       key: 'ACTIVE',
       title: 'Active',
-      value: mockStats.active,
-      sub: 'กำลังใช้งาน',
-      extra: '+1 this week',
+      value: mockActivities.filter(a => a.status === 'ACTIVE').length,
       color: 'text-green-600'
     },
     {
       key: 'REVIEW',
       title: 'Under Review',
-      value: mockStats.review,
-      sub: 'รอทบทวน',
-      extra: 'Needs attention',
+      value: mockActivities.filter(a => a.status === 'REVIEW').length,
       color: 'text-yellow-600'
     },
     {
       key: 'DRAFT',
       title: 'Draft',
-      value: mockStats.draft,
-      sub: 'แบบร่าง',
-      extra: 'In progress',
+      value: mockActivities.filter(a => a.status === 'DRAFT').length,
       color: 'text-gray-500'
     },
   ];
@@ -111,14 +103,6 @@ export default function DashboardPage() {
               <p className={`text-2xl font-semibold mt-1 ${s.color}`}>
                 {s.value}
               </p>
-
-              <p className="text-xs text-gray-400 mt-1">
-                {s.extra}
-              </p>
-
-              <div className="mt-3 text-[11px] text-gray-400">
-                {s.sub}
-              </div>
             </button>
           );
         })}
@@ -147,7 +131,7 @@ export default function DashboardPage() {
               {/* แก้ value ให้ตรงกับข้อมูล department ใน mockActivities */}
               <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
               <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
-              <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>             
+              <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
             </select>
 
             <input
