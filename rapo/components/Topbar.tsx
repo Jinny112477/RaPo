@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from '@/lib/sidebarContext';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 import { mockNotifications } from '@/lib/mockData';
 
 const MenuIcon = () => (

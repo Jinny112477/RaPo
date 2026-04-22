@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 
 const ShieldIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -49,6 +49,7 @@ export default function LoginPage() {
     else setError('Account not found. Use a demo email below.');
   };
 
+  // ✅ Uncomment this — it was using the correct name "login"
   const quickLogin = async (e: string) => {
     setEmail(e);
     const ok = await login(e, 'demo');

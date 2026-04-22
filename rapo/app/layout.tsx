@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
 
-import { AuthProvider } from "@/lib/authContext"
+import { AuthProvider } from "@/context/AuthContext"
 import { SidebarProvider } from "@/lib/sidebarContext"
 import { RopaProvider } from "@/lib/ropaContext"
 
