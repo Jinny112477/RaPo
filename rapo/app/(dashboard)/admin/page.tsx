@@ -52,8 +52,8 @@ export default function UsersPage() {
     <div className="bg-white rounded-xl overflow-hidden">
 
       {/* Black Header */}
-      <div className="bg-black text-white px-6 py-3">
-        User Management
+      <div className="bg-black text-white px-6 py-3 text-2xl font-bold text-gray-900">
+          User Management
       </div>
 
       <div className="p-6">
