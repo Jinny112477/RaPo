@@ -39,21 +39,15 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // LOGIN : handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const ok = await login(email, password || 'demo');
+    const ok = await login(email, password || 'Temp1234');
     setLoading(false);
     if (ok) router.push('/dashboard');
     else setError('Account not found. Use a demo email below.');
-  };
-
-  // ✅ Uncomment this — it was using the correct name "login"
-  const quickLogin = async (e: string) => {
-    setEmail(e);
-    const ok = await login(e, 'demo');
-    if (ok) router.push('/dashboard');
   };
 
   return (
@@ -148,7 +142,7 @@ export default function LoginPage() {
                     type={showPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password (or leave blank for demo)"
+                    placeholder="Enter password (Temp1234 for DEMO)"
                     className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                   />
                   <button
@@ -176,28 +170,6 @@ export default function LoginPage() {
                 ) : 'Sign In'}
               </button>
             </form>
-
-            {/* Demo accounts */}
-            <div className="px-8 pb-8">
-              <div className="border-t border-slate-100 pt-5">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  Quick Demo Access
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {demoAccounts.map((acc) => (
-                    <button
-                      key={acc.email}
-                      type="button"
-                      onClick={() => quickLogin(acc.email)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium transition-all duration-150 hover:shadow-sm ${acc.color}`}
-                    >
-                      <span className="truncate">{acc.email}</span>
-                      <span className="ml-2 flex-shrink-0 opacity-70">{acc.role}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>

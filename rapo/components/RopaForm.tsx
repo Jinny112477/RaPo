@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -148,6 +149,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
   sub: SubActivity; idx: number; isCtrl: boolean;
   onChange: (s: SubActivity) => void; onRemove: () => void; canRemove: boolean;
 }) {
+
   const [open, setOpen] = useState(true);
   const set = <K extends keyof SubActivity>(k: K, v: SubActivity[K]) => onChange({ ...sub, [k]: v });
 
@@ -197,7 +199,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {/* 1. วัตถุประสงค์ */}
           <Field label="วัตถุประสงค์ของการประมวลผล" required>
             <textarea rows={2} value={sub.purpose} onChange={e => set('purpose', e.target.value)}
-               className={txa} />
+              className={txa} />
           </Field>
 
           {/* 2. ข้อมูลที่จัดเก็บ */}
@@ -248,7 +250,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {/* 8. ผู้เยาว์ (Controller เท่านั้น) */}
           {isCtrl && (
             <div className="p-4 rounded-xl border border-amber-200 bg-50 space-y-4">
-              <div className="flex items-center gap-2">         
+              <div className="flex items-center gap-2">
                 <span className="text-sm font-semibold text-800">การขอความยินยอมของผู้เยาว์</span>
                 {/* <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span> */}
               </div>
@@ -256,12 +258,12 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 <Field label="อายุไม่เกิน 10 ปี" >
                   <textarea rows={2} value={sub.minorConsentUnder10}
                     onChange={e => set('minorConsentUnder10', e.target.value)}
-                     className={txa} />
+                    className={txa} />
                 </Field>
                 <Field label="อายุ 10–20 ปี" >
                   <textarea rows={2} value={sub.minorConsentAge10to20}
                     onChange={e => set('minorConsentAge10to20', e.target.value)}
-                     className={txa} />
+                    className={txa} />
                 </Field>
               </div>
             </div>
@@ -289,7 +291,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                   </Field>
                   <Field label="วิธีการโอนข้อมูล">
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)}
-                       className={inp} />
+                      className={inp} />
                   </Field>
                 </div>
                 <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่">
@@ -298,13 +300,13 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 {sub.transferAffiliate === 'ใช่' && (
                   <Field label="ชื่อบริษัทในเครือ">
                     <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)}
-                       className={inp} />
+                      className={inp} />
                   </Field>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง">
                     <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)}
-                       className={inp} />
+                      className={inp} />
                   </Field>
                   <Field label="ข้อยกเว้นตามมาตรา 28">
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
@@ -331,21 +333,21 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="วิธีการเก็บรักษาข้อมูล">
                 <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)}
-                   className={txa} />
+                  className={txa} />
               </Field>
               <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
                 <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)}
-                   className={inp} />
+                  className={inp} />
               </Field>
             </div>
             <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล"
-             >
+            >
               <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)}
-                 className={txa} />
+                className={txa} />
             </Field>
             <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
               <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)}
-                 className={txa} />
+                className={txa} />
             </Field>
           </div>
 
@@ -356,14 +358,14 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">เฉพาะ Data Controller</span>
               </div>
               <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม"
-               >
+              >
                 <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)}
-                   className={txa} />
+                  className={txa} />
               </Field>
               <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล"
-                >
+              >
                 <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)}
-                   className={txa} />
+                  className={txa} />
               </Field>
             </div>
           )}
@@ -407,6 +409,9 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   const [secAudit, setSecAudit] = useState('');
 
   const isCtrl = formType === 'controller';
+  const { user } = useAuth();
+
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
   const canNext = () => {
     if (step === 1) return formType !== null;
@@ -424,9 +429,44 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
     setTimeout(() => setDraftSaved(false), 2500);
   };
 
-  const handleSubmit = () => {
-    onSubmit?.({ formType, mainActivity, subs });
-    setSubmitted(true);
+  // Handler
+  const handleSubmit = async () => {
+    const sub = subs[0];
+    try {
+      const res = await fetch(`${API_URL}/api/form/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,          // ← fixed: was `currentUserId`
+          formType,
+          mainActivity,
+          ownerName,
+          processorName,
+          purpose: sub.purpose,
+          personalDataItems: sub.personalDataItems,
+          collectionMethod: sub.collectionMethod,
+          legalBasis: sub.legalBasis,
+          sourceFromOwner: sub.sourceFromOwner,
+          minorConsentUnder10: sub.minorConsentUnder10,
+          minorConsentAge10to20: sub.minorConsentAge10to20,
+          storageType: sub.storageType,
+          storageMethod: sub.storageMethod,
+          retentionPeriod: sub.retentionPeriod,
+          accessRights: sub.accessRights,
+          deletionMethod: sub.deletionMethod,
+          exemptDisclosure: sub.exemptDisclosure,
+          rightsDenial: sub.rightsDenial,
+          secOrg, secTech, secPhysical, secAccess, secUser, secAudit,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      setSubmitted(true);
+    } catch (err) {
+      alert((err as Error).message);
+    }
   };
 
   // Success screen
@@ -468,8 +508,8 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             <div key={s.id} className="flex flex-col items-center gap-1.5 z-10">
               <button onClick={() => s.id < step && setStep(s.id)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' :
-                    s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
-                      'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
+                  s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
+                    'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
                 {s.id < step
                   ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
                   : s.id}
@@ -563,20 +603,20 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="ชื่อ-นามสกุล / ชื่อองค์กร" required>
               <input type="text" value={rec.name} onChange={e => setRec(r => ({ ...r, name: e.target.value }))}
-                 className={inp} />
+                className={inp} />
             </Field>
             <Field label="เบอร์โทรศัพท์" required>
               <input type="tel" value={rec.phone} onChange={e => setRec(r => ({ ...r, phone: e.target.value }))}
-                 className={inp} />
+                className={inp} />
             </Field>
           </div>
           <Field label="ที่อยู่" required >
             <textarea rows={2} value={rec.address} onChange={e => setRec(r => ({ ...r, address: e.target.value }))}
-               className={txa} />
+              className={txa} />
           </Field>
           <Field label="อีเมล" required>
             <input type="email" value={rec.email} onChange={e => setRec(r => ({ ...r, email: e.target.value }))}
-               className={inp} />
+              className={inp} />
           </Field>
         </div>
       )}
@@ -597,26 +637,26 @@ export function RopaForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             {isCtrl ? (
               <Field label="ชื่อเจ้าของข้อมูลส่วนบุคคล" required >
                 <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)}
-                   className={inp} />
+                  className={inp} />
               </Field>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Field label="ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" required >
                   <input type="text" value={processorName} onChange={e => setProcessorName(e.target.value)}
-                     className={inp} />
+                    className={inp} />
                 </Field>
                 <Field label="ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" required >
                   <input type="text" value={ctrlAddress} onChange={e => setCtrlAddress(e.target.value)}
-                     className={inp} />
+                    className={inp} />
                 </Field>
               </div>
             )}
 
             <Field label="กิจกรรมการประมวลผลหลัก" required >
               <input type="text" value={mainActivity} onChange={e => setMainActivity(e.target.value)}
-                 className={inp} />
+                className={inp} />
             </Field>
-           
+
           </div>
 
           {/* Sub-activity cards */}

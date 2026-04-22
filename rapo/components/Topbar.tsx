@@ -72,15 +72,18 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // LOGOUT: handler
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
+  // NOTIFICATION: mark all read (MOCK DATA)
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  // NOTIFICATION: notify type color-based (MOCK DATA)
   const notifTypeColors: Record<string, string> = {
     info: 'bg-blue-100 text-blue-600',
     warning: 'bg-amber-100 text-amber-600',
@@ -99,7 +102,7 @@ export function Topbar() {
           <MenuIcon />
         </button>
         <h1 className="text-lg font-semibold text-white">
-          RAPo | RoPA Management System
+          RaPO | RoPA Management System
         </h1>
       </div>
 

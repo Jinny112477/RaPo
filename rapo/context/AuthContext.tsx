@@ -17,7 +17,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
   login: async () => false,
-  logout: async () => {},
+  logout: async () => { },
   isLoading: true,
 });
 
@@ -29,18 +29,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const mapUser = async (supabaseUser: SupabaseUser): Promise<User> => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, user_membership(position)')
+      .select('name, user_membership(role, departments(department_name))')
       .eq('user_id', supabaseUser.id)
       .single();
+
+    const membership = (profile?.user_membership as any) ?? {};
+    const role = membership.role ?? 'user';
+    const department = membership.departments?.department_name ?? '';
+    const name = profile?.name ?? '';
 
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      role: (profile?.user_membership?.position as Role) ?? 'user',
-      name: profile?.name ?? '',
+      role: role as Role,
+      name,
+      department,
+      avatarInitials: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
     };
   };
 
+  // GET: fetch session
   useEffect(() => {
     const getSession = async () => {
       setIsLoading(true);
@@ -68,13 +76,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // ✅ Matches interface name: "login"
+  // LOGIN: handler
   const login = async (email: string, password: string): Promise<boolean> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return !error;
   };
 
-  // ✅ Matches interface name: "logout"
+  // LOGOUT: handler
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);

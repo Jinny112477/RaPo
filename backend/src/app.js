@@ -1,6 +1,7 @@
 import express from "express"
 import cors from "cors"
 import usersRoutes from './routes/users.routes.js';
+import formRoutes from './routes/form.routes.js';
 
 const app = express()
 
@@ -16,5 +17,6 @@ app.use(
 
 // API Routes
 app.use("/api", usersRoutes);
+app.use("/api/form", formRoutes);
 
 export default app
