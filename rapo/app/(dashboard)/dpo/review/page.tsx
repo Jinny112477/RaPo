@@ -320,7 +320,7 @@ export default function DPOReviewPage() {
             )}
           </div>
           {dcQueue.length === 0 ? (
-            <div className="py-12 text-center text-gray-400 text-sm">✅ ไม่มี DC Form ที่รออนุมัติ</div>
+            <div className="py-12 text-center text-gray-400 text-sm"> ไม่มี DC Form ที่รออนุมัติ</div>
           ) : (
             <div className="divide-y">
               {dcQueue.map(act => (
@@ -394,7 +394,7 @@ export default function DPOReviewPage() {
             )}
           </div>
           {dpQueue.length === 0 ? (
-            <div className="py-12 text-center text-gray-400 text-sm">✅ ไม่มี DP Form ที่รออนุมัติ</div>
+            <div className="py-12 text-center text-gray-400 text-sm"> ไม่มี DP Form ที่รออนุมัติ</div>
           ) : (
             <div className="divide-y">
               {dpQueue.map(dp => {
