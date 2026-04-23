@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Clock8 } from 'lucide-react';
-import { SearchAlert } from 'lucide-react';// หรือใช้ AlertTriangle ก็ได้ครับ
+import { SearchAlert } from 'lucide-react';
+import { useRopa } from '@/lib/ropaContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -425,7 +426,38 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
     setTimeout(() => setDraftSaved(false), 2500);
   };
 
+  const { addActivity } = useRopa();
+
   const handleSubmit = () => {
+    addActivity({
+      id: Date.now().toString(),
+      formType: 'processor',
+      recorder: rec,
+      department: processorName,
+      activityName: mainActivity,
+      processorName: processorName,
+      controllerAddress: ctrlAddress,
+      subActivities: subs,
+      securityMeasures: {
+        organizational: secOrg,
+        technical: secTech,
+        physical: secPhysical,
+        accessControl: secAccess,
+        userResponsibility: secUser,
+        auditTrail: secAudit,
+      },
+      // backward compat
+      purpose: subs[0]?.purpose ?? '',
+      legalBasis: subs[0]?.legalBasis?.join(', ') ?? '',
+      dataSubject: subs[0]?.dataCategory ?? [],
+      personalData: subs[0]?.personalDataItems ?? [],
+      processing: subs[0]?.collectionMethod ?? [],
+      riskLevel: 'LOW',
+      retentionPeriod: subs[0]?.retentionPeriod ?? '',
+      status: 'REVIEW',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
     onSubmit?.({ formType, mainActivity, subs });
     setSubmitted(true);
   };

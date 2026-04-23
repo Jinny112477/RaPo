@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Clock8 } from 'lucide-react';
 import { SearchAlert } from 'lucide-react';
-import { useRopa } from '@/lib/ropaContext'
+import { useRopa } from '@/lib/ropaContext';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -377,36 +378,40 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 
 // ─── Main export ───────────────────────────────────────────────────────────────
 
-interface RopaFormProps {
-  onSubmit?: (data: Record<string, unknown>) => void;
-  onSaveDraft?: (data: Record<string, unknown>) => void;
+import { Activity } from '@/types';
+
+interface RopaDCEditFormProps {
+  activity: Activity;
 }
 
-export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
+export default function RopaDCEditForm({ activity }: RopaDCEditFormProps) {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [formType] = useState<FormType>('controller');
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
 
-  // Part 1
-  const [rec, setRec] = useState<RecorderInfo>({ name: '', address: '', email: '', phone: '' });
-
-  // Part 2 - controller
-  const [ownerName, setOwnerName] = useState('');
-  // Part 2 - processor
+  // Pre-fill from existing activity
+  const [rec, setRec] = useState<RecorderInfo>(
+    activity.recorder ?? { name: '', address: '', email: '', phone: '' }
+  );
+  const [ownerName, setOwnerName] = useState(activity.dataOwnerName ?? activity.department ?? '');
   const [processorName, setProcessorName] = useState('');
   const [ctrlAddress, setCtrlAddress] = useState('');
-  // Shared
-  const [mainActivity, setMainActivity] = useState('');
-  const [subs, setSubs] = useState<SubActivity[]>([newSub(0)]);
+  const [mainActivity, setMainActivity] = useState(activity.activityName ?? '');
+  const [subs, setSubs] = useState<SubActivity[]>(
+    activity.subActivities && activity.subActivities.length > 0
+      ? activity.subActivities
+      : [{ ...newSub(0), purpose: activity.purpose ?? '' }]
+  );
 
-  // Security
-  const [secOrg, setSecOrg] = useState('');
-  const [secTech, setSecTech] = useState('');
-  const [secPhysical, setSecPhysical] = useState('');
-  const [secAccess, setSecAccess] = useState('');
-  const [secUser, setSecUser] = useState('');
-  const [secAudit, setSecAudit] = useState('');
+  const sec = activity.securityMeasures;
+  const [secOrg, setSecOrg] = useState(sec?.organizational ?? '');
+  const [secTech, setSecTech] = useState(sec?.technical ?? '');
+  const [secPhysical, setSecPhysical] = useState(sec?.physical ?? '');
+  const [secAccess, setSecAccess] = useState(sec?.accessControl ?? '');
+  const [secUser, setSecUser] = useState(sec?.userResponsibility ?? '');
+  const [secAudit, setSecAudit] = useState(sec?.auditTrail ?? '');
 
   const isCtrl = formType === 'controller';
 
@@ -420,16 +425,14 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   const prev = () => setStep(s => Math.max(1, s - 1));
 
   const handleSaveDraft = () => {
-    onSaveDraft?.({ formType, mainActivity });
     setDraftSaved(true);
     setTimeout(() => setDraftSaved(false), 2500);
   };
 
-  const { addActivity } = useRopa();
+  const { updateActivity } = useRopa();
 
   const handleSubmit = () => {
-    addActivity({
-      id: Date.now().toString(),
+    updateActivity(activity.id, {
       formType: 'controller',
       recorder: rec,
       department: ownerName,
@@ -444,19 +447,15 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         userResponsibility: secUser,
         auditTrail: secAudit,
       },
-      // backward compat
       purpose: subs[0]?.purpose ?? '',
       legalBasis: subs[0]?.legalBasis?.join(', ') ?? '',
       dataSubject: subs[0]?.dataCategory ?? [],
       personalData: subs[0]?.personalDataItems ?? [],
       processing: subs[0]?.collectionMethod ?? [],
-      riskLevel: 'LOW',
       retentionPeriod: subs[0]?.retentionPeriod ?? '',
       status: 'REVIEW',
-      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
-    onSubmit?.({ formType, mainActivity, subs });
     setSubmitted(true);
   };
 
@@ -469,19 +468,15 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-slate-800 mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
-        <p className="text-sm text-slate-500 mb-3">กิจกรรมการประมวลผลถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
+        <h3 className="text-xl font-bold text-slate-800 mb-2">แก้ไขและส่งข้อมูลเรียบร้อยแล้ว</h3>
+        <p className="text-sm text-slate-500 mb-3">กิจกรรมถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-sm text-blue-700 font-medium mb-6">
-          {isCtrl ? 'Data Controller' : 'Data Processor'} · {mainActivity}
+          Data Controller · {mainActivity}
         </div>
         <br />
-        <button onClick={() => {
-          setStep(1); setSubmitted(false);
-          setRec({ name: '', address: '', email: '', phone: '' });
-          setMainActivity(''); setSubs([newSub(0)]);
-          setOwnerName(''); setProcessorName(''); setCtrlAddress('');
-        }} className="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-          สร้างกิจกรรมใหม่
+        <button onClick={() => router.push('/dc/my-ropa')}
+          className="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+          กลับหน้า My ROPA
         </button>
       </div>
     );

@@ -4,6 +4,7 @@ import { DpRecord } from '@/types';
 export const mockActivities: Activity[] = [
   {
     id: 'ACT-001',
+    formType: 'controller' as const,
     department: 'ฝ่ายทรัพยากรบุคคล',
     activityName: 'การจัดเก็บข้อมูลพนักงาน',
     purpose: 'เพื่อบริหารจัดการข้อมูลพนักงานและการจ่ายเงินเดือน',
@@ -20,6 +21,7 @@ export const mockActivities: Activity[] = [
   },
   {
     id: 'ACT-002',
+    formType: 'controller' as const,
     department: 'ฝ่ายการตลาด',
     activityName: 'การจัดงาน Event และกิจกรรมส่งเสริมการขาย',
     purpose: 'เพื่อเก็บข้อมูลผู้เข้าร่วมงานและประชาสัมพันธ์',
@@ -36,6 +38,7 @@ export const mockActivities: Activity[] = [
   },
   {
     id: 'ACT-003',
+    formType: 'controller' as const,
     department: 'ฝ่ายการตลาด',
     activityName: 'ทดสอบ DP Flow',
     purpose: 'test',
@@ -53,6 +56,7 @@ export const mockActivities: Activity[] = [
   // สำหรับทดสอบสถานะ REJECTED
   {
     id: 'ACT-004',
+    formType: 'controller' as const,
     department: 'ฝ่ายทรัพยากรบุคคล',
     activityName: 'การประเมินผลพนักงานประจำปี',
     purpose: 'เพื่อประเมินผลการปฏิบัติงาน',
@@ -71,6 +75,7 @@ export const mockActivities: Activity[] = [
   // สำหรับทดสอบสถานะ DRAFT
   {
   id: 'ACT-005',
+    formType: 'controller' as const,
   department: 'ฝ่ายการตลาด',
   activityName: 'การเก็บข้อมูลแบบสอบถามออนไลน์',
   purpose: 'เพื่อสำรวจความพึงพอใจลูกค้า',
