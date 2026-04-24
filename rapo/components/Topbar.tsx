@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSidebar } from '@/lib/sidebarContext';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 import { mockNotifications } from '@/lib/mockData';
 
 const MenuIcon = () => (
@@ -29,13 +29,7 @@ const UserIcon = () => (
   </svg>
 );
 
-const SettingsIcon = () => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="3" />
-    <path d="M19.07 4.93L17.66 6.34M21 12h-2M17.66 17.66l1.41 1.41M12 21v-2M6.34 17.66L4.93 19.07M3 12H1M6.34 6.34L4.93 4.93" />
-    <path d="M21.17 8A9 9 0 1 1 3 12" />
-  </svg>
-);
+
 
 const LogOutIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,15 +72,18 @@ export function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  // LOGOUT: handler
   const handleLogout = () => {
     logout();
     router.push('/login');
   };
 
+  // NOTIFICATION: mark all read (MOCK DATA)
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   };
 
+  // NOTIFICATION: notify type color-based (MOCK DATA)
   const notifTypeColors: Record<string, string> = {
     info: 'bg-blue-100 text-blue-600',
     warning: 'bg-amber-100 text-amber-600',
@@ -105,7 +102,7 @@ export function Topbar() {
           <MenuIcon />
         </button>
         <h1 className="text-lg font-semibold text-white">
-          RAPo | RoPA Management System
+          RaPO | RoPA Management System
         </h1>
       </div>
 
@@ -197,14 +194,6 @@ export function Topbar() {
                 >
                   <span className="text-slate-400"><UserIcon /></span>
                   My Profile
-                </Link>
-                <Link
-                  href="/settings"
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  onClick={() => setShowProfile(false)}
-                >
-                  <span className="text-slate-400"><SettingsIcon /></span>
-                  Settings
                 </Link>
               </div>
               <div className="border-t border-slate-100 py-1">

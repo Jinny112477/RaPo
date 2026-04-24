@@ -24,11 +24,11 @@ export function RopaProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useRopa() {
-  const context = useContext(RopaContext)
+  const lib = useContext(RopaContext)
 
-  if (!context) {
+  if (!lib) {
     throw new Error("useRopa must be used inside RopaProvider")
   }
 
-  return context
+  return lib
 }

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/lib/sidebarContext';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
@@ -12,11 +12,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { isCollapsed } = useSidebar();
   const router = useRouter();
 
-  useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isLoading, router]);
+  // useEffect(() => {
+  //   if (!isLoading && !user) {
+  //     router.push('/login');
+  //   }
+  // }, [user, isLoading, router]);
 
   if (isLoading) {
     return (
@@ -29,7 +29,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
 
-  if (!user) return null;
+  // if (!user) return null;
 
   return (
     <div className="min-h-screen bg-slate-50 flex">

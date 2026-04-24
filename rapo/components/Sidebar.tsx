@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/lib/sidebarContext';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 import { Role } from '@/types';
 
 interface NavItem {
@@ -113,17 +113,17 @@ const ChevronLeftIcon = () => (
 
 // ลิ้งหน้า
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
-  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
-  { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
-  { label: 'My Activities', href: '/admin/activities', icon: <ListIcon />, roles: ['dataOwner'] },
-  { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['admin'] },
-  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
-  { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },
-  { label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['dpo'] },
-  { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
-  { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['executive'] },
-  { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['executive'] },
+  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['Admin', 'Data Controller', 'DPO', 'Auditor', 'Executive'] },
+  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['Admin'] },
+  { label: 'My ROPA', href: '/dc/my-access', icon: <ListIcon />, roles: ['Data Controller', 'Admin'] },
+  { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['Admin', 'Data Controller'] },
+  { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['Admin'] },
+  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['Admin'] },
+  { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['DPO'] },
+  { label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['DPO'] },
+  { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['Auditor'] },
+  { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['Executive'] },
+  { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['Executive'] },
   // { label: 'รายการ Activity', href: '/activities', roles: ['processor'] },
   // { label: 'คำขอเข้าถึง', href: '/dc/requests', roles: ['dataOwner'] },
 ];
