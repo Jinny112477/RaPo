@@ -95,12 +95,6 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
-        <div className="border-t border-white/10 pt-6">
-          <p className="text-xs text-slate-500">
-            © 2024 ROPA Management System. Enterprise Edition v2.4
-          </p>
-        </div>
       </div>
 
       {/* Right panel - login form */}
