@@ -61,9 +61,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             isCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[240px]',
           ].join(' ')}
         >
-          <div className="p-5 lg:p-6 h-full">{children}</div>
           <RopaProvider>
-            {children}
+            <div className="p-5 lg:p-6 h-full">{children}</div>
           </RopaProvider>
         </main>
       </div>

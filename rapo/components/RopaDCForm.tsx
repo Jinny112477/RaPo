@@ -85,14 +85,14 @@ const STEPS = [
 ];
 
 // ─── Shared styled helpers ───────────────────────────────────────────────────
-
-const inp = 'w-full px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-800 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all';
+const card = 'bg-white border border-gray-200 rounded-2xl';
+const inp = 'w-full px-4 py-2.5 rounded-xl bg-white border border-gray-300 text-black text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500';
 const txa = `${inp} resize-none`;
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div className="space-y-2">
-      <label className="flex items-center gap-1 text-sm font-medium text-slate-700">
+      <label className="flex items-center gap-1 text-sm font-medium text-white/80">
         {label}{required && <span className="text-red-400">*</span>}
       </label>
       {children}
@@ -111,7 +111,7 @@ function CheckGrid({ options, selected, onChange, cols = 2 }: {
         const on = selected.includes(o);
         return (
           <button key={o} type="button" onClick={() => toggle(o)}
-            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm text-left transition-all ${on ? 'bg-blue-500/20 border-blue-400/60 text-slate-700' : 'bg-white border-slate-200 border-white/10 text-slate-700/60 hover:bg-white/10 hover:border-white/20'}`}>
+            className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border text-sm text-left transition-all ${on ? 'bg-blue-500/20 border-blue-400/60 text-white' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10 hover:border-white/20'}`}>
             <span className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border transition-all ${on ? 'bg-blue-500 border-blue-500' : 'border-white/30'}`}>
               {on && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
             </span>
@@ -130,7 +130,7 @@ function RadioGroup({ options, value, onChange }: { options: string[]; value: st
         const on = value === o;
         return (
           <button key={o} type="button" onClick={() => onChange(o)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-all ${on ? 'bg-blue-500/20 border-blue-400/60 text-slate-700' : 'bg-white border-slate-200 border-white/10 text-slate-700/60 hover:bg-white/10'}`}>
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm transition-all ${on ? 'bg-blue-500/20 border-blue-400/60 text-white' : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'}`}>
             <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${on ? 'border-blue-400' : 'border-white/30'}`}>
               {on && <span className="w-2 h-2 rounded-full bg-blue-400 block" />}
             </span>
@@ -149,8 +149,8 @@ function CardHeader({ step, title, sub }: { step: number; title: string; sub: st
         {step}
       </div>
       <div>
-        <p className="text-base font-semibold text-slate-700">{title}</p>
-        <p className="text-xs text-slate-700/40">{sub}</p>
+        <p className="text-base font-semibold text-white">{title}</p>
+        <p className="text-xs text-white/40">{sub}</p>
       </div>
     </div>
   );
@@ -204,16 +204,16 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   // ── Success screen ─────────────────────────────────────────────────────────
   if (submitted) {
     return (
-      <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-12 text-center">
+      <div className="bg-[#1e2130] rounded-2xl border border-white/10 p-12 text-center">
         <div className="w-16 h-16 bg-emerald-500/20 border border-emerald-400/30 rounded-full flex items-center justify-center mx-auto mb-5">
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5">
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-slate-700 mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
-        <p className="text-sm text-slate-700/50 mb-6">กิจกรรมถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
+        <h3 className="text-xl font-bold text-white mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
+        <p className="text-sm text-white/50 mb-6">กิจกรรมถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
         <button onClick={() => { setStep(1); setSubmitted(false); setForm(INIT); }}
-          className="px-6 py-2.5 bg-blue-500 text-slate-700 text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors">
+          className="px-6 py-2.5 bg-blue-500 text-white text-sm font-semibold rounded-xl hover:bg-blue-600 transition-colors">
           สร้างกิจกรรมใหม่
         </button>
       </div>
@@ -224,7 +224,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
     <div className="space-y-4">
 
       {/* ── Progress bar ──────────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 px-6 py-5">
+      <div className="bg-[#1e2130] rounded-2xl border border-white/10 px-6 py-5">
         <div className="flex items-start gap-1 relative">
           {/* connecting line */}
           <div className="absolute top-4 left-4 right-4 h-px bg-white/10 z-0" />
@@ -237,10 +237,10 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <div key={s.id} className="flex-1 flex flex-col items-center gap-2 z-10">
                 <button
                   onClick={() => done && setStep(s.id)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${done ? 'bg-blue-500 border-blue-500 text-slate-700 cursor-pointer' : active ? 'bg-white border-blue-400 text-blue-400' : 'bg-white border-white/20 text-slate-700/30 cursor-default'}`}>
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${done ? 'bg-blue-500 border-blue-500 text-white cursor-pointer' : active ? 'bg-[#1e2130] border-blue-400 text-blue-400' : 'bg-[#1e2130] border-white/20 text-white/30 cursor-default'}`}>
                   {done ? <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg> : s.id}
                 </button>
-                <span className={`text-[10px] font-medium text-center leading-tight hidden md:block ${active ? 'text-blue-400' : done ? 'text-slate-700/50' : 'text-slate-700/25'}`}>
+                <span className={`text-[10px] font-medium text-center leading-tight hidden md:block ${active ? 'text-blue-400' : done ? 'text-white/50' : 'text-white/25'}`}>
                   {s.label}
                 </span>
               </div>
@@ -248,14 +248,14 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           })}
         </div>
         <div className="mt-4">
-          <p className="text-sm font-semibold text-slate-700">{STEPS[step - 1].label}</p>
-          <p className="text-xs text-slate-700/40">{STEPS[step - 1].sub} · ส่วนที่ {step}/{STEPS.length}</p>
+          <p className="text-sm font-semibold text-white">{STEPS[step - 1].label}</p>
+          <p className="text-xs text-white/40">{STEPS[step - 1].sub} · ส่วนที่ {step}/{STEPS.length}</p>
         </div>
       </div>
 
       {/* ── Step 1: ข้อมูลองค์กร ──────────────────────────────────────────── */}
       {step === 1 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 p-6 space-y-5">
+        <div className="bg-[#1e2130] rounded-2xl border border-white/10 p-6 space-y-5">
           <CardHeader step={1} title="ข้อมูลองค์กร / เจ้าของกิจกรรม" sub="ผู้รับผิดชอบและรายละเอียดกิจกรรม" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="ชื่อบริษัท / องค์กร" required>
@@ -278,7 +278,8 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="วันที่/เดือน/ปีที่บันทึก">
-              <input type="date" value={form.recordDate} onChange={e => set('recordDate', e.target.value)} />
+              <input type="date" value={form.recordDate} onChange={e => set('recordDate', e.target.value)}
+                className={`${inp} [color-scheme:dark]`} />
             </Field>
             <Field label="เจ้าหน้าที่คุ้มครองข้อมูล (DPC)">
               <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="ABC co." className={inp} />
@@ -289,7 +290,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
 
       {/* ── Step 2: วัตถุประสงค์และฐานทางกฎหมาย ─────────────────────────── */}
       {step === 2 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 p-6 space-y-5">
+        <div className="bg-[#1e2130] rounded-2xl border border-white/10 p-6 space-y-5">
           <CardHeader step={2} title="วัตถุประสงค์การประมวลผล" sub="ระบุวัตถุประสงค์และฐานทางกฎหมายที่ใช้" />
           <Field label="วัตถุประสงค์ของการประมวลผล" required>
             <textarea rows={4} value={form.purpose} onChange={e => set('purpose', e.target.value)}
@@ -307,7 +308,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
 
       {/* ── Step 3: ประเภทข้อมูลและเจ้าของข้อมูล ────────────────────────── */}
       {step === 3 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 p-6 space-y-5">
+        <div className="bg-[#1e2130] rounded-2xl border border-white/10 p-6 space-y-5">
           <CardHeader step={3} title="ประเภทข้อมูลและเจ้าของข้อมูล" sub="ประเภทผู้เป็นเจ้าของข้อมูลและกลุ่มข้อมูลที่ประมวลผล" />
           <Field label="กลุ่มเจ้าของข้อมูล (DATA SUBJECT)" required>
             <CheckGrid options={DATA_SUBJECTS} selected={form.dataSubjects} onChange={v => set('dataSubjects', v)} cols={2} />
@@ -318,7 +319,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
           <Field label="ระบุข้อมูลเพิ่มเติม">
             <input type="text" value={form.otherDataNote} onChange={e => set('otherDataNote', e.target.value)}
               placeholder="พิมพ์แล้วกด Enter เพื่อเพิ่ม..." className={inp} />
-            <p className="text-xs text-slate-700/30 mt-1">เช่น หมายเลขสัญชาติ, ที่อยู่, ประวัติการศึกษา</p>
+            <p className="text-xs text-white/30 mt-1">เช่น หมายเลขสัญชาติ, ที่อยู่, ประวัติการศึกษา</p>
           </Field>
           <Field label="วิธีการเก็บรวบรวมข้อมูล">
             <CheckGrid options={COLLECTION_METHODS} selected={form.collectionMethods} onChange={v => set('collectionMethods', v)} cols={2} />
@@ -328,14 +329,14 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
 
       {/* ── Step 4: ระยะเวลาเก็บรักษาข้อมูล ────────────────────────────── */}
       {step === 4 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 p-6 space-y-5">
+        <div className="bg-[#1e2130] rounded-2xl border border-white/10 p-6 space-y-5">
           <CardHeader step={4} title="ระยะเวลาเก็บรักษาข้อมูล" sub="กำหนดระยะเวลาและนโยบายการลบหรือทำลายข้อมูล" />
           <Field label="ระยะเวลาเก็บรักษา" required>
             <div className="flex gap-3">
               <input type="number" min="1" value={form.retentionValue} onChange={e => set('retentionValue', e.target.value)}
                 placeholder="2" className={`${inp} w-28`} />
               <select value={form.retentionUnit} onChange={e => set('retentionUnit', e.target.value)}
-                className={`${inp} flex-1 cursor-pointer`}>
+                className={`${inp} flex-1 cursor-pointer [color-scheme:dark]`}>
                 <option>วัน</option><option>เดือน</option><option>ปี</option>
               </select>
             </div>
@@ -355,7 +356,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
 
       {/* ── Step 5: มาตรการรักษาความปลอดภัย ────────────────────────────── */}
       {step === 5 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 p-6 space-y-5">
+        <div className="bg-[#1e2130] rounded-2xl border border-white/10 p-6 space-y-5">
           <CardHeader step={5} title="มาตรการรักษาความปลอดภัย" sub="คำอธิบายมาตรการที่ใช้ปกป้องข้อมูล" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <Field label="มาตรการเชิงองค์กร (Organizational)">
@@ -380,34 +381,34 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
 
       {/* ── Step 6: สรุปและส่ง ───────────────────────────────────────────── */}
       {step === 6 && (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 overflow-hidden">
+        <div className="bg-[#1e2130] rounded-2xl border border-white/10 overflow-hidden">
           <div className="px-6 py-4 border-b border-white/10">
-            <p className="text-sm font-semibold text-slate-700">สรุปข้อมูลก่อนส่ง</p>
-            <p className="text-xs text-slate-700/40 mt-0.5">กรุณาตรวจสอบความถูกต้องก่อนส่งเพื่อรออนุมัติจาก DPO</p>
+            <p className="text-sm font-semibold text-white">สรุปข้อมูลก่อนส่ง</p>
+            <p className="text-xs text-white/40 mt-0.5">กรุณาตรวจสอบความถูกต้องก่อนส่งเพื่อรออนุมัติจาก DPO</p>
           </div>
           <div className="p-6 space-y-4">
             {/* Row 1 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-4 rounded-xl bg-white border-slate-200 border border-slate-200 shadow-sm/10">
-                <p className="text-xs text-slate-700/40 mb-1">บริษัท / องค์กร</p>
-                <p className="text-sm font-semibold text-slate-700">{form.companyName || '—'}</p>
-                <p className="text-xs text-slate-700/40 mt-0.5">{form.department || '—'}</p>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-xs text-white/40 mb-1">บริษัท / องค์กร</p>
+                <p className="text-sm font-semibold text-white">{form.companyName || '—'}</p>
+                <p className="text-xs text-white/40 mt-0.5">{form.department || '—'}</p>
               </div>
-              <div className="p-4 rounded-xl bg-white border-slate-200 border border-slate-200 shadow-sm/10">
-                <p className="text-xs text-slate-700/40 mb-1">ผู้บันทึก</p>
-                <p className="text-sm font-semibold text-slate-700">{form.recorderEmail || '—'}</p>
-                <p className="text-xs text-slate-700/40 mt-0.5">{form.recordDate || '—'}</p>
+              <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+                <p className="text-xs text-white/40 mb-1">ผู้บันทึก</p>
+                <p className="text-sm font-semibold text-white">{form.recorderEmail || '—'}</p>
+                <p className="text-xs text-white/40 mt-0.5">{form.recordDate || '—'}</p>
               </div>
             </div>
             {/* Activity */}
             <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-400/20">
               <p className="text-xs text-blue-400 mb-1 font-medium">กิจกรรมการประมวลผล</p>
-              <p className="text-base font-bold text-slate-700">{form.activityName || '—'}</p>
+              <p className="text-base font-bold text-white">{form.activityName || '—'}</p>
             </div>
             {/* Purpose + legal basis */}
-            <div className="p-4 rounded-xl bg-white border-slate-200 border border-slate-200 shadow-sm/10 space-y-2">
-              <p className="text-xs text-slate-700/40 font-medium">วัตถุประสงค์</p>
-              <p className="text-sm text-slate-700">{form.purpose || '—'}</p>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+              <p className="text-xs text-white/40 font-medium">วัตถุประสงค์</p>
+              <p className="text-sm text-white/80">{form.purpose || '—'}</p>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {form.legalBasis.map(l => (
                   <span key={l} className="text-xs px-2.5 py-1 bg-blue-500/15 border border-blue-400/25 rounded-full text-blue-300">{l}</span>
@@ -415,20 +416,20 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               </div>
             </div>
             {/* Data subjects */}
-            <div className="p-4 rounded-xl bg-white border-slate-200 border border-slate-200 shadow-sm/10">
-              <p className="text-xs text-slate-700/40 mb-2 font-medium">กลุ่มเจ้าของข้อมูล</p>
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <p className="text-xs text-white/40 mb-2 font-medium">กลุ่มเจ้าของข้อมูล</p>
               <div className="flex flex-wrap gap-1.5">
                 {form.dataSubjects.map(s => (
-                  <span key={s} className="text-xs px-2.5 py-1 bg-white/10 rounded-full text-slate-700/70">{s}</span>
+                  <span key={s} className="text-xs px-2.5 py-1 bg-white/10 rounded-full text-white/70">{s}</span>
                 ))}
               </div>
             </div>
             {/* Retention */}
-            <div className="p-4 rounded-xl bg-white border-slate-200 border border-slate-200 shadow-sm/10">
-              <p className="text-xs text-slate-700/40 mb-1 font-medium">ระยะเวลาเก็บรักษา</p>
-              <p className="text-sm font-semibold text-slate-700">
+            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
+              <p className="text-xs text-white/40 mb-1 font-medium">ระยะเวลาเก็บรักษา</p>
+              <p className="text-sm font-semibold text-white">
                 {form.retentionValue ? `${form.retentionValue} ${form.retentionUnit}` : '—'}
-                {form.retentionCriteria && <span className="text-slate-700/40 font-normal ml-2">· {form.retentionCriteria}</span>}
+                {form.retentionCriteria && <span className="text-white/40 font-normal ml-2">· {form.retentionCriteria}</span>}
               </p>
             </div>
             {/* Warning */}
@@ -441,9 +442,9 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
       )}
 
       {/* ── Footer navigation ────────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm/10 px-5 py-4 flex items-center justify-between gap-3">
+      <div className="bg-[#1e2130] rounded-2xl border border-white/10 px-5 py-4 flex items-center justify-between gap-3">
         <button type="button" onClick={handleSaveDraft}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-700/50 border border-slate-200 shadow-sm/10 rounded-xl hover:bg-white border-slate-200 transition-colors">
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white/50 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">
           {draftSaved
             ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-400">บันทึกร่างแล้ว</span></>
             : 'บันทึกร่าง'}
@@ -451,24 +452,24 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         <div className="flex items-center gap-2">
           {step > 1 && (
             <button type="button" onClick={() => setStep(s => s - 1)}
-              className="px-4 py-2 text-sm font-medium text-slate-700/60 border border-slate-200 shadow-sm/10 rounded-xl hover:bg-white border-slate-200 transition-colors">
+              className="px-4 py-2 text-sm font-medium text-white/60 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">
               ← ย้อนกลับ
             </button>
           )}
           {step < 6 ? (
             <button type="button" onClick={() => canNext() && setStep(s => s + 1)}
               disabled={!canNext()}
-              className="px-5 py-2 text-sm font-semibold text-slate-700 bg-blue-500 rounded-xl hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-500 rounded-xl hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
               ถัดไป →
             </button>
           ) : (
             <div className="flex gap-2">
               <button type="button" onClick={handleSaveDraft}
-                className="px-4 py-2 text-sm font-medium text-slate-700/60 border border-slate-200 shadow-sm/10 rounded-xl hover:bg-white border-slate-200 transition-colors">
+                className="px-4 py-2 text-sm font-medium text-white/60 border border-white/10 rounded-xl hover:bg-white/5 transition-colors">
                 บันทึกร่าง
               </button>
               <button type="button" onClick={handleSubmit}
-                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-slate-700 bg-emerald-500 rounded-xl hover:bg-emerald-600 transition-colors">
+                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-500 rounded-xl hover:bg-emerald-600 transition-colors">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
                 ยืนยันและบันทึก
               </button>
