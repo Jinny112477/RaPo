@@ -1,27 +1,80 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
-import { useRopa } from '@/lib/ropaContext';
-import { Plus } from "lucide-react";
+import { useAuth } from '@/context/AuthContext';
+import { mapApiRopaToActivity } from '@/lib/mapRopa';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export default function DashboardPage() {
-  const { deleteActivity } = useRopa()
-  const { activities } = useRopa();
-  const { user, role } = useAuth();
+  const { role } = useAuth();
   const router = useRouter();
 
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [deptFilter, setDeptFilter] = useState('ALL');
 
-  const filtered = activities.filter(a => {
-    const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-    const matchDept = deptFilter === 'ALL' || a.department === deptFilter;
-    return matchSearch && matchStatus && matchDept;
-  });
+  const fetchActivities = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${API_URL}/api/form`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('FETCH DASHBOARD ERROR:', data);
+        alert(data.detail || data.error || 'โหลดข้อมูลไม่สำเร็จ');
+        return;
+      }
+
+      const mapped = (data.data || []).map(mapApiRopaToActivity);
+      setActivities(mapped);
+    } catch (error) {
+      console.error(error);
+      alert('โหลดข้อมูลไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteActivity = async (id: string) => {
+    if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/form/${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('DELETE FORM ERROR:', data);
+        alert(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
+        return;
+      }
+
+      setActivities(prev => prev.filter(a => a.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert('ลบข้อมูลไม่สำเร็จ');
+    }
+  };
+
+  useEffect(() => {
+    fetchActivities();
+  }, []);
+
+  const filtered = useMemo(() => {
+    return activities.filter(a => {
+      const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
+      const matchDept = deptFilter === 'ALL' || a.department === deptFilter;
+      return matchSearch && matchStatus && matchDept;
+    });
+  }, [activities, search, statusFilter, deptFilter]);
 
   const stats = [
     {
@@ -217,7 +270,7 @@ export default function DashboardPage() {
             ) : (
               <tr>
                 <td colSpan={7} className="text-center py-10 text-gray-400">
-                  ไม่พบข้อมูลกิจกรรม
+                  {loading ? 'กำลังโหลดข้อมูล...' : 'ไม่พบข้อมูลกิจกรรม'}
                 </td>
               </tr>
             )}

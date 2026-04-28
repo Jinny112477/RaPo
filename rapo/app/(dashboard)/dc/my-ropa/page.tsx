@@ -1,32 +1,88 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
-// 1. ตรวจสอบให้แน่ใจว่า import useRopa มาแล้ว
-import { useRopa } from '@/lib/ropaContext'
+import { useAuth } from '@/context/AuthContext';
+import { useRopa } from '@/lib/ropaContext';
 import { DpRecord } from '@/types';
+import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { MessageSquareWarning } from 'lucide-react';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 export default function MyRopaPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  // 2. เรียกใช้ state และฟังก์ชันจาก Context
-  const { activities, dpRecords, deleteActivity, deleteDpRecord } = useRopa();
+  const { activities: contextActivities, dpRecords, deleteDpRecord } = useRopa();
 
+  const [activities, setActivities] = useState<any[]>([]);
+  const [loadingDC, setLoadingDC] = useState(false);
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // ── DC data ──────────────────────────────────────────────────────────────────
-  // 3. เปลี่ยนไปใช้ activities จาก Context แทน mockActivities
-  const myDC = activities.filter(a => a.owner === user?.name);
-  const filteredDC = myDC.filter(a => {
-    const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-    return matchSearch && matchStatus;
-  });
+  const fetchMyActivities = async () => {
+    try {
+      if (!user?.id) return;
+
+      setLoadingDC(true);
+
+      const res = await fetch(`${API_URL}/api/form?user_id=${user.id}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('FETCH MY RECORD ERROR:', data);
+        alert(data.detail || data.error || 'โหลด My Record ไม่สำเร็จ');
+        return;
+      }
+
+      const mapped = (data.data || []).map(mapApiRopaToActivity);
+      setActivities(mapped);
+    } catch (error) {
+      console.error(error);
+      alert('โหลด My Record ไม่สำเร็จ');
+    } finally {
+      setLoadingDC(false);
+    }
+  };
+
+  const deleteActivity = async (id: string) => {
+    if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/form/${id}`, {
+        method: 'DELETE',
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('DELETE MY RECORD ERROR:', data);
+        alert(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
+        return;
+      }
+
+      setActivities(prev => prev.filter(a => a.id !== id));
+    } catch (error) {
+      console.error(error);
+      alert('ลบข้อมูลไม่สำเร็จ');
+    }
+  };
+
+  useEffect(() => {
+    fetchMyActivities();
+  }, [user?.id]);
+
+  const myDC = activities;
+
+  const filteredDC = useMemo(() => {
+    return myDC.filter(a => {
+      const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
+      const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
+      return matchSearch && matchStatus;
+    });
+  }, [myDC, search, statusFilter]);
 
   // ── DP data ──────────────────────────────────────────────────────────────────
   // 4. เปลี่ยนไปใช้ dpRecords จาก Context แทน mockDpRecords
@@ -232,7 +288,11 @@ export default function MyRopaPage() {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan={7} className="text-center py-10 text-gray-400">ไม่พบข้อมูล</td></tr>
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-gray-400">
+                    {loadingDC ? 'กำลังโหลดข้อมูล...' : 'ไม่พบข้อมูล'}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>
@@ -254,8 +314,8 @@ export default function MyRopaPage() {
             <tbody className="text-sm text-gray-700">
               {filteredDP.length > 0 ? filteredDP.map((d: DpRecord) => {
                 // 6. เปลี่ยนเป็น activities จาก Context แทน mockActivities
-                const linked = activities.find(a => a.id === d.activityId);
-                return (
+              const linked = [...activities, ...contextActivities].find(a => a.id === d.activityId);
+              return (
                   <tr key={d.id} className="border-t hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium text-gray-900">{d.processorName}</td>
                     <td className="px-4 py-3">

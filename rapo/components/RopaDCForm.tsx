@@ -182,9 +182,26 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
 
   const canNext = () => {
-    if (step === 1) return form.companyName.trim() && form.activityName.trim() && form.recorderEmail.trim();
-    if (step === 2) return form.purpose.trim() && form.legalBasis.length > 0;
-    if (step === 3) return form.dataSubjects.length > 0 && form.personalDataTypes.length > 0;
+    if (step === 1) {
+      return form.companyName.trim() && form.activityName.trim() && form.recorderEmail.trim();
+    }
+
+    if (step === 2) {
+      return form.purpose.trim() && form.legalBasis.length > 0;
+    }
+
+    if (step === 3) {
+      return (
+        form.dataSubjects.length > 0 &&
+        form.personalDataTypes.length > 0 &&
+        form.collectionMethods.length > 0
+      );
+    }
+
+    if (step === 4) {
+      return form.retentionValue.trim() && form.retentionCriteria.trim();
+    }
+
     return true;
   };
 
@@ -202,7 +219,16 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         body: JSON.stringify({ userId: user?.id, formType: 'controller', ...form }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) {
+        console.log("CREATE FORM ERROR:", data);
+
+        const detail = Array.isArray(data.detail)
+          ? data.detail.join("\n")
+          : data.detail;
+
+        alert(detail || data.error || "Create form failed");
+        return;
+      }
       setSubmitted(true);
     } catch (err) {
       alert((err as Error).message);
@@ -296,8 +322,8 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <Field label="วันที่/เดือน/ปีที่บันทึก">
                 <input type="date" value={form.recordDate} onChange={e => set('recordDate', e.target.value)} className={inp} />
               </Field>
-              <Field label="เจ้าหน้าที่คุ้มครองข้อมูล (DPC)">
-                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="ชื่อ DPC" className={inp} />
+              <Field label="เจ้าหน้าที่คุ้มครองข้อมูล (DPO)">
+                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="ชื่อ DPO" className={inp} />
               </Field>
             </div>
           </div>
@@ -339,7 +365,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <input type="text" value={form.otherDataNote} onChange={e => set('otherDataNote', e.target.value)}
                 placeholder="เช่น หมายเลขสัญชาติ, ที่อยู่, ประวัติการศึกษา" className={inp} />
             </Field>
-            <Field label="วิธีการเก็บรวบรวมข้อมูล">
+            <Field label="วิธีการเก็บรวบรวมข้อมูล" required>
               <CheckGrid options={COLLECTION_METHODS} selected={form.collectionMethods} onChange={v => set('collectionMethods', v)} cols={2} />
             </Field>
           </div>

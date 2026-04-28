@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRopa } from '@/lib/ropaContext';
 import { StatusBadge, RiskBadge } from '@/components/StatusBadge';
 import { Activity, DpRecord } from '@/types';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 const CheckIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -21,12 +23,65 @@ const EyeIcon = () => (
   </svg>
 );
 
+type ApiRopa = {
+  activity_id: string;
+  user_id: string;
+  activity_name: string;
+  activity_subject: string;
+  purpose: string;
+  approval_status: string;
+  created_at: string;
+  updated_at: string | null;
+  source?: {
+    name?: string;
+  };
+  legal_basis?: {
+    name?: string;
+  };
+  obtaining_data?: {
+    name?: string;
+  };
+  obtaining_method_detail?: {
+    name?: string;
+  };
+  policy?: {
+    retention_period?: string;
+  };
+};
+
+const mapApiRopaToActivity = (item: ApiRopa): Activity => {
+  const status =
+    item.approval_status === 'approved'
+      ? 'ACTIVE'
+      : item.approval_status === 'rejected'
+        ? 'REJECTED'
+        : 'REVIEW';
+
+  return {
+    id: item.activity_id,
+    activityName: item.activity_name || '-',
+    department: item.activity_subject || item.source?.name || '-',
+    owner: item.source?.name || '-',
+    status,
+    riskLevel: 'LOW',
+    legalBasis: item.legal_basis?.name || '-',
+    retentionPeriod: item.policy?.retention_period || '-',
+    dataSubject: [item.source?.name || '-'],
+    personalData: [item.obtaining_data?.name || '-'],
+    processing: [item.obtaining_method_detail?.name || '-'],
+    purpose: item.purpose || '-',
+    updatedAt: item.updated_at
+      ? new Date(item.updated_at).toLocaleDateString('th-TH')
+      : new Date(item.created_at).toLocaleDateString('th-TH'),
+  } as Activity;
+};
+
 // ─── Modal ดู DC ────────────────────────────────────────────────────────────────
 function DCModal({ activity, onClose, onApprove, onReject }: {
   activity: Activity;
   onClose: () => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string, reason: string) => void;
+  onApprove: (id: string) => void | Promise<void>;
+  onReject: (id: string, reason: string) => void | Promise<void>;
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
@@ -210,10 +265,10 @@ export default function DPOReviewPage() {
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
 
   // ดึงข้อมูลและฟังก์ชันจาก Context
-  const { activities, dpRecords, updateActivity, updateDpRecord } = useRopa();
+  const { activities, dpRecords, updateDpRecord } = useRopa();
 
-  // เปลี่ยนมาใช้ข้อมูลจาก Context แทน mockData
-  const [dcQueue, setDcQueue] = useState(activities.filter(a => a.status === 'REVIEW'));
+  const [dcQueue, setDcQueue] = useState<Activity[]>([]);
+  const [dcLoading, setDcLoading] = useState(false);
   const [dcProcessed, setDcProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDC, setViewingDC] = useState<Activity | null>(null);
 
@@ -221,19 +276,85 @@ export default function DPOReviewPage() {
   const [dpProcessed, setDpProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDP, setViewingDP] = useState<DpRecord | null>(null);
 
-  // DC handlers (อัปเดตลง Global Context ด้วย)
-  const handleDCApprove = (id: string) => {
-    updateActivity(id, { status: 'ACTIVE' });
-    setDcQueue(q => q.filter(a => a.id !== id));
-    setDcProcessed(p => [...p, { id, action: 'approved' }]);
-    setViewingDC(null);
+  const fetchPendingRopa = async () => {
+    try {
+      setDcLoading(true);
+
+      const res = await fetch(`${API_URL}/api/dpo/ropa/pending`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('FETCH DPO ROPA ERROR:', data);
+        alert(data.detail || data.error || 'โหลดรายการ ROPA ไม่สำเร็จ');
+        return;
+      }
+
+      const mapped = (data.data || []).map(mapApiRopaToActivity);
+      setDcQueue(mapped);
+    } catch (error) {
+      console.error(error);
+      alert('โหลดรายการ ROPA ไม่สำเร็จ');
+    } finally {
+      setDcLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingRopa();
+  }, []);
+
+  const handleDCApprove = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/approve`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('APPROVE ROPA ERROR:', data);
+        alert(data.detail || data.error || 'อนุมัติไม่สำเร็จ');
+        return;
+      }
+
+      setDcQueue(q => q.filter(a => a.id !== id));
+      setDcProcessed(p => [...p, { id, action: 'approved' }]);
+      setViewingDC(null);
+    } catch (error) {
+      console.error(error);
+      alert('อนุมัติไม่สำเร็จ');
+    }
   };
   
-  const handleDCReject = (id: string, reason: string) => {
-    updateActivity(id, { status: 'REJECTED', rejectionReason: reason });
-    setDcQueue(q => q.filter(a => a.id !== id));
-    setDcProcessed(p => [...p, { id, action: 'rejected' }]);
-    setViewingDC(null);
+  const handleDCReject = async (id: string, reason: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/reject`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('REJECT ROPA ERROR:', data);
+        alert(data.detail || data.error || 'ปฏิเสธไม่สำเร็จ');
+        return;
+      }
+
+      setDcQueue(q => q.filter(a => a.id !== id));
+      setDcProcessed(p => [...p, { id, action: 'rejected' }]);
+      setViewingDC(null);
+    } catch (error) {
+      console.error(error);
+      alert('ปฏิเสธไม่สำเร็จ');
+    }
   };
 
   // DP handlers (อัปเดตลง Global Context ด้วย)
@@ -319,8 +440,14 @@ export default function DPOReviewPage() {
               </span>
             )}
           </div>
-          {dcQueue.length === 0 ? (
-            <div className="py-12 text-center text-gray-400 text-sm"> ไม่มี DC Form ที่รออนุมัติ</div>
+          {dcLoading ? (
+            <div className="py-12 text-center text-gray-400 text-sm">
+              กำลังโหลดรายการ ROPA...
+            </div>
+          ) : dcQueue.length === 0 ? (
+            <div className="py-12 text-center text-gray-400 text-sm">
+              ไม่มี DC Form ที่รออนุมัติ
+            </div>
           ) : (
             <div className="divide-y">
               {dcQueue.map(act => (

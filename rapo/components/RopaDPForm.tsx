@@ -412,8 +412,19 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
   const isCtrl = formType === 'controller';
 
   const canNext = () => {
-    if (step === 1) return rec.name.trim() !== '' && rec.email.trim() !== '';
-    if (step === 2) return mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
+    if (step === 1) {
+      return (
+        rec.name.trim() !== '' &&
+        rec.phone.trim() !== '' &&
+        rec.address.trim() !== '' &&
+        rec.email.trim() !== ''
+      );
+    }
+
+    if (step === 2) {
+      return mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
+    }
+
     return true;
   };
 
