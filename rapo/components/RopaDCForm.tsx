@@ -31,6 +31,8 @@ interface FormData {
   secTech: string;
   secPhysical: string;
   secAccess: string;
+  secResponsibility: string;
+  secAudit: string;
 }
 
 const INIT: FormData = {
@@ -41,7 +43,7 @@ const INIT: FormData = {
   collectionMethods: [], otherDataNote: '',
   retentionValue: '', retentionUnit: 'ปี', retentionCriteria: '',
   deletionMethods: [], retentionNote: '',
-  secOrg: '', secTech: '', secPhysical: '', secAccess: '',
+  secOrg: '', secTech: '', secPhysical: '', secAccess: '', secResponsibility: '', secAudit: '',
 };
 
 const LEGAL_BASES = [
