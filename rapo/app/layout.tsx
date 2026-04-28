@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/lib/authContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,18 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${inter.className} min-h-full bg-gray-100`}>
-        
-        {/* Top Navbar */}
-        <div className="bg-[#203690] text-white px-6 py-4 font-semibold">
-          RAPo | RoPA Management System
-        </div>
-
-        {/* Page Content */}
-        <main className="p-6">
+      <body className={`${inter.className} min-h-full`}>
+        <AuthProvider>
           {children}
-        </main>
-
+        </AuthProvider>
       </body>
     </html>
   );

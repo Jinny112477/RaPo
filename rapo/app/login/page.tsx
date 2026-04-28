@@ -1,57 +1,8 @@
-<<<<<<< Updated upstream
-'use client'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import { Button, Input } from '@/components/ui'
-
-export default function LoginPage() {
-  const router = useRouter()
-  const [email, setEmail] = useState('admin@datacorp.th')
-  const [password, setPassword] = useState('••••••••')
-
-  return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white border border-gray-200 rounded-xl w-[380px] overflow-hidden shadow-sm">
-        {/* Header */}
-        <div className="bg-gray-900 border-b-[3px] border-red-700 px-7 py-7 text-center">
-          <div className="flex items-center justify-center gap-3 mb-1">
-            <div className="w-9 h-9 bg-red-700 rounded flex items-center justify-center shrink-0">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                <rect x="3" y="3" width="6" height="6" fill="white" opacity=".9" />
-                <rect x="11" y="3" width="6" height="6" fill="white" opacity=".6" />
-                <rect x="3" y="11" width="6" height="6" fill="white" opacity=".6" />
-                <rect x="11" y="11" width="6" height="6" fill="white" opacity=".3" />
-              </svg>
-            </div>
-            <div className="text-left">
-              <p className="text-[15px] font-semibold text-white">RoPA Management System</p>
-              <p className="text-[11px] text-gray-400">ระบบบริหารจัดการ PDPA</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="px-7 py-7">
-          <div className="flex flex-col gap-3 mb-5">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-700">อีเมลผู้ใช้งาน</label>
-              <Input type="email" value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-gray-700">รหัสผ่าน</label>
-              <Input type="password" value={password} onChange={e => setPassword(e.target.value)} />
-=======
 'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
-
-const ShieldIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-);
 
 const EyeIcon = ({ open }: { open: boolean }) =>
   open ? (
@@ -95,8 +46,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-[#1e3a6e] flex items-center justify-center p-6">
       <div className="w-full max-w-[400px]">
-
-        {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
           <div className="px-8 pt-7 pb-5 border-b border-slate-100">
             <h1 className="text-xl font-semibold text-slate-800 mb-0.5">Sign in</h1>
@@ -161,7 +110,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Demo accounts */}
           <div className="px-8 pb-7 border-t border-slate-100 pt-4">
             <p className="text-[11px] text-slate-400 uppercase tracking-widest mb-3">Quick Demo Access</p>
             <div className="space-y-1.5">
@@ -181,33 +129,10 @@ export default function LoginPage() {
                   <span className="font-semibold">{a.role}</span>
                 </button>
               ))}
->>>>>>> Stashed changes
             </div>
           </div>
-
-          <div className="flex items-center justify-between mb-5">
-            <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-              <input type="checkbox" defaultChecked className="accent-red-700" />
-              จดจำฉัน
-            </label>
-            <button className="text-xs text-red-700 hover:underline">ลืมรหัสผ่าน?</button>
-          </div>
-
-          <Button variant="primary" className="w-full py-2.5 justify-center" onClick={() => router.push('/dashboard')}>
-            เข้าสู่ระบบ
-          </Button>
-
-          <p className="text-[11px] text-gray-400 text-center mt-4 leading-relaxed">
-            ระบบนี้สงวนสิทธิ์เฉพาะผู้ได้รับอนุญาต<br />
-            การเข้าถึงโดยไม่ได้รับอนุญาตเป็นความผิดตาม พ.ร.บ. PDPA พ.ศ. 2562
-          </p>
         </div>
       </div>
     </div>
-<<<<<<< Updated upstream
-  )
-}
-=======
   );
 }
->>>>>>> Stashed changes
