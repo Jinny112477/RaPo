@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/lib/authContext';
 // 1. ตรวจสอบให้แน่ใจว่า import useRopa มาแล้ว
 import { useRopa } from '@/lib/ropaContext'
 import { DpRecord } from '@/types';

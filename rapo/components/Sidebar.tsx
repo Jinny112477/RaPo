@@ -120,10 +120,10 @@ const navItems: NavItem[] = [
   { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['Admin'] },
   { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['Admin'] },
   { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['DPO'] },
-  { label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['DPO'] },
+  //{ label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['DPO'] },
   { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['Auditor'] },
   { label: 'Risk Dashboard', href: '/executive/risk', icon: <AlertTriangleIcon />, roles: ['Executive'] },
-  { label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['Executive'] },
+  //{ label: 'Analytics', href: '/executive/analytics', icon: <BarChartIcon />, roles: ['Executive'] },
   // { label: 'รายการ Activity', href: '/activities', roles: ['processor'] },
   // { label: 'คำขอเข้าถึง', href: '/dc/requests', roles: ['dataOwner'] },
 ];
