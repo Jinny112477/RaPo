@@ -161,11 +161,11 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
         onClick={() => setOpen(o => !o)}
         className={`flex items-center justify-between px-5 py-3.5 cursor-pointer select-none transition-colors ${open ? 'bg-[#1a3a6b]' : 'bg-slate-50 hover:bg-slate-100'}`}>
         <div className="flex items-center gap-3">
-          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${open ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'}`}>
+          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${open ? 'bg-white text-blue-700' : 'bg-blue-600 text-slate-700'}`}>
             {idx + 1}
           </span>
           <div>
-            <p className={`text-sm font-semibold ${open ? 'text-white' : 'text-slate-700'}`}>
+            <p className={`text-sm font-semibold ${open ? 'text-slate-700' : 'text-slate-700'}`}>
               วัตถุประสงค์ที่ {idx + 1}
             </p>
             {sub.purpose && (
@@ -179,13 +179,13 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {canRemove && (
             <button type="button"
               onClick={e => { e.stopPropagation(); onRemove(); }}
-              className={`p-1.5 rounded-lg transition-colors ${open ? 'text-white/60 hover:text-white hover:bg-white/15' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>
+              className={`p-1.5 rounded-lg transition-colors ${open ? 'text-slate-700/60 hover:text-slate-700 hover:bg-white/15' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
               </svg>
             </button>
           )}
-          <span className={open ? 'text-white/70' : 'text-slate-400'}>
+          <span className={open ? 'text-slate-700/70' : 'text-slate-400'}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
               className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
               <polyline points="6 9 12 15 18 9" />
@@ -475,7 +475,7 @@ export default function RopaDCEditForm({ activity }: RopaDCEditFormProps) {
         </div>
         <br />
         <button onClick={() => router.push('/dc/my-ropa')}
-          className="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+          className="px-6 py-2.5 bg-blue-600 text-slate-700 text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
           กลับหน้า My ROPA
         </button>
       </div>
@@ -493,7 +493,7 @@ export default function RopaDCEditForm({ activity }: RopaDCEditFormProps) {
           {STEPS.map(s => (
             <div key={s.id} className="flex flex-col items-center gap-1.5 z-10">
               <button onClick={() => s.id < step && setStep(s.id)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' :
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-slate-700 cursor-pointer' :
                   s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
                     'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
                 {s.id < step
@@ -682,7 +682,7 @@ export default function RopaDCEditForm({ activity }: RopaDCEditFormProps) {
               <div className="space-y-2">
                 {subs.map((s, i) => (
                   <div key={s.id} className="flex items-start gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                    <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="w-6 h-6 rounded-full bg-blue-600 text-slate-700 text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
@@ -735,12 +735,12 @@ export default function RopaDCEditForm({ activity }: RopaDCEditFormProps) {
           )}
           {step < 4 ? (
             <button type="button" onClick={next} disabled={!canNext()}
-              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+              className="px-5 py-2 text-sm font-semibold text-slate-700 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
               ถัดไป →
             </button>
           ) : (
             <button type="button" onClick={handleSubmit}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-slate-700 bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
               ส่งเพื่อรอการตรวจสอบ
             </button>

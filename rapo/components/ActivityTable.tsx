@@ -207,7 +207,7 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
                               onDelete?.(activity.id);     // สั่งลบผ่าน Props (ถ้ามี)
                               setDeleteConfirm(null);      // ปิดกล่องยืนยัน
                             }}
-                            className="px-2 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                            className="px-2 py-1 text-xs bg-red-600 text-slate-700 rounded-md hover:bg-red-700 transition-colors"
                           >Yes</button>
                           <button
                             onClick={() => setDeleteConfirm(null)}
@@ -271,7 +271,7 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
               onClick={() => setPage(p)}
               className={`w-7 h-7 text-xs rounded-lg font-medium transition-colors ${
                 p === page
-                  ? 'bg-blue-600 text-white shadow-sm'
+                  ? 'bg-blue-600 text-slate-700 shadow-sm'
                   : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700'
               }`}
             >

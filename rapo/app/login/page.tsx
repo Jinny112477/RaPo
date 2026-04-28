@@ -65,14 +65,14 @@ export default function LoginPage() {
               <ShieldIcon />
             </div>
             <div>
-              <p className="text-white font-bold text-lg leading-tight">ROPA</p>
+              <p className="text-slate-700 font-bold text-lg leading-tight">ROPA</p>
               <p className="text-slate-400 text-xs">Management System</p>
             </div>
           </div>
 
           <div className="space-y-8">
             <div>
-              <h2 className="text-white text-3xl font-bold leading-tight mb-3">
+              <h2 className="text-slate-700 text-3xl font-bold leading-tight mb-3">
                 Privacy compliance<br />made simple.
               </h2>
               <p className="text-slate-400 text-sm leading-relaxed">
@@ -105,7 +105,7 @@ export default function LoginPage() {
             <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center">
               <ShieldIcon />
             </div>
-            <span className="text-white font-bold text-lg">ROPA Management</span>
+            <span className="text-slate-700 font-bold text-lg">ROPA Management</span>
           </div>
 
           <div className="bg-white rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
@@ -157,7 +157,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-sm shadow-blue-200 mt-2"
+                className="w-full py-2.5 bg-blue-600 text-slate-700 text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-sm shadow-blue-200 mt-2"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -171,24 +171,25 @@ export default function LoginPage() {
             </form>
 
             {/* Demo accounts */}
-            <div className="px-8 pb-8">
-              <div className="border-t border-slate-100 pt-5">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                  Quick Demo Access
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {demoAccounts.map((acc) => (
-                    <button
-                      key={acc.email}
-                      type="button"
-                      onClick={() => quickLogin(acc.email)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium transition-all duration-150 hover:shadow-sm ${acc.color}`}
-                    >
-                      <span className="truncate">{acc.email}</span>
-                      <span className="ml-2 flex-shrink-0 opacity-70">{acc.role}</span>
-                    </button>
-                  ))}
-                </div>
+            <div className="px-8 pb-6 border-t border-slate-100 pt-4">
+              <p className="text-xs text-slate-400 mb-3">Quick Demo Access</p>
+              <div className="space-y-1.5">
+                {demoAccounts.map((a) => (
+                  <button
+                    key={a.email}
+                    type="button"
+                    onClick={async () => {
+                      setLoading(true);
+                      const ok = await login(a.email, 'Temp1234');
+                      setLoading(false);
+                      if (ok) router.push('/dashboard');
+                    }}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-xs transition-all hover:shadow-sm ${a.color}`}
+                  >
+                    <span className="font-medium">{a.email}</span>
+                    <span className="font-semibold">{a.role}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
