@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 const ShieldIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -42,12 +44,50 @@ export default function LoginPage() {
   // LOGIN : handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
-    const ok = await login(email, password || 'Temp1234');
-    setLoading(false);
-    if (ok) router.push('/dashboard');
-    else setError('Account not found. Use a demo email below.');
+
+    try {
+      const ok = await login(email, password || "Temp1234");
+
+      if (!ok) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      const { data: sessionData } = await supabase.auth.getSession();
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        setError("User not found");
+        return;
+      }
+
+      // ✅ Check password_change flag
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("password_change")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error) throw new Error(error.message);
+
+      // ✅ Decide route BEFORE navigating
+      if (!profile?.password_change) {
+        router.replace("/change-password");
+      } else {
+        router.replace("/dashboard");
+      }
+
+    } catch (err: any) {
+      console.error("LOGIN ERROR:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

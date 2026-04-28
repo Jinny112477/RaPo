@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 import { useRopa } from '@/lib/ropaContext';
 import { Plus } from "lucide-react";
 
