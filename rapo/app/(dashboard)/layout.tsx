@@ -6,12 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useSidebar } from '@/lib/sidebarContext';
 import { Sidebar } from '@/components/Sidebar';
 import { Topbar } from '@/components/Topbar';
+import { RopaProvider } from '@/lib/ropaContext'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth();
   const { isCollapsed } = useSidebar();
   const router = useRouter();
 
+  //คอมเม้นไว้ชั่วคราวจะได้พิมพ์ path ได้
   // useEffect(() => {
   //   if (!isLoading && !user) {
   //     router.push('/login');
@@ -60,7 +62,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             isCollapsed ? 'lg:ml-[64px]' : 'lg:ml-[240px]',
           ].join(' ')}
         >
-          <div className="p-5 lg:p-6 h-full">{children}</div>
+          <RopaProvider>
+            <div className="p-5 lg:p-6 h-full">{children}</div>
+          </RopaProvider>
         </main>
       </div>
     </div>
