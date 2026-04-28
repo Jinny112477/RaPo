@@ -1,9 +1,9 @@
-import { RopaForm } from '@/components/RopaForm'
+import RopaDCForm from '@/components/RopaDCForm'
 
 export default function CreateRopaPage() {
   return (
-    <div className="p-6">
-      <RopaForm />
+    <div className="max-w-2xl mx-auto">      
+      <RopaDCForm />
     </div>
   )
 }

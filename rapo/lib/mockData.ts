@@ -1,8 +1,10 @@
 import { Activity, User, Notification, DashboardStats } from '@/types';
+import { DpRecord } from '@/types';
 
 export const mockActivities: Activity[] = [
   {
     id: 'ACT-001',
+    formType: 'controller' as const,
     department: 'ฝ่ายทรัพยากรบุคคล',
     activityName: 'การจัดเก็บข้อมูลพนักงาน',
     purpose: 'เพื่อบริหารจัดการข้อมูลพนักงานและการจ่ายเงินเดือน',
@@ -19,6 +21,7 @@ export const mockActivities: Activity[] = [
   },
   {
     id: 'ACT-002',
+    formType: 'controller' as const,
     department: 'ฝ่ายการตลาด',
     activityName: 'การจัดงาน Event และกิจกรรมส่งเสริมการขาย',
     purpose: 'เพื่อเก็บข้อมูลผู้เข้าร่วมงานและประชาสัมพันธ์',
@@ -33,6 +36,60 @@ export const mockActivities: Activity[] = [
     updatedAt: '2567-03-14',
     owner: 'meimei',
   },
+  {
+    id: 'ACT-003',
+    formType: 'controller' as const,
+    department: 'ฝ่ายการตลาด',
+    activityName: 'ทดสอบ DP Flow',
+    purpose: 'test',
+    legalBasis: 'ฐานความยินยอม (Consent)',
+    dataSubject: ['ลูกค้า'],
+    personalData: ['ชื่อ-นามสกุล'],
+    processing: ['การเก็บรวบรวม'],
+    riskLevel: 'LOW',
+    retentionPeriod: '5 ปี',
+    status: 'ACTIVE',
+    createdAt: '2567-03-01',
+    updatedAt: '2567-03-15',
+    owner: 'meimei',
+  },
+  // สำหรับทดสอบสถานะ REJECTED
+  {
+    id: 'ACT-004',
+    formType: 'controller' as const,
+    department: 'ฝ่ายทรัพยากรบุคคล',
+    activityName: 'การประเมินผลพนักงานประจำปี',
+    purpose: 'เพื่อประเมินผลการปฏิบัติงาน',
+    legalBasis: 'ฐานสัญญา (Contract)',
+    dataSubject: ['พนักงาน'],
+    personalData: ['ชื่อ-นามสกุล'],
+    processing: ['การเก็บรวบรวม'],
+    riskLevel: 'LOW',
+    retentionPeriod: '5 ปี',
+    status: 'REJECTED',
+    rejectionReason: 'ฐานกฎหมายไม่ครบถ้วน กรุณาระบุเพิ่มเติม',
+    createdAt: '2567-03-20',
+    updatedAt: '2567-03-22',
+    owner: 'meimei',
+  },
+  // สำหรับทดสอบสถานะ DRAFT
+  {
+  id: 'ACT-005',
+    formType: 'controller' as const,
+  department: 'ฝ่ายการตลาด',
+  activityName: 'การเก็บข้อมูลแบบสอบถามออนไลน์',
+  purpose: 'เพื่อสำรวจความพึงพอใจลูกค้า',
+  legalBasis: 'ฐานความยินยอม (Consent)',
+  dataSubject: ['ลูกค้า'],
+  personalData: ['ชื่อ-นามสกุล', 'อีเมล'],
+  processing: ['การเก็บรวบรวม'],
+  riskLevel: 'LOW',
+  retentionPeriod: '1 ปี',
+  status: 'DRAFT',
+  createdAt: '2568-03-20',
+  updatedAt: '2568-03-20',
+  owner: 'meimei',
+},
 ];
 
 export const mockUsers: User[] = [
@@ -41,7 +98,7 @@ export const mockUsers: User[] = [
     name: 'jikko',
     email: 'jikko@company.com',
     role: 'admin',
-    department: 'IT',
+    department: '',
     avatarInitials: 'JK',
     status: 'active',
     createdAt: '2567-06-01',
@@ -61,7 +118,7 @@ export const mockUsers: User[] = [
     name: 'jin',
     email: 'jin@company.com',
     role: 'dpo',
-    department: 'กฎหมาย',
+    department: '',
     avatarInitials: 'JN',
     status: 'active',
     createdAt: '2567-05-20',
@@ -71,7 +128,7 @@ export const mockUsers: User[] = [
     name: 'kk',
     email: 'kk@company.com',
     role: 'auditor',
-    department: 'ตรวจสอบ',
+    department: '',
     avatarInitials: 'KK',
     status: 'active',
     createdAt: '2567-09-10',
@@ -81,7 +138,7 @@ export const mockUsers: User[] = [
     name: 'somshy',
     email: 'somshy@company.com',
     role: 'executive',
-    department: 'ผู้บริหาร',
+    department: '',
     avatarInitials: 'SS',
     status: 'active',
     createdAt: '2567-04-01',
@@ -138,4 +195,36 @@ export const PROCESSING_ACTIVITIES = [
 export const RETENTION_PERIODS = [
   '5 ปี',
   '7 ปี',
+];
+
+export const mockDpRecords: DpRecord[] = [
+  {
+    id: 'DP-001',
+    activityId: 'ACT-003',
+    processorName: 'บริษัท kk Solutions จำกัด',
+    purpose: 'ประมวลผลข้อมูลลูกค้าเพื่อจัดงาน Event',
+    status: 'PENDING',
+    createdAt: '2568-03-15',
+    createdBy: 'meimei',
+  },
+  {
+    id: 'DP-002',
+    activityId: 'ACT-003',
+    processorName: 'Vendor Draft Test',
+    purpose: 'ทดสอบ draft',
+    status: 'DRAFT',
+    createdAt: '2568-03-16',
+    createdBy: 'meimei',
+  },
+  // เพิ่ม Mock Data สำหรับทดสอบสถานะ REJECTED
+  {
+    id: 'DP-003',
+    activityId: 'ACT-003',
+    processorName: 'บริษัท Data Analytics จำกัด',
+    purpose: 'วิเคราะห์พฤติกรรมลูกค้า',
+    status: 'REJECTED',
+    rejectionReason: 'วัตถุประสงค์ไม่ชัดเจน กรุณาEdit',
+    createdAt: '2568-03-17',
+    createdBy: 'meimei',
+  }
 ];
