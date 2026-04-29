@@ -894,6 +894,16 @@ export default function DPOReviewPage() {
           )}
         </div>
       )}
+
+      {/* Modals */}
+      {viewingDC && (
+        <DCModal activity={viewingDC} onClose={() => setViewingDCId(null)}
+          onApprove={handleDCApprove} onReject={handleDCReject} />
+      )}
+      {viewingDP && (
+        <DPModal dp={viewingDP} onClose={() => setViewingDPId(null)}
+          onApprove={handleDPApprove} onReject={handleDPReject} />
+      )}
     </div>
   );
 }

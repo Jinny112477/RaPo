@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Info } from 'lucide-react';
 import { notifyError } from '@/lib/notify';
 
-// ─── Types ──────────────────────────────────────────────────────────────────
+// ΓöÇΓöÇΓöÇ Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
 
 interface FormData {
   companyName: string;
@@ -73,43 +73,43 @@ const INIT: FormData = {
   purpose: '', legalBasis: [], legalBasisNote: '',
   dataSubjects: [], personalDataTypes: [], sensitiveData: [],
   collectionMethods: [], otherDataNote: '',
-  retentionValue: '', retentionUnit: 'ปี', retentionCriteria: '',
+  retentionValue: '', retentionUnit: 'α╕¢α╕╡', retentionCriteria: '',
   deletionMethods: [], retentionNote: '',
   secOrg: '', secTech: '', secPhysical: '', secAccess: '', secResponsibility: '', secAudit: '',
 };
 
 const LEGAL_BASES = [
-  'ความยินยอม (Consent)',
-  'การปฏิบัติตามสัญญา (Contract)',
-  'ประโยชน์โดยชอบด้วยกฎหมาย (Legitimate Interest)',
-  'การปฏิบัติหน้าที่ตามกฎหมาย (Legal Obligation)',
-  'ภารกิจสาธารณะ (Public Task)',
-  'ประโยชน์สำคัญต่อชีวิต (Vital Interest)',
+  'α╕äα╕ºα╕▓α╕íα╕óα╕┤α╕Öα╕óα╕¡α╕í (Consent)',
+  'α╕üα╕▓α╕úα╕¢α╕Åα╕┤α╕Üα╕▒α╕òα╕┤α╕òα╕▓α╕íα╕¬α╕▒α╕ìα╕ìα╕▓ (Contract)',
+  'α╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╣éα╕öα╕óα╕èα╕¡α╕Üα╕öα╣ëα╕ºα╕óα╕üα╕Äα╕½α╕íα╕▓α╕ó (Legitimate Interest)',
+  'α╕üα╕▓α╕úα╕¢α╕Åα╕┤α╕Üα╕▒α╕òα╕┤α╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕òα╕▓α╕íα╕üα╕Äα╕½α╕íα╕▓α╕ó (Legal Obligation)',
+  'α╕áα╕▓α╕úα╕üα╕┤α╕êα╕¬α╕▓α╕ÿα╕▓α╕úα╕ôα╕░ (Public Task)',
+  'α╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╕¬α╕│α╕äα╕▒α╕ìα╕òα╣êα╕¡α╕èα╕╡α╕ºα╕┤α╕ò (Vital Interest)',
 ];
-const DATA_SUBJECTS = ['พนักงาน / ลูกจ้าง', 'ผู้สมัครงาน', 'ลูกค้า / ผู้ใช้บริการ', 'คู่ค้า / ผู้จัดจำหน่าย', 'อื่นๆ'];
+const DATA_SUBJECTS = ['α╕₧α╕Öα╕▒α╕üα╕çα╕▓α╕Ö / α╕Ñα╕╣α╕üα╕êα╣ëα╕▓α╕ç', 'α╕£α╕╣α╣ëα╕¬α╕íα╕▒α╕äα╕úα╕çα╕▓α╕Ö', 'α╕Ñα╕╣α╕üα╕äα╣ëα╕▓ / α╕£α╕╣α╣ëα╣âα╕èα╣ëα╕Üα╕úα╕┤α╕üα╕▓α╕ú', 'α╕äα╕╣α╣êα╕äα╣ëα╕▓ / α╕£α╕╣α╣ëα╕êα╕▒α╕öα╕êα╕│α╕½α╕Öα╣êα╕▓α╕ó', 'α╕¡α╕╖α╣êα╕Öα╣å'];
 const PERSONAL_DATA_TYPES = [
-  'ข้อมูลระบุตัวตน (ชื่อ, อีเมล, เบอร์โทร)',
-  'ข้อมูลทางการเงิน (เงินเดือน, บัญชีธนาคาร)',
-  'ข้อมูลสุขภาพ',
-  'ข้อมูลชีวภาพ (ลายนิ้วมือ, ใบหน้า)',
-  'ข้อมูลพฤติกรรม / การใช้งาน',
-  'ข้อมูลอ่อนไหวอื่นๆ (ศาสนา, เชื้อชาติ)',
+  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕úα╕░α╕Üα╕╕α╕òα╕▒α╕ºα╕òα╕Ö (α╕èα╕╖α╣êα╕¡, α╕¡α╕╡α╣Çα╕íα╕Ñ, α╣Çα╕Üα╕¡α╕úα╣îα╣éα╕ùα╕ú)',
+  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕▓α╕çα╕üα╕▓α╕úα╣Çα╕çα╕┤α╕Ö (α╣Çα╕çα╕┤α╕Öα╣Çα╕öα╕╖α╕¡α╕Ö, α╕Üα╕▒α╕ìα╕èα╕╡α╕ÿα╕Öα╕▓α╕äα╕▓α╕ú)',
+  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╕╕α╕éα╕áα╕▓α╕₧',
+  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕èα╕╡α╕ºα╕áα╕▓α╕₧ (α╕Ñα╕▓α╕óα╕Öα╕┤α╣ëα╕ºα╕íα╕╖α╕¡, α╣âα╕Üα╕½α╕Öα╣ëα╕▓)',
+  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕₧α╕ñα╕òα╕┤α╕üα╕úα╕úα╕í / α╕üα╕▓α╕úα╣âα╕èα╣ëα╕çα╕▓α╕Ö',
+  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╣êα╕¡α╕Öα╣äα╕½α╕ºα╕¡α╕╖α╣êα╕Öα╣å (α╕¿α╕▓α╕¬α╕Öα╕▓, α╣Çα╕èα╕╖α╣ëα╕¡α╕èα╕▓α╕òα╕┤)',
 ];
-const COLLECTION_METHODS = ['แบบฟอร์มออนไลน์', 'เอกสารกระดาษ', 'ระบบ HR / CRM', 'บุคคลที่สาม / API'];
+const COLLECTION_METHODS = ['α╣üα╕Üα╕Üα╕ƒα╕¡α╕úα╣îα╕íα╕¡α╕¡α╕Öα╣äα╕Ñα╕Öα╣î', 'α╣Çα╕¡α╕üα╕¬α╕▓α╕úα╕üα╕úα╕░α╕öα╕▓α╕⌐', 'α╕úα╕░α╕Üα╕Ü HR / CRM', 'α╕Üα╕╕α╕äα╕äα╕Ñα╕ùα╕╡α╣êα╕¬α╕▓α╕í / API'];
 const DELETION_METHODS = [
-  'ลบจากระบบดิจิทัล (Secure Delete)',
-  'ทำลายเอกสาร (Shredding)',
-  'ทำให้ไม่สามารถระบุตัวตนได้ (Anonymization)',
-  'โอนย้ายไปเก็บถาวร (Archiving)',
+  'α╕Ñα╕Üα╕êα╕▓α╕üα╕úα╕░α╕Üα╕Üα╕öα╕┤α╕êα╕┤α╕ùα╕▒α╕Ñ (Secure Delete)',
+  'α╕ùα╕│α╕Ñα╕▓α╕óα╣Çα╕¡α╕üα╕¬α╕▓α╕ú (Shredding)',
+  'α╕ùα╕│α╣âα╕½α╣ëα╣äα╕íα╣êα╕¬α╕▓α╕íα╕▓α╕úα╕ûα╕úα╕░α╕Üα╕╕α╕òα╕▒α╕ºα╕òα╕Öα╣äα╕öα╣ë (Anonymization)',
+  'α╣éα╕¡α╕Öα╕óα╣ëα╕▓α╕óα╣äα╕¢α╣Çα╕üα╣çα╕Üα╕ûα╕▓α╕ºα╕ú (Archiving)',
 ];
-const RETENTION_CRITERIA = ['กฎหมายกำหนด', 'นโยบายองค์กร', 'วัตถุประสงค์สิ้นสุด', 'อื่นๆ'];
+const RETENTION_CRITERIA = ['α╕üα╕Äα╕½α╕íα╕▓α╕óα╕üα╕│α╕½α╕Öα╕ö', 'α╕Öα╣éα╕óα╕Üα╕▓α╕óα╕¡α╕çα╕äα╣îα╕üα╕ú', 'α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕¬α╕┤α╣ëα╕Öα╕¬α╕╕α╕ö', 'α╕¡α╕╖α╣êα╕Öα╣å'];
 const STEPS = [
-  { id: 1, label: 'ข้อมูลองค์กร' },
-  { id: 2, label: 'วัตถุประสงค์' },
-  { id: 3, label: 'ประเภทข้อมูล' },
-  { id: 4, label: 'ระยะเวลาเก็บ' },
-  { id: 5, label: 'มาตรการ' },
-  { id: 6, label: 'สรุปและส่ง' },
+  { id: 1, label: 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╕çα╕äα╣îα╕üα╕ú' },
+  { id: 2, label: 'α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î' },
+  { id: 3, label: 'α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ' },
+  { id: 4, label: 'α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Ü' },
+  { id: 5, label: 'α╕íα╕▓α╕òα╕úα╕üα╕▓α╕ú' },
+  { id: 6, label: 'α╕¬α╕úα╕╕α╕¢α╣üα╕Ñα╕░α╕¬α╣êα╕ç' },
 ];
 
 const inp = 'w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all';
@@ -226,7 +226,7 @@ const parseRetention = (value?: string | null) => {
 
   if (parts.length === 2) {
     const [first, second] = parts;
-    if (/(ปี|เดือน|วัน)/.test(first) && !/^(ปี|เดือน|วัน)$/.test(second)) {
+    if (/(α╕¢α╕╡|α╣Çα╕öα╕╖α╕¡α╕Ö|α╕ºα╕▒α╕Ö)/.test(first) && !/^(α╕¢α╕╡|α╣Çα╕öα╕╖α╕¡α╕Ö|α╕ºα╕▒α╕Ö)$/.test(second)) {
       return { retentionValue: first, retentionUnit: '', retentionCriteria: second };
     }
     return { retentionValue: first, retentionUnit: second, retentionCriteria: '' };
@@ -234,24 +234,24 @@ const parseRetention = (value?: string | null) => {
 
   return {
     retentionValue: parts[0] || '',
-    retentionUnit: 'ปี',
+    retentionUnit: 'α╕¢α╕╡',
     retentionCriteria: '',
   };
 };
 
 const parseRetentionDurationParts = (value?: string | null) => {
   const raw = String(value || '');
-  const years = (raw.match(/(\d+)\s*ปี/)?.[1] || '').trim();
-  const months = (raw.match(/(\d+)\s*เดือน/)?.[1] || '').trim();
-  const days = (raw.match(/(\d+)\s*วัน/)?.[1] || '').trim();
+  const years = (raw.match(/(\d+)\s*α╕¢α╕╡/)?.[1] || '').trim();
+  const months = (raw.match(/(\d+)\s*α╣Çα╕öα╕╖α╕¡α╕Ö/)?.[1] || '').trim();
+  const days = (raw.match(/(\d+)\s*α╕ºα╕▒α╕Ö/)?.[1] || '').trim();
   return { years, months, days };
 };
 
 const buildRetentionDuration = (years: string, months: string, days: string) => {
   const parts = [
-    days ? `${days} วัน` : '',
-    months ? `${months} เดือน` : '',
-    years ? `${years} ปี` : '',
+    days ? `${days} α╕ºα╕▒α╕Ö` : '',
+    months ? `${months} α╣Çα╕öα╕╖α╕¡α╕Ö` : '',
+    years ? `${years} α╕¢α╕╡` : '',
   ].filter(Boolean);
 
   return parts.join(' ');
@@ -310,7 +310,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
           const detail = Array.isArray(response.detail)
             ? response.detail.join('\n')
             : response.detail;
-          notifyError(detail || response.error || 'โหลดแบบร่างไม่สำเร็จ');
+          notifyError(detail || response.error || 'α╣éα╕½α╕Ñα╕öα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
           return;
         }
 
@@ -358,7 +358,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         setRetentionDays(retentionParts.days);
       } catch (error) {
         console.error(error);
-        notifyError('โหลดแบบร่างไม่สำเร็จ');
+        notifyError('α╣éα╕½α╕Ñα╕öα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
       }
     };
 
@@ -421,7 +421,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
   const handleSaveDraft = async () => {
     try {
       if (!user?.id) {
-        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนบันทึกแบบร่าง');
+        notifyError('α╕üα╕úα╕╕α╕ôα╕▓α╣Çα╕éα╣ëα╕▓α╕¬α╕╣α╣êα╕úα╕░α╕Üα╕Üα╣âα╕½α╕íα╣êα╕üα╣êα╕¡α╕Öα╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕ç');
         return;
       }
 
@@ -439,7 +439,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
           departmentId: form.department,
           ...form,
           retentionValue: retentionDurationText,
-          retentionUnit: 'รวม',
+          retentionUnit: 'α╕úα╕ºα╕í',
           retentionPeriod: retentionPeriodPayload,
         }),
       });
@@ -448,7 +448,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
 
       if (!res.ok) {
         const detail = Array.isArray(data.detail) ? data.detail.join('\n') : data.detail;
-        notifyError(detail || data.error || 'บันทึกแบบร่างไม่สำเร็จ');
+        notifyError(detail || data.error || 'α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
         return;
       }
 
@@ -467,7 +467,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
     }
   };
 
-  const selectedDepartment = departments.find((d) => d.department_id === form.department)?.department_name || form.department || '—';
+  const selectedDepartment = departments.find((d) => d.department_id === form.department)?.department_name || form.department || 'ΓÇö';
 
   const handleSubmit = async () => {
     try {
@@ -483,7 +483,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
           departmentId: form.department,
           ...form,
           retentionValue: retentionDurationText,
-          retentionUnit: 'รวม',
+          retentionUnit: 'α╕úα╕ºα╕í',
           retentionPeriod: retentionPeriodPayload,
         }),
       });
@@ -512,14 +512,14 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold text-gray-800 mb-1">ส่งข้อมูลเรียบร้อยแล้ว</h3>
-        <p className="text-sm text-gray-500 mb-5">กิจกรรมถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
+        <h3 className="text-lg font-bold text-gray-800 mb-1">α╕¬α╣êα╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕úα╕╡α╕óα╕Üα╕úα╣ëα╕¡α╕óα╣üα╕Ñα╣ëα╕º</h3>
+        <p className="text-sm text-gray-500 mb-5">α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕ûα╕╣α╕üα╕¬α╣êα╕çα╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕êα╕▓α╕ü DPO</p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <button
             onClick={() => router.push('/dc/my-ropa')}
             className="px-5 py-2 bg-white border border-blue-200 text-blue-700 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors"
           >
-            ไปหน้า My Activity
+            α╣äα╕¢α╕½α╕Öα╣ëα╕▓ My Activity
           </button>
           <button onClick={() => {
             setStep(1);
@@ -530,7 +530,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
             setRetentionDays('');
           }}
             className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-            สร้างกิจกรรมใหม่
+            α╕¬α╕úα╣ëα╕▓α╕çα╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╣âα╕½α╕íα╣ê
           </button>
         </div>
       </div>
@@ -572,7 +572,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         </div>
         <div className="mt-6 flex items-center gap-2">
           <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-            ส่วนที่ {step}/{STEPS.length}
+            α╕¬α╣êα╕ºα╕Öα╕ùα╕╡α╣ê {step}/{STEPS.length}
           </span>
           <span className="text-xs text-gray-500">{STEPS[step - 1].label}</span>
           <span className="ml-auto flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
@@ -584,15 +584,15 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       {/* Step 1 */}
       {step === 1 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={1} title="ข้อมูลองค์กร / เจ้าของกิจกรรม" sub="ผู้รับผิดชอบและรายละเอียดกิจกรรม" />
+          <SectionHeader step={1} title="α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╕çα╕äα╣îα╕üα╕ú / α╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕üα╕┤α╕êα╕üα╕úα╕úα╕í" sub="α╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╣üα╕Ñα╕░α╕úα╕▓α╕óα╕Ñα╕░α╣Çα╕¡α╕╡α╕óα╕öα╕üα╕┤α╕êα╕üα╕úα╕úα╕í" />
           <div className="space-y-3 mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="ชื่อบริษัท / องค์กร" required>
+              <Field label="α╕èα╕╖α╣êα╕¡α╕Üα╕úα╕┤α╕⌐α╕▒α╕ù / α╕¡α╕çα╕äα╣îα╕üα╕ú" required>
                 <input type="text" value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="ABC Co., Ltd." className={inp} />
               </Field>
-              <Field label="แผนก / ฝ่ายที่รับผิดชอบ" required>
+              <Field label="α╣üα╕£α╕Öα╕ü / α╕¥α╣êα╕▓α╕óα╕ùα╕╡α╣êα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Ü" required>
                 <select value={form.department} onChange={e => set('department', e.target.value)} className={inp}>
-                  <option value="">เลือกแผนก</option>
+                  <option value="">α╣Çα╕Ñα╕╖α╕¡α╕üα╣üα╕£α╕Öα╕ü</option>
                   {departments.map((department) => (
                     <option key={department.department_id} value={department.department_id}>
                       {department.department_name}
@@ -601,23 +601,23 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
                 </select>
               </Field>
             </div>
-            <Field label="ลักษณะกิจกรรมการประมวลผล" required>
-              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} placeholder="การบันทึกข้อมูลเพื่อการสมัครงานและออกจากงาน" className={inp} />
+            <Field label="α╕Ñα╕▒α╕üα╕⌐α╕ôα╕░α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" required>
+              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} placeholder="α╕üα╕▓α╕úα╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕₧α╕╖α╣êα╕¡α╕üα╕▓α╕úα╕¬α╕íα╕▒α╕äα╕úα╕çα╕▓α╕Öα╣üα╕Ñα╕░α╕¡α╕¡α╕üα╕êα╕▓α╕üα╕çα╕▓α╕Ö" className={inp} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="ผู้รับผิดชอบ (DATA OWNER)">
-                <input type="text" value={form.dataOwner} onChange={e => set('dataOwner', e.target.value)} placeholder="ชื่อ-สกุล" className={inp} />
+              <Field label="α╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Ü (DATA OWNER)">
+                <input type="text" value={form.dataOwner} onChange={e => set('dataOwner', e.target.value)} placeholder="α╕èα╕╖α╣êα╕¡-α╕¬α╕üα╕╕α╕Ñ" className={inp} />
               </Field>
-              <Field label="อีเมลผู้ลงบันทึก" required>
+              <Field label="α╕¡α╕╡α╣Çα╕íα╕Ñα╕£α╕╣α╣ëα╕Ñα╕çα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü" required>
                 <input type="email" value={form.recorderEmail} onChange={e => set('recorderEmail', e.target.value)} placeholder="email@company.com" className={inp} />
               </Field>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="วันที่/เดือน/ปีที่บันทึก">
+              <Field label="α╕ºα╕▒α╕Öα╕ùα╕╡α╣ê/α╣Çα╕öα╕╖α╕¡α╕Ö/α╕¢α╕╡α╕ùα╕╡α╣êα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü">
                 <input type="date" value={form.recordDate} onChange={e => set('recordDate', e.target.value)} className={inp} />
               </Field>
-              <Field label="เจ้าหน้าที่คุ้มครองข้อมูล (DPO)">
-                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="ชื่อ DPO" className={inp} />
+              <Field label="α╣Çα╕êα╣ëα╕▓α╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕äα╕╕α╣ëα╕íα╕äα╕úα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (DPO)">
+                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="α╕èα╕╖α╣êα╕¡ DPO" className={inp} />
               </Field>
             </div>
           </div>
@@ -627,18 +627,18 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       {/* Step 2 */}
       {step === 2 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={2} title="วัตถุประสงค์การประมวลผล" sub="ระบุวัตถุประสงค์และฐานทางกฎหมายที่ใช้" />
+          <SectionHeader step={2} title="α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" sub="α╕úα╕░α╕Üα╕╕α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╣üα╕Ñα╕░α╕Éα╕▓α╕Öα╕ùα╕▓α╕çα╕üα╕Äα╕½α╕íα╕▓α╕óα╕ùα╕╡α╣êα╣âα╕èα╣ë" />
           <div className="space-y-3 mt-3">
-            <Field label="วัตถุประสงค์ของการประมวลผล" required>
+            <Field label="α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕éα╕¡α╕çα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" required>
               <textarea rows={3} value={form.purpose} onChange={e => set('purpose', e.target.value)}
-                placeholder="เก็บรวบรวมข้อมูลเพื่อใช้ในการบริหารทรัพยากรบุคคล..." className={txa} />
+                placeholder="α╣Çα╕üα╣çα╕Üα╕úα╕ºα╕Üα╕úα╕ºα╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕₧α╕╖α╣êα╕¡α╣âα╕èα╣ëα╣âα╕Öα╕üα╕▓α╕úα╕Üα╕úα╕┤α╕½α╕▓α╕úα╕ùα╕úα╕▒α╕₧α╕óα╕▓α╕üα╕úα╕Üα╕╕α╕äα╕äα╕Ñ..." className={txa} />
             </Field>
-            <Field label="ฐานทางกฎหมาย (LEGAL BASIS)" required>
+            <Field label="α╕Éα╕▓α╕Öα╕ùα╕▓α╕çα╕üα╕Äα╕½α╕íα╕▓α╕ó (LEGAL BASIS)" required>
               <CheckGrid options={LEGAL_BASES} selected={form.legalBasis} onChange={v => set('legalBasis', v)} cols={2} />
             </Field>
-            <Field label="หมายเหตุเพิ่มเติม">
+            <Field label="α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕α╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í">
               <textarea rows={2} value={form.legalBasisNote} onChange={e => set('legalBasisNote', e.target.value)}
-                placeholder="ระบุรายละเอียดเพิ่มเติม (ถ้ามี)" className={txa} />
+                placeholder="α╕úα╕░α╕Üα╕╕α╕úα╕▓α╕óα╕Ñα╕░α╣Çα╕¡α╕╡α╕óα╕öα╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í (α╕ûα╣ëα╕▓α╕íα╕╡)" className={txa} />
             </Field>
           </div>
         </div>
@@ -647,19 +647,19 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       {/* Step 3 */}
       {step === 3 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={3} title="ประเภทข้อมูลและเจ้าของข้อมูล" sub="ประเภทผู้เป็นเจ้าของข้อมูลและกลุ่มข้อมูลที่ประมวลผล" />
+          <SectionHeader step={3} title="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣üα╕Ñα╕░α╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" sub="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕£α╕╣α╣ëα╣Çα╕¢α╣çα╕Öα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣üα╕Ñα╕░α╕üα╕Ñα╕╕α╣êα╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕╡α╣êα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" />
           <div className="space-y-3 mt-3">
-            <Field label="กลุ่มเจ้าของข้อมูล (DATA SUBJECT)" required>
+            <Field label="α╕üα╕Ñα╕╕α╣êα╕íα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (DATA SUBJECT)" required>
               <CheckGrid options={DATA_SUBJECTS} selected={form.dataSubjects} onChange={v => set('dataSubjects', v)} cols={2} />
             </Field>
-            <Field label="ประเภทข้อมูลส่วนบุคคลที่เก็บ" required>
+            <Field label="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñα╕ùα╕╡α╣êα╣Çα╕üα╣çα╕Ü" required>
               <CheckGrid options={PERSONAL_DATA_TYPES} selected={form.personalDataTypes} onChange={v => set('personalDataTypes', v)} cols={2} />
             </Field>
-            <Field label="ระบุข้อมูลเพิ่มเติม">
+            <Field label="α╕úα╕░α╕Üα╕╕α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í">
               <input type="text" value={form.otherDataNote} onChange={e => set('otherDataNote', e.target.value)}
-                placeholder="เช่น หมายเลขสัญชาติ, ที่อยู่, ประวัติการศึกษา" className={inp} />
+                placeholder="α╣Çα╕èα╣êα╕Ö α╕½α╕íα╕▓α╕óα╣Çα╕Ñα╕éα╕¬α╕▒α╕ìα╕èα╕▓α╕òα╕┤, α╕ùα╕╡α╣êα╕¡α╕óα╕╣α╣ê, α╕¢α╕úα╕░α╕ºα╕▒α╕òα╕┤α╕üα╕▓α╕úα╕¿α╕╢α╕üα╕⌐α╕▓" className={inp} />
             </Field>
-            <Field label="วิธีการเก็บรวบรวมข้อมูล" required>
+            <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣Çα╕üα╣çα╕Üα╕úα╕ºα╕Üα╕úα╕ºα╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
               <CheckGrid options={COLLECTION_METHODS} selected={form.collectionMethods} onChange={v => set('collectionMethods', v)} cols={2} />
             </Field>
           </div>
@@ -669,9 +669,9 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       {/* Step 4 */}
       {step === 4 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={4} title="ระยะเวลาเก็บรักษาข้อมูล" sub="กำหนดระยะเวลาและนโยบายการลบหรือทำลายข้อมูล" />
+          <SectionHeader step={4} title="α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓α╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" sub="α╕üα╕│α╕½α╕Öα╕öα╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣üα╕Ñα╕░α╕Öα╣éα╕óα╕Üα╕▓α╕óα╕üα╕▓α╕úα╕Ñα╕Üα╕½α╕úα╕╖α╕¡α╕ùα╕│α╕Ñα╕▓α╕óα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" />
           <div className="space-y-3 mt-3">
-            <Field label="ระยะเวลาเก็บรักษา" required>
+            <Field label="α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓" required>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div className="flex items-center gap-2">
                   <input
@@ -684,7 +684,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
                     placeholder="dd"
                     className={inp}
                   />
-                  <span className="text-sm text-gray-500 whitespace-nowrap">วัน</span>
+                  <span className="text-sm text-gray-500 whitespace-nowrap">α╕ºα╕▒α╕Ö</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -697,7 +697,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
                     placeholder="mm"
                     className={inp}
                   />
-                  <span className="text-sm text-gray-500 whitespace-nowrap">เดือน</span>
+                  <span className="text-sm text-gray-500 whitespace-nowrap">α╣Çα╕öα╕╖α╕¡α╕Ö</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <input
@@ -710,19 +710,19 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
                     placeholder="yyyy"
                     className={inp}
                   />
-                  <span className="text-sm text-gray-500 whitespace-nowrap">ปี</span>
+                  <span className="text-sm text-gray-500 whitespace-nowrap">α╕¢α╕╡</span>
                 </div>
               </div>
             </Field>
-            <Field label="เกณฑ์การกำหนดระยะเวลา" required>
+            <Field label="α╣Çα╕üα╕ôα╕æα╣îα╕üα╕▓α╕úα╕üα╕│α╕½α╕Öα╕öα╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓" required>
               <RadioGroup options={RETENTION_CRITERIA} value={form.retentionCriteria} onChange={v => set('retentionCriteria', v)} />
             </Field>
-            <Field label="วิธีการทำลายข้อมูลเมื่อครบกำหนด">
+            <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╕ùα╕│α╕Ñα╕▓α╕óα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕íα╕╖α╣êα╕¡α╕äα╕úα╕Üα╕üα╕│α╕½α╕Öα╕ö">
               <CheckGrid options={DELETION_METHODS} selected={form.deletionMethods} onChange={v => set('deletionMethods', v)} cols={2} />
             </Field>
-            <Field label="หมายเหตุเพิ่มเติม">
+            <Field label="α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕α╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í">
               <textarea rows={2} value={form.retentionNote} onChange={e => set('retentionNote', e.target.value)}
-                placeholder="เช่น เอกสารที่เกี่ยวข้องควรจะเก็บไว้ไม่กี่วันก่อนที่จะลบ..." className={txa} />
+                placeholder="α╣Çα╕èα╣êα╕Ö α╣Çα╕¡α╕üα╕¬α╕▓α╕úα╕ùα╕╡α╣êα╣Çα╕üα╕╡α╣êα╕óα╕ºα╕éα╣ëα╕¡α╕çα╕äα╕ºα╕úα╕êα╕░α╣Çα╕üα╣çα╕Üα╣äα╕ºα╣ëα╣äα╕íα╣êα╕üα╕╡α╣êα╕ºα╕▒α╕Öα╕üα╣êα╕¡α╕Öα╕ùα╕╡α╣êα╕êα╕░α╕Ñα╕Ü..." className={txa} />
             </Field>
           </div>
         </div>
@@ -731,31 +731,31 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       {/* Step 5 */}
       {step === 5 && (
         <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={5} title="มาตรการรักษาความปลอดภัย" sub="คำอธิบายมาตรการที่ใช้ปกป้องข้อมูล" />
+          <SectionHeader step={5} title="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕úα╕▒α╕üα╕⌐α╕▓α╕äα╕ºα╕▓α╕íα╕¢α╕Ñα╕¡α╕öα╕áα╕▒α╕ó" sub="α╕äα╕│α╕¡α╕ÿα╕┤α╕Üα╕▓α╕óα╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕ùα╕╡α╣êα╣âα╕èα╣ëα╕¢α╕üα╕¢α╣ëα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-            <Field label="มาตรการเชิงองค์กร (Organizational)">
+            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╣Çα╕èα╕┤α╕çα╕¡α╕çα╕äα╣îα╕üα╕ú (Organizational)">
               <textarea rows={3} value={form.secOrg} onChange={e => set('secOrg', e.target.value)}
-                placeholder="นโยบาย, การอบรม, PDPA committee..." className={txa} />
+                placeholder="α╕Öα╣éα╕óα╕Üα╕▓α╕ó, α╕üα╕▓α╕úα╕¡α╕Üα╕úα╕í, PDPA committee..." className={txa} />
             </Field>
-            <Field label="มาตรการเชิงเทคนิค (Technical)">
+            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╣Çα╕èα╕┤α╕çα╣Çα╕ùα╕äα╕Öα╕┤α╕ä (Technical)">
               <textarea rows={3} value={form.secTech} onChange={e => set('secTech', e.target.value)}
                 placeholder="Encryption, Firewall, 2FA..." className={txa} />
             </Field>
-            <Field label="มาตรการทางกายภาพ (Physical)">
+            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕ùα╕▓α╕çα╕üα╕▓α╕óα╕áα╕▓α╕₧ (Physical)">
               <textarea rows={3} value={form.secPhysical} onChange={e => set('secPhysical', e.target.value)}
-                placeholder="ระบบล็อค, CCTV, บัตรผ่าน..." className={txa} />
+                placeholder="α╕úα╕░α╕Üα╕Üα╕Ñα╣çα╕¡α╕ä, CCTV, α╕Üα╕▒α╕òα╕úα╕£α╣êα╕▓α╕Ö..." className={txa} />
             </Field>
-            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)">
+            <Field label="α╕üα╕▓α╕úα╕äα╕ºα╕Üα╕äα╕╕α╕íα╕üα╕▓α╕úα╣Çα╕éα╣ëα╕▓α╕ûα╕╢α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (Access Control)">
               <textarea rows={3} value={form.secAccess} onChange={e => set('secAccess', e.target.value)}
                 placeholder="Role-based access, Audit log..." className={txa} />
             </Field>
-            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน">
+            <Field label="α╕üα╕▓α╕úα╕üα╕│α╕½α╕Öα╕öα╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕äα╕ºα╕▓α╕íα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╕éα╕¡α╕çα╕£α╕╣α╣ëα╣âα╕èα╣ëα╕çα╕▓α╕Ö">
               <textarea rows={3} value={form.secResponsibility} onChange={e => set('secResponsibility', e.target.value)}
-                placeholder="กำหนด role, สิทธิ์การใช้งาน, ผู้รับผิดชอบแต่ละระบบ..." className={txa} />
+                placeholder="α╕üα╕│α╕½α╕Öα╕ö role, α╕¬α╕┤α╕ùα╕ÿα╕┤α╣îα╕üα╕▓α╕úα╣âα╕èα╣ëα╕çα╕▓α╕Ö, α╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╣üα╕òα╣êα╕Ñα╕░α╕úα╕░α╕Üα╕Ü..." className={txa} />
             </Field>
-            <Field label="มาตรการตรวจสอบย้อนหลัง">
+            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕óα╣ëα╕¡α╕Öα╕½α╕Ñα╕▒α╕ç">
               <textarea rows={3} value={form.secAudit} onChange={e => set('secAudit', e.target.value)}
-                placeholder="Audit log, การทบทวนสิทธิ์ประจำปี..." className={txa} />
+                placeholder="Audit log, α╕üα╕▓α╕úα╕ùα╕Üα╕ùα╕ºα╕Öα╕¬α╕┤α╕ùα╕ÿα╕┤α╣îα╕¢α╕úα╕░α╕êα╕│α╕¢α╕╡..." className={txa} />
             </Field>
           </div>
         </div>
@@ -765,29 +765,29 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       {step === 6 && (
         <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
           <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <p className="text-sm font-bold text-gray-800">สรุปข้อมูลก่อนส่ง</p>
-            <p className="text-xs text-gray-500">กรุณาตรวจสอบความถูกต้องก่อนส่งเพื่อรออนุมัติจาก DPO</p>
+            <p className="text-sm font-bold text-gray-800">α╕¬α╕úα╕╕α╕¢α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕ç</p>
+            <p className="text-xs text-gray-500">α╕üα╕úα╕╕α╕ôα╕▓α╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕äα╕ºα╕▓α╕íα╕ûα╕╣α╕üα╕òα╣ëα╕¡α╕çα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕çα╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕¡α╕Öα╕╕α╕íα╕▒α╕òα╕┤α╕êα╕▓α╕ü DPO</p>
           </div>
           <div className="p-5 space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <p className="text-xs text-gray-400 mb-0.5">บริษัท / องค์กร</p>
-                <p className="text-sm font-semibold text-gray-800">{form.companyName || '—'}</p>
+                <p className="text-xs text-gray-400 mb-0.5">α╕Üα╕úα╕┤α╕⌐α╕▒α╕ù / α╕¡α╕çα╕äα╣îα╕üα╕ú</p>
+                <p className="text-sm font-semibold text-gray-800">{form.companyName || 'ΓÇö'}</p>
                 <p className="text-xs text-gray-500">{selectedDepartment}</p>
               </div>
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <p className="text-xs text-gray-400 mb-0.5">ผู้บันทึก</p>
-                <p className="text-sm font-semibold text-gray-800">{form.recorderEmail || '—'}</p>
-                <p className="text-xs text-gray-500">{form.recordDate || '—'}</p>
+                <p className="text-xs text-gray-400 mb-0.5">α╕£α╕╣α╣ëα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü</p>
+                <p className="text-sm font-semibold text-gray-800">{form.recorderEmail || 'ΓÇö'}</p>
+                <p className="text-xs text-gray-500">{form.recordDate || 'ΓÇö'}</p>
               </div>
             </div>
             <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
-              <p className="text-xs text-blue-500 mb-0.5 font-medium">กิจกรรมการประมวลผล</p>
-              <p className="text-sm font-bold text-gray-800">{form.activityName || '—'}</p>
+              <p className="text-xs text-blue-500 mb-0.5 font-medium">α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ</p>
+              <p className="text-sm font-bold text-gray-800">{form.activityName || 'ΓÇö'}</p>
             </div>
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
-              <p className="text-xs text-gray-400 font-medium">วัตถุประสงค์</p>
-              <p className="text-sm text-gray-700">{form.purpose || '—'}</p>
+              <p className="text-xs text-gray-400 font-medium">α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î</p>
+              <p className="text-sm text-gray-700">{form.purpose || 'ΓÇö'}</p>
               <div className="flex flex-wrap gap-1.5">
                 {form.legalBasis.map(l => (
                   <span key={l} className="text-xs px-2.5 py-0.5 bg-blue-100 border border-blue-200 rounded-full text-blue-700">{l}</span>
@@ -795,7 +795,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
               </div>
             </div>
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-1.5 font-medium">กลุ่มเจ้าของข้อมูล</p>
+              <p className="text-xs text-gray-400 mb-1.5 font-medium">α╕üα╕Ñα╕╕α╣êα╕íα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ</p>
               <div className="flex flex-wrap gap-1.5">
                 {form.dataSubjects.map(s => (
                   <span key={s} className="text-xs px-2.5 py-0.5 bg-white border border-gray-200 rounded-full text-gray-600">{s}</span>
@@ -803,15 +803,15 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
               </div>
             </div>
             <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-0.5 font-medium">ระยะเวลาเก็บรักษา</p>
+              <p className="text-xs text-gray-400 mb-0.5 font-medium">α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓</p>
               <p className="text-sm font-semibold text-gray-800">
-                {retentionDurationText || '—'}
-                {form.retentionCriteria && <span className="text-gray-400 font-normal ml-2">· {form.retentionCriteria}</span>}
+                {retentionDurationText || 'ΓÇö'}
+                {form.retentionCriteria && <span className="text-gray-400 font-normal ml-2">┬╖ {form.retentionCriteria}</span>}
               </p>
             </div>
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 leading-relaxed">
-              <span className="font-semibold block mb-0.5"><Info className="w-4 h-4" /> หมายเหตุ</span>
-              เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ&rdquo; และ DPO จะต้องตรวจสอบและอนุมัติก่อนจึงจะมีสถานะ Active
+              <span className="font-semibold block mb-0.5"><Info className="w-4 h-4" /> α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕</span>
+              α╣Çα╕íα╕╖α╣êα╕¡α╕¬α╣êα╕çα╣üα╕Ñα╣ëα╕º α╕¬α╕ûα╕▓α╕Öα╕░α╕êα╕░α╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Öα╣Çα╕¢α╣çα╕Ö &ldquo;α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Ü&rdquo; α╣üα╕Ñα╕░ DPO α╕êα╕░α╕òα╣ëα╕¡α╕çα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╣üα╕Ñα╕░α╕¡α╕Öα╕╕α╕íα╕▒α╕òα╕┤α╕üα╣êα╕¡α╕Öα╕êα╕╢α╕çα╕êα╕░α╕íα╕╡α╕¬α╕ûα╕▓α╕Öα╕░ Active
             </div>
           </div>
         </div>
@@ -822,29 +822,29 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         <button type="button" onClick={handleSaveDraft}
           className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
           {draftSaved
-            ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกแบบร่างแล้ว</span></>
-            : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>บันทึกแบบร่าง</>}
+            ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣üα╕Ñα╣ëα╕º</span></>
+            : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕ç</>}
         </button>
         <div className="flex items-center gap-2">
           {step > 1 && (
             <button type="button" onClick={() => setStep(s => s - 1)}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-              ย้อนกลับ
+              α╕óα╣ëα╕¡α╕Öα╕üα╕Ñα╕▒α╕Ü
             </button>
           )}
           {step < 6 ? (
             <button type="button" onClick={() => canNext() && setStep(s => s + 1)}
               disabled={!canNext()}
               className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              ถัดไป
+              α╕ûα╕▒α╕öα╣äα╕¢
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           ) : (
             <button type="button" onClick={handleSubmit}
               className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-              ยืนยันและส่ง
+              α╕óα╕╖α╕Öα╕óα╕▒α╕Öα╣üα╕Ñα╕░α╕¬α╣êα╕ç
             </button>
           )}
         </div>
