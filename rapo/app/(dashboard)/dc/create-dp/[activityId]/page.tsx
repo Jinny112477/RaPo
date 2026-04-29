@@ -8,7 +8,7 @@ export default function CreateDPPage() {
   const activityId = params?.activityId as string
 
   return (
-    <div className="p-6">
+    <div className="max-w-2xl mx-auto py-6">
       <RopaDPForm activityId={activityId} />
     </div>
   )
