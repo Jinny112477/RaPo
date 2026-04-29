@@ -5,6 +5,7 @@ import "./globals.css"
 import { AuthProvider } from "@/context/AuthContext"
 import { SidebarProvider } from "@/lib/sidebarContext"
 import { RopaProvider } from "@/lib/ropaContext"
+import AppToastHost from "@/components/ui/AppToastHost"
 
 
 const inter = Inter({
@@ -28,7 +29,8 @@ export default function RootLayout({
         <AuthProvider>
           <SidebarProvider>
             <RopaProvider>
-              {children}              
+              {children}
+              <AppToastHost />
             </RopaProvider>
           </SidebarProvider>
         </AuthProvider>

@@ -416,8 +416,33 @@ export default function RopaDCEditForm({ activity }: RopaDCEditFormProps) {
   const isCtrl = formType === 'controller';
 
   const canNext = () => {
-    if (step === 1) return rec.name.trim() !== '' && rec.email.trim() !== '';
-    if (step === 2) return mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
+    if (step === 1) {
+      return (
+        rec.name.trim() !== '' &&
+        rec.phone.trim() !== '' &&
+        rec.address.trim() !== '' &&
+        rec.email.trim() !== ''
+      );
+    }
+
+    if (step === 2) {
+      return (
+        mainActivity.trim() !== '' &&
+        processorName.trim() !== '' &&
+        ctrlAddress.trim() !== '' &&
+        subs.every(s =>
+          s.purpose.trim() !== '' &&
+          s.personalDataItems.length > 0 &&
+          s.dataCategory.length > 0 &&
+          s.dataType.length > 0 &&
+          s.collectionMethod.length > 0 &&
+          s.sourceFromOwner.trim() !== '' &&
+          s.legalBasis.length > 0 &&
+          s.retentionPeriod.trim() !== ''
+        )
+      );
+    }
+
     return true;
   };
 

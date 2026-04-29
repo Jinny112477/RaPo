@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { notifyError, notifySuccess } from "@/lib/notify";
 
 const DEPARTMENTS = [
   { department_id: "06315740-4498-4146-91a7-576504c4ad4a", department_name: "Information Technology" },
@@ -132,7 +133,7 @@ export default function UsersPage() {
       setActionModal(null);
       setSelectedUser(null);
     } catch (err: any) {
-      alert("Failed to update user: " + err.message);
+      notifyError("Failed to update user: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -153,7 +154,7 @@ export default function UsersPage() {
       setActionModal(null);
       setSelectedUser(null);
     } catch (err: any) {
-      alert("Failed to delete user: " + err.message);
+      notifyError("Failed to delete user: " + err.message);
     } finally {
       setSaving(false);
     }
