@@ -536,13 +536,13 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
               canRemove={subs.length > 1} />
           ))}
 
-          <button type="button" onClick={() => setSubs(prev => [...prev, newSub(prev.length)])}
+          {/* <button type="button" onClick={() => setSubs(prev => [...prev, newSub(prev.length)])}
             className="w-full flex items-center justify-center gap-2.5 py-4 border-2 border-dashed border-emerald-300 rounded-xl text-sm font-semibold text-emerald-600 hover:bg-emerald-50 hover:border-emerald-400 transition-all">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
             </svg>
             เพิ่มวัตถุประสงค์ย่อย
-          </button>
+          </button> */}
         </div>
       )}
 
