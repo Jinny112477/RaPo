@@ -86,7 +86,7 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Email address</label>
+              <label className="text-xs text-gray-600 font-medium text-slate-500 uppercase tracking-wider">Email address</label>
               <input
                 type="email"
                 value={email}
@@ -98,7 +98,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-500 uppercase tracking-wider">Password</label>
+              <label className="text-xs text-gray-600 font-medium text-slate-500 uppercase tracking-wider">Password</label>
               <div className="relative">
                 <input
                   type={showPw ? 'text' : 'password'}
