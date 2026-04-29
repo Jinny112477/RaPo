@@ -7,6 +7,9 @@ import {
   getMyAccessRequests,
   getPendingAccessRequests,
   rejectAccessRequest,
+  getAccessRequestById,
+  updateAccessRequest,
+  deleteAccessRequest,
 } from "../controllers/access.controller.js";
 
 const router = Router();
@@ -20,5 +23,9 @@ router.post("/request", createAccessRequest);
 
 router.patch("/:request_id/approve", approveAccessRequest);
 router.patch("/:request_id/reject", rejectAccessRequest);
+
+router.get("/:request_id", getAccessRequestById);
+router.put("/:request_id", updateAccessRequest);
+router.delete("/:request_id", deleteAccessRequest);
 
 export default router;

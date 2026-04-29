@@ -93,7 +93,9 @@ function DCModal({ activity, onClose, onApprove, onReject }: {
           <div>
             <p className="text-xs font-semibold text-blue-600 mb-0.5">DC Form</p>
             <h2 className="text-base font-bold text-gray-800">{activity.activityName}</h2>
-            <p className="text-xs text-gray-500">{activity.department} · {activity.id}</p>
+            <p className="text-xs text-gray-500">
+              {activity.department}
+            </p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-gray-100">
             <XIcon />
@@ -144,8 +146,7 @@ function DCModal({ activity, onClose, onApprove, onReject }: {
                   className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">
                   <XIcon /> ปฏิเสธ
                 </button>
-                <button onClick={() => onApprove(activity.id)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+                <button onClick={() => onApprove(activity.id)} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
                   <CheckIcon /> อนุมัติ
                 </button>
               </>
@@ -166,18 +167,14 @@ function DCModal({ activity, onClose, onApprove, onReject }: {
   );
 }
 
-// ─── Modal ดู DP ────────────────────────────────────────────────────────────────
 function DPModal({ dp, onClose, onApprove, onReject }: {
-  dp: DpRecord;
+  dp: DpRecordUI;
   onClose: () => void;
-  onApprove: (id: string) => void;
-  onReject: (id: string, reason: string) => void;
+  onApprove: (id: string) => void | Promise<void>;
+  onReject: (id: string, reason: string) => void | Promise<void>;
 }) {
-  // นำเข้า activities จาก Context เพื่อค้นหา DC record ที่ผูกอยู่
-  const { activities } = useRopa();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
-  const linkedActivity = activities.find(a => a.id === dp.activityId);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
@@ -186,69 +183,110 @@ function DPModal({ dp, onClose, onApprove, onReject }: {
           <div>
             <p className="text-xs font-semibold text-emerald-600 mb-0.5">DP Form</p>
             <h2 className="text-base font-bold text-gray-800">{dp.processorName}</h2>
-            <p className="text-xs text-gray-500">{dp.id} · ผูกกับ {dp.activityId}</p>
+            <p className="text-xs text-gray-500">
+              ผูกกับ {dp.activityName || 'ไม่พบชื่อกิจกรรม'}
+            </p>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-gray-100"><XIcon /></button>
+
+          <button onClick={onClose} className="p-1.5 rounded hover:bg-gray-100">
+            <XIcon />
+          </button>
         </div>
 
         <div className="p-6 space-y-4">
-          {/* DC record ที่ผูกอยู่ */}
-          {linkedActivity && (
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
-              <p className="text-xs font-semibold text-blue-600 mb-1">DC Record ที่ผูกอยู่</p>
-              <p className="text-sm font-medium text-gray-800">{linkedActivity.activityName}</p>
-              <p className="text-xs text-gray-500">{linkedActivity.department}</p>
-            </div>
-          )}
+          <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
+            <p className="text-xs font-semibold text-blue-600 mb-1">DC Record ที่ผูกอยู่</p>
+            <p className="text-sm font-medium text-gray-800">{dp.activityName}</p>
+            <p className="text-xs text-gray-500">{dp.activitySubject}</p>
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: 'ชื่อผู้ประมวลผล', value: dp.processorName },
+              { label: 'ที่อยู่ผู้ประมวลผล', value: dp.processorAddress },
               { label: 'วันที่สร้าง', value: dp.createdAt },
               { label: 'สร้างโดย', value: dp.createdBy },
               { label: 'สถานะ', value: dp.status },
+              { label: 'ฐานกฎหมายของ DC', value: dp.dcLegalBasis },
+              { label: 'ข้อมูลส่วนบุคคล', value: dp.dcPersonalData },
+              { label: 'วิธีเก็บข้อมูล', value: dp.dcMethod },
+              { label: 'ระยะเวลาจัดเก็บ DC', value: dp.dcRetention },
             ].map(f => (
               <div key={f.label} className="p-3 rounded-lg bg-gray-50 border border-gray-100">
                 <p className="text-xs text-gray-400 mb-1">{f.label}</p>
-                <p className="text-sm font-medium text-gray-700">{f.value}</p>
+                <p className="text-sm font-medium text-gray-700">{f.value || '-'}</p>
               </div>
             ))}
           </div>
+
           <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
-            <p className="text-xs text-gray-400 mb-1">วัตถุประสงค์</p>
+            <p className="text-xs text-gray-400 mb-1">วัตถุประสงค์ที่ DP ขอใช้</p>
             <p className="text-sm text-gray-700">{dp.purpose}</p>
           </div>
 
+          {dp.scope && (
+            <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <p className="text-xs text-gray-400 mb-1">ขอบเขตการใช้งาน</p>
+              <p className="text-sm text-gray-700 whitespace-pre-wrap">{dp.scope}</p>
+            </div>
+          )}
+
+          {dp.duration && (
+            <div className="p-3 rounded-lg bg-gray-50 border border-gray-100">
+              <p className="text-xs text-gray-400 mb-1">ระยะเวลาที่ขอใช้</p>
+              <p className="text-sm text-gray-700">{dp.duration}</p>
+            </div>
+          )}
+
           {rejecting && (
             <div>
-              <label className="text-sm font-medium text-gray-700">เหตุผลที่ปฏิเสธ <span className="text-red-500">*</span></label>
-              <textarea value={reason} onChange={e => setReason(e.target.value)}
-                rows={3} placeholder="ระบุเหตุผล..."
-                className="w-full mt-1 px-3 py-2 text-sm border border-red-200 rounded-lg bg-red-50 resize-none focus:outline-none focus:ring-1 focus:ring-red-400" />
+              <label className="text-sm font-medium text-gray-700">
+                เหตุผลที่ปฏิเสธ <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                value={reason}
+                onChange={e => setReason(e.target.value)}
+                rows={3}
+                placeholder="ระบุเหตุผล..."
+                className="w-full mt-1 px-3 py-2 text-sm border border-red-200 rounded-lg bg-red-50 resize-none focus:outline-none focus:ring-1 focus:ring-red-400"
+              />
             </div>
           )}
         </div>
 
         <div className="flex items-center justify-between px-6 py-4 border-t bg-gray-50 sticky bottom-0">
-          <button onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">ปิด</button>
+          <button onClick={onClose} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
+            ปิด
+          </button>
+
           <div className="flex gap-2">
             {!rejecting ? (
               <>
-                <button onClick={() => setRejecting(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100">
+                <button
+                  onClick={() => setRejecting(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100"
+                >
                   <XIcon /> ปฏิเสธ
                 </button>
-                <button onClick={() => onApprove(dp.id)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700">
+
+                <button
+                  onClick={() => onApprove(dp.id)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700"
+                >
                   <CheckIcon /> อนุมัติ
                 </button>
               </>
             ) : (
               <>
-                <button onClick={() => setRejecting(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">ยกเลิก</button>
-                <button onClick={() => reason.trim() && onReject(dp.id, reason)}
+                <button onClick={() => setRejecting(false)} className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-100">
+                  ยกเลิก
+                </button>
+
+                <button
+                  onClick={() => reason.trim() && onReject(dp.id, reason)}
                   disabled={!reason.trim()}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50">
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                >
                   <XIcon /> ยืนยันปฏิเสธ
                 </button>
               </>
@@ -260,21 +298,118 @@ function DPModal({ dp, onClose, onApprove, onReject }: {
   );
 }
 
+type ApiAccessRequest = {
+  request_id: string;
+  activity_id: string;
+  requested_by: string;
+  purpose: string;
+  scope?: string | null;
+  duration?: string | null;
+  processor_name?: string | null;
+  processor_address?: string | null;
+  approval_status: string;
+  created_at: string;
+  requester?: {
+    user_id?: string;
+    name?: string;
+    email?: string;
+  };
+  activity?: {
+    activity_id: string;
+    activity_name?: string;
+    activity_subject?: string;
+    purpose?: string;
+    source?: {
+      name?: string;
+    };
+    legal_basis?: {
+      name?: string;
+    };
+    obtaining_data?: {
+      name?: string;
+    };
+    obtaining_method_detail?: {
+      name?: string;
+    };
+    policy?: {
+      retention_period?: string;
+    };
+  };
+};
+
+type DpRecordUI = DpRecord & {
+  activityName?: string;
+  activitySubject?: string;
+  processorAddress?: string | null;
+  dcPurpose?: string;
+  dcSource?: string;
+  dcLegalBasis?: string;
+  dcPersonalData?: string;
+  dcMethod?: string;
+  dcRetention?: string;
+  scope?: string | null;
+  duration?: string | null;
+};
+const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
+  return {
+    id: item.request_id,
+    activityId: item.activity_id,
+
+    processorName:
+      item.processor_name ||
+      item.activity?.activity_subject ||
+      item.activity?.activity_name ||
+      'ไม่ระบุผู้ประมวลผล',
+
+    processorAddress: item.processor_address || '-',
+
+    purpose: item.purpose || '-',
+
+    status:
+      item.approval_status === 'approved'
+        ? 'APPROVED'
+        : item.approval_status === 'rejected'
+          ? 'REJECTED'
+          : 'PENDING',
+
+    createdBy:
+      item.requester?.name ||
+      item.requester?.email ||
+      'ไม่ระบุผู้สร้าง',
+
+    createdAt: item.created_at
+      ? new Date(item.created_at).toLocaleDateString('th-TH')
+      : '-',
+
+    activityName: item.activity?.activity_name || '-',
+    activitySubject: item.activity?.activity_subject || '-',
+    dcPurpose: item.activity?.purpose || '-',
+    dcSource: item.activity?.source?.name || '-',
+    dcLegalBasis: item.activity?.legal_basis?.name || '-',
+    dcPersonalData: item.activity?.obtaining_data?.name || '-',
+    dcMethod: item.activity?.obtaining_method_detail?.name || '-',
+    dcRetention: item.activity?.policy?.retention_period || '-',
+
+    scope: item.scope,
+    duration: item.duration,
+  } as DpRecordUI;
+};
+
 // ─── Main Page ──────────────────────────────────────────────────────────────────
 export default function DPOReviewPage() {
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
 
-  // ดึงข้อมูลและฟังก์ชันจาก Context
-  const { activities, dpRecords, updateDpRecord } = useRopa();
+  const { activities } = useRopa();
 
   const [dcQueue, setDcQueue] = useState<Activity[]>([]);
   const [dcLoading, setDcLoading] = useState(false);
   const [dcProcessed, setDcProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDC, setViewingDC] = useState<Activity | null>(null);
 
-  const [dpQueue, setDpQueue] = useState(dpRecords.filter(d => d.status === 'PENDING'));
+  const [dpQueue, setDpQueue] = useState<DpRecordUI[]>([]);
+  const [dpLoading, setDpLoading] = useState(false);
   const [dpProcessed, setDpProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
-  const [viewingDP, setViewingDP] = useState<DpRecord | null>(null);
+  const [viewingDP, setViewingDP] = useState<DpRecordUI | null>(null);
 
   const fetchPendingRopa = async () => {
     try {
@@ -303,6 +438,33 @@ export default function DPOReviewPage() {
     fetchPendingRopa();
   }, []);
 
+  const fetchPendingDPForms = async () => {
+    try {
+      setDpLoading(true);
+
+      const res = await fetch(`${API_URL}/api/access/pending`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('FETCH DP PENDING ERROR:', data);
+        alert(data.detail || data.error || 'โหลด DP Form ไม่สำเร็จ');
+        return;
+      }
+
+      const mapped = (data.data || []).map(mapAccessToDpRecord);
+      setDpQueue(mapped);
+    } catch (error) {
+      console.error(error);
+      alert('โหลด DP Form ไม่สำเร็จ');
+    } finally {
+      setDpLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingDPForms();
+  }, []);
+
   const handleDCApprove = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/approve`, {
@@ -329,7 +491,7 @@ export default function DPOReviewPage() {
       alert('อนุมัติไม่สำเร็จ');
     }
   };
-  
+
   const handleDCReject = async (id: string, reason: string) => {
     try {
       const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/reject`, {
@@ -357,19 +519,58 @@ export default function DPOReviewPage() {
     }
   };
 
-  // DP handlers (อัปเดตลง Global Context ด้วย)
-  const handleDPApprove = (id: string) => {
-    updateDpRecord(id, { status: 'APPROVED' });
-    setDpQueue(q => q.filter(d => d.id !== id));
-    setDpProcessed(p => [...p, { id, action: 'approved' }]);
-    setViewingDP(null);
+  const handleDPApprove = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/access/${id}/approve`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('APPROVE DP ERROR:', data);
+        alert(data.detail || data.error || 'อนุมัติ DP Form ไม่สำเร็จ');
+        return;
+      }
+
+      setDpQueue(q => q.filter(d => d.id !== id));
+      setDpProcessed(p => [...p, { id, action: 'approved' }]);
+      setViewingDP(null);
+    } catch (error) {
+      console.error(error);
+      alert('อนุมัติ DP Form ไม่สำเร็จ');
+    }
   };
-  
-  const handleDPReject = (id: string, reason: string) => {
-    updateDpRecord(id, { status: 'REJECTED', rejectionReason: reason });
-    setDpQueue(q => q.filter(d => d.id !== id));
-    setDpProcessed(p => [...p, { id, action: 'rejected' }]);
-    setViewingDP(null);
+
+  const handleDPReject = async (id: string, reason: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/access/${id}/reject`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('REJECT DP ERROR:', data);
+        alert(data.detail || data.error || 'ปฏิเสธ DP Form ไม่สำเร็จ');
+        return;
+      }
+
+      setDpQueue(q => q.filter(d => d.id !== id));
+      setDpProcessed(p => [...p, { id, action: 'rejected' }]);
+      setViewingDP(null);
+    } catch (error) {
+      console.error(error);
+      alert('ปฏิเสธ DP Form ไม่สำเร็จ');
+    }
   };
 
   return (
@@ -454,7 +655,7 @@ export default function DPOReviewPage() {
                 <div key={act.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-xs font-mono text-gray-400">{act.id}</span>
+                      <span className="text-xs text-gray-400">DC Form</span>
                       <RiskBadge level={act.riskLevel} />
                     </div>
                     <p className="text-sm font-semibold text-gray-800">{act.activityName}</p>
@@ -520,24 +721,29 @@ export default function DPOReviewPage() {
               </span>
             )}
           </div>
-          {dpQueue.length === 0 ? (
-            <div className="py-12 text-center text-gray-400 text-sm"> ไม่มี DP Form ที่รออนุมัติ</div>
+          {dpLoading ? (
+            <div className="py-12 text-center text-gray-400 text-sm">
+              กำลังโหลด DP Form...
+            </div>
+          ) : dpQueue.length === 0 ? (
+            <div className="py-12 text-center text-gray-400 text-sm">
+              ไม่มี DP Form ที่รออนุมัติ
+            </div>
           ) : (
             <div className="divide-y">
               {dpQueue.map(dp => {
-                const linked = activities.find(a => a.id === dp.activityId); // ใช้ activities จาก Context
                 return (
                   <div key={dp.id} className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-mono text-gray-400">{dp.id}</span>
+                        <span className="text-xs text-gray-400">DP Form</span>
                         <span className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-2 py-0.5 rounded-full">
-                          ผูกกับ {dp.activityId}
+                          ผูกกับ {dp.activityName || 'ไม่พบชื่อกิจกรรม'}
                         </span>
                       </div>
                       <p className="text-sm font-semibold text-gray-800">{dp.processorName}</p>
                       <p className="text-xs text-gray-400 mt-0.5">
-                        {linked?.activityName} · สร้างโดย {dp.createdBy} · {dp.createdAt}
+                        {dp.purpose} · สร้างโดย {dp.createdBy} · {dp.createdAt}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -565,24 +771,27 @@ export default function DPOReviewPage() {
               <div className="px-5 py-3 bg-gray-50">
                 <p className="text-xs font-semibold text-gray-500 uppercase">ดำเนินการแล้ว</p>
               </div>
-              {dpProcessed.map(({ id, action }) => {
-                const dp = dpRecords.find((d: DpRecord) => d.id === id); // ใช้ dpRecords จาก Context
-                if (!dp) return null;
-                return (
-                  <div key={id} className="flex items-center gap-3 px-5 py-3 border-t">
-                    <span className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${action === 'approved' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-500'}`}>
-                      {action === 'approved' ? <CheckIcon /> : <XIcon />}
-                    </span>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-800">{dp.processorName}</p>
-                      <p className="text-xs text-gray-400">{dp.activityId}</p>
-                    </div>
-                    <span className={`text-xs font-semibold ${action === 'approved' ? 'text-emerald-600' : 'text-red-500'}`}>
-                      {action === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'}
-                    </span>
+
+              {dpProcessed.map(({ id, action }) => (
+                <div key={id} className="flex items-center gap-3 px-5 py-3 border-t">
+                  <span className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${action === 'approved'
+                    ? 'bg-emerald-100 text-emerald-600'
+                    : 'bg-red-100 text-red-500'
+                    }`}>
+                    {action === 'approved' ? <CheckIcon /> : <XIcon />}
+                  </span>
+
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-gray-800">DP Form</p>
+                    <p className="text-xs text-gray-400">{id}</p>
                   </div>
-                );
-              })}
+
+                  <span className={`text-xs font-semibold ${action === 'approved' ? 'text-emerald-600' : 'text-red-500'
+                    }`}>
+                    {action === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>

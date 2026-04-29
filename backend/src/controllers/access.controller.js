@@ -18,6 +18,16 @@ const APPROVED_ROPA_SELECT = `
 
 const ACCESS_REQUEST_SELECT = `
   *,
+  requester:requested_by(
+    user_id,
+    name,
+    email
+  ),
+  approver:approve_by(
+    user_id,
+    name,
+    email
+  ),
   activity:activity_id(
     activity_id,
     activity_name,
@@ -95,7 +105,14 @@ export const getAvailableRopa = async (req, res) => {
 // Processor / DP ขอใช้ข้อมูลจาก ROPA ที่ approved แล้ว
 export const createAccessRequest = async (req, res) => {
   try {
-    const { activity_id, purpose, scope, duration } = req.body;
+    const {
+      activity_id,
+      purpose,
+      scope,
+      duration,
+      processor_name,
+      processor_address,
+    } = req.body;
     const requestedBy = getUserId(req);
 
     if (!activity_id) {
@@ -150,6 +167,8 @@ export const createAccessRequest = async (req, res) => {
         purpose,
         scope: scope || null,
         duration: duration || null,
+        processor_name: processor_name || null,
+        processor_address: processor_address || null,
         approval_status: "pending",
       })
       .select(ACCESS_REQUEST_SELECT)
@@ -330,5 +349,109 @@ export const rejectAccessRequest = async (req, res) => {
     });
   } catch (err) {
     return sendError(res, 500, "Reject access request failed", err.message);
+  }
+};
+
+// GET /api/access/:request_id
+export const getAccessRequestById = async (req, res) => {
+  try {
+    const { request_id } = req.params;
+
+    if (!request_id) {
+      return sendError(res, 400, "request_id is required");
+    }
+
+    const { data, error } = await supabase
+      .from("access_requests")
+      .select(ACCESS_REQUEST_SELECT)
+      .eq("request_id", request_id)
+      .single();
+
+    if (error) {
+      return sendError(res, 404, "Access request not found", error.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err) {
+    return sendError(res, 500, "Fetch access request failed", err.message);
+  }
+};
+
+// PUT /api/access/:request_id
+export const updateAccessRequest = async (req, res) => {
+  try {
+    const { request_id } = req.params;
+    const {
+      purpose,
+      scope,
+      duration,
+      approval_status,
+      processor_name,
+      processor_address,
+    } = req.body;
+
+    if (!request_id) {
+      return sendError(res, 400, "request_id is required");
+    }
+
+    const updateData = {
+      ...(purpose !== undefined ? { purpose } : {}),
+      ...(scope !== undefined ? { scope } : {}),
+      ...(duration !== undefined ? { duration } : {}),
+      ...(processor_name !== undefined ? { processor_name } : {}),
+      ...(processor_address !== undefined ? { processor_address } : {}),
+      ...(approval_status !== undefined ? { approval_status } : {}),
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("access_requests")
+      .update(updateData)
+      .eq("request_id", request_id)
+      .select(ACCESS_REQUEST_SELECT)
+      .single();
+
+    if (error) {
+      return sendError(res, 500, "Update access request failed", error.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Access request updated successfully",
+      data,
+    });
+  } catch (err) {
+    return sendError(res, 500, "Update access request failed", err.message);
+  }
+};
+
+// DELETE /api/access/:request_id
+export const deleteAccessRequest = async (req, res) => {
+  try {
+    const { request_id } = req.params;
+
+    if (!request_id) {
+      return sendError(res, 400, "request_id is required");
+    }
+
+    const { error } = await supabase
+      .from("access_requests")
+      .delete()
+      .eq("request_id", request_id);
+
+    if (error) {
+      return sendError(res, 500, "Delete access request failed", error.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Access request deleted successfully",
+      request_id,
+    });
+  } catch (err) {
+    return sendError(res, 500, "Delete access request failed", err.message);
   }
 };
