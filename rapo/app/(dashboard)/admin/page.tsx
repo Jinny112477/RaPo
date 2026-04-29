@@ -159,6 +159,7 @@ export default function UsersPage() {
     }
   };
 
+  // Users Filtered : handler
   const filteredUsers = users.filter((user) => {
     const matchSearch = [user.name, user.email, user.department_name, user.role]
       .join(" ").toLowerCase().includes(search.toLowerCase());
