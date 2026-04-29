@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Info } from 'lucide-react';
+import { Activity } from '@/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -166,14 +167,59 @@ function SectionHeader({ step, title, sub }: { step: number; title: string; sub:
   );
 }
 
-interface RopaFormProps {
+// interface RopaFormProps {
+//   onSubmit?: (data: Record<string, unknown>) => void;
+//   onSaveDraft?: (data: Record<string, unknown>) => void;
+// }
+
+type Props = {
+  initialData?: any; // หรือใช้ Activity ตามที่คุณต้องการ
+  readOnly?: boolean;
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
-}
+};
 
-export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
+const mapToFormData = (activity: any) => {
+  const sub = activity.subActivities?.[0] || {};
+
+  return {
+    companyName: activity.recorder?.name || '',
+    department: activity.department || '',
+    activityName: activity.activityName || '',
+    dataOwner: activity.dataOwnerName || '',
+    recorderEmail: activity.recorder?.email || '',
+    recordDate: activity.createdAt?.slice(0, 10) || '',
+    dpcName: '',
+
+    purpose: sub.purpose || '',
+    legalBasis: sub.legalBasis || [],
+    legalBasisNote: '',
+
+    dataSubjects: sub.dataCategory || [],
+    personalDataTypes: sub.dataType || [],
+    sensitiveData: [],
+
+    collectionMethods: sub.collectionMethod || [],
+    otherDataNote: '',
+
+    retentionValue: sub.retentionPeriod || '',
+    retentionUnit: 'ปี',
+    retentionCriteria: '',
+    deletionMethods: [],
+    retentionNote: '',
+
+    secOrg: activity.securityMeasures?.organizational || '',
+    secTech: activity.securityMeasures?.technical || '',
+    secPhysical: activity.securityMeasures?.physical || '',
+    secAccess: activity.securityMeasures?.accessControl || '',
+    secResponsibility: activity.securityMeasures?.userResponsibility || '',
+    secAudit: activity.securityMeasures?.auditTrail || '',
+  };
+};
+
+export default function RopaDCForm({ initialData, readOnly, onSubmit, onSaveDraft }: Props) {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(INIT);
+  const [form, setForm] = useState<FormData>(initialData ? mapToFormData(initialData) : INIT);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const { user } = useAuth();
@@ -182,8 +228,8 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
 
   const canNext = () => {
-    if (step === 1) return form.companyName.trim() && form.activityName.trim() && form.recorderEmail.trim();
-    if (step === 2) return form.purpose.trim() && form.legalBasis.length > 0;
+    if (step === 1) return (form.companyName || '').trim() && (form.activityName || '').trim() && (form.recorderEmail || '').trim();
+    if (step === 2) return (form.purpose || '').trim() && form.legalBasis.length > 0;
     if (step === 3) return form.dataSubjects.length > 0 && form.personalDataTypes.length > 0;
     return true;
   };
@@ -199,7 +245,13 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
       const res = await fetch(`${API_URL}/api/form/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id, formType: 'controller', ...form }),
+        body: JSON.stringify({
+          id: initialData?.id,          //บอกว่าเป็น update
+          userId: user?.id,
+          formType: 'controller',
+          status: 'pending',           //ส่งไป DPO review
+          ...form
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
@@ -228,7 +280,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="max-w-3xl mx-auto space-y-4 px-4">
 
       {/* Progress bar */}
       <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4">
@@ -265,6 +317,9 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
             ส่วนที่ {step}/{STEPS.length}
           </span>
           <span className="text-xs text-gray-500">{STEPS[step - 1].label}</span>
+          <span className="ml-auto flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+            Data Controller Form
+          </span>
         </div>
       </div>
 
@@ -282,7 +337,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               </Field>
             </div>
             <Field label="ลักษณะกิจกรรมการประมวลผล" required>
-              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} placeholder="การบันทึกข้อมูลเพื่อการสมัครงานและออกจากงาน" className={inp} />
+              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} disabled={readOnly} placeholder="การบันทึกข้อมูลเพื่อการสมัครงานและออกจากงาน" className={inp} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="ผู้รับผิดชอบ (DATA OWNER)">
@@ -296,8 +351,8 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <Field label="วันที่/เดือน/ปีที่บันทึก">
                 <input type="date" value={form.recordDate} onChange={e => set('recordDate', e.target.value)} className={inp} />
               </Field>
-              <Field label="เจ้าหน้าที่คุ้มครองข้อมูล (DPC)">
-                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="ชื่อ DPC" className={inp} />
+              <Field label="เจ้าหน้าที่คุ้มครองข้อมูล (DPO)">
+                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="ชื่อ DPO" className={inp} />
               </Field>
             </div>
           </div>

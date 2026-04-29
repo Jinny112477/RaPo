@@ -213,42 +213,59 @@ export default function DPOReviewPage() {
   const { activities, dpRecords, updateActivity, updateDpRecord } = useRopa();
 
   // เปลี่ยนมาใช้ข้อมูลจาก Context แทน mockData
-  const [dcQueue, setDcQueue] = useState(activities.filter(a => a.status === 'REVIEW'));
+  // const [dcQueue, setDcQueue] = useState(activities.filter(a => a.status === 'REVIEW'));
   const [dcProcessed, setDcProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
-  const [viewingDC, setViewingDC] = useState<Activity | null>(null);
+  const dcQueue = activities.filter(a => a.status === 'REVIEW');
+  const dpQueue = dpRecords.filter(d => d.status === 'PENDING');
+  // const [viewingDC, setViewingDC] = useState<Activity | null>(null);
 
-  const [dpQueue, setDpQueue] = useState(dpRecords.filter(d => d.status === 'PENDING'));
   const [dpProcessed, setDpProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
-  const [viewingDP, setViewingDP] = useState<DpRecord | null>(null);
+  // const [viewingDP, setViewingDP] = useState<DpRecord | null>(null);
+  const [viewingDCId, setViewingDCId] = useState<string | null>(null);
+  const [viewingDPId, setViewingDPId] = useState<string | null>(null);
+
+  const viewingDC = activities.find(a => a.id === viewingDCId) || null;
+  const viewingDP = dpRecords.find(d => d.id === viewingDPId) || null;
+
 
   // DC handlers (อัปเดตลง Global Context ด้วย)
+  // const handleDCApprove = (id: string) => {
+  //   updateActivity(id, { status: 'ACTIVE' });
+  //   // setDcQueue(q => q.filter(a => a.id !== id));
+  //   setDcProcessed(p => [...p, { id, action: 'approved' }]);
+  //   setViewingDC(null);
+  // };
   const handleDCApprove = (id: string) => {
     updateActivity(id, { status: 'ACTIVE' });
-    setDcQueue(q => q.filter(a => a.id !== id));
     setDcProcessed(p => [...p, { id, action: 'approved' }]);
-    setViewingDC(null);
+    setViewingDCId(null);
   };
-  
+
+  // const handleDCReject = (id: string, reason: string) => {
+  //   updateActivity(id, { status: 'REJECTED', rejectionReason: reason });
+  //   // setDcQueue(q => q.filter(a => a.id !== id));
+  //   setDcProcessed(p => [...p, { id, action: 'rejected' }]);
+  //   setViewingDC(null);
+  // };
   const handleDCReject = (id: string, reason: string) => {
     updateActivity(id, { status: 'REJECTED', rejectionReason: reason });
-    setDcQueue(q => q.filter(a => a.id !== id));
     setDcProcessed(p => [...p, { id, action: 'rejected' }]);
-    setViewingDC(null);
+    setViewingDCId(null);
   };
 
   // DP handlers (อัปเดตลง Global Context ด้วย)
   const handleDPApprove = (id: string) => {
     updateDpRecord(id, { status: 'APPROVED' });
-    setDpQueue(q => q.filter(d => d.id !== id));
+    // setDpQueue(q => q.filter(d => d.id !== id));
     setDpProcessed(p => [...p, { id, action: 'approved' }]);
-    setViewingDP(null);
+    setViewingDPId(null);;
   };
-  
+
   const handleDPReject = (id: string, reason: string) => {
     updateDpRecord(id, { status: 'REJECTED', rejectionReason: reason });
-    setDpQueue(q => q.filter(d => d.id !== id));
+    // setDpQueue(q => q.filter(d => d.id !== id));
     setDpProcessed(p => [...p, { id, action: 'rejected' }]);
-    setViewingDP(null);
+    setViewingDPId(null);;
   };
 
   return (
@@ -334,7 +351,7 @@ export default function DPOReviewPage() {
                     <p className="text-xs text-gray-400 mt-0.5">{act.department} · {act.owner} · {act.updatedAt}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setViewingDC(act)}
+                    <button onClick={() => setViewingDCId(act.id)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                       <EyeIcon /> ดู
                     </button>
@@ -342,7 +359,7 @@ export default function DPOReviewPage() {
                       className="p-2 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100" title="อนุมัติ">
                       <CheckIcon />
                     </button>
-                    <button onClick={() => setViewingDC(act)}
+                    <button onClick={() => setViewingDCId(act.id)}
                       className="p-2 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100" title="ปฏิเสธ">
                       <XIcon />
                     </button>
@@ -414,7 +431,7 @@ export default function DPOReviewPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setViewingDP(dp)}
+                      <button onClick={() => setViewingDPId(dp.id)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                         <EyeIcon /> ดู
                       </button>
@@ -422,7 +439,7 @@ export default function DPOReviewPage() {
                         className="p-2 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100" title="อนุมัติ">
                         <CheckIcon />
                       </button>
-                      <button onClick={() => setViewingDP(dp)}
+                      <button onClick={() => setViewingDPId(dp.id)}
                         className="p-2 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100" title="ปฏิเสธ">
                         <XIcon />
                       </button>
@@ -463,11 +480,11 @@ export default function DPOReviewPage() {
 
       {/* Modals */}
       {viewingDC && (
-        <DCModal activity={viewingDC} onClose={() => setViewingDC(null)}
+        <DCModal activity={viewingDC} onClose={() => setViewingDCId(null)}
           onApprove={handleDCApprove} onReject={handleDCReject} />
       )}
       {viewingDP && (
-        <DPModal dp={viewingDP} onClose={() => setViewingDP(null)}
+        <DPModal dp={viewingDP} onClose={() => setViewingDPId(null);}
           onApprove={handleDPApprove} onReject={handleDPReject} />
       )}
     </div>

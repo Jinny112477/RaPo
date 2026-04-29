@@ -115,9 +115,9 @@ const ChevronLeftIcon = () => (
 const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['Admin', 'Data Controller', 'DPO', 'Auditor', 'Executive'] },
   { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['Admin'] },
-  { label: 'My ROPA', href: '/dc/my-access', icon: <ListIcon />, roles: ['Data Controller', 'Admin'] },
+  { label: 'My ROPA', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['Data Controller', 'Admin'] },
   { label: 'Create ROPA', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['Admin', 'Data Controller'] },
-  { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['Admin'] },
+  { label: 'Processor', href: '/processor', icon: <ServerIcon />, roles: ['Admin', 'Data Controller'] },
   { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['Admin'] },
   { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['DPO'] },
   //{ label: 'Risk Assessment', href: '/dpo/risk', icon: <AlertTriangleIcon />, roles: ['DPO'] },

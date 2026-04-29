@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 // 1. ตรวจสอบให้แน่ใจว่า import useRopa มาแล้ว
 import { useRopa } from '@/lib/ropaContext'
 import { DpRecord } from '@/types';
@@ -21,7 +21,8 @@ export default function MyRopaPage() {
 
   // ── DC data ──────────────────────────────────────────────────────────────────
   // 3. เปลี่ยนไปใช้ activities จาก Context แทน mockActivities
-  const myDC = activities.filter(a => a.owner === user?.name);
+  const myDC = activities
+  // const myDC = activities.filter(a => a.userId === user?.id)
   const filteredDC = myDC.filter(a => {
     const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
