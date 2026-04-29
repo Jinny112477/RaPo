@@ -215,13 +215,13 @@ export default function MyRopaPage() {
                       )}
 
                       {/* ACTIVE — ปุ่ม Create DP Form */}
-                      {a.status === 'ACTIVE' && (
+                      {/* {a.status === 'ACTIVE' && (
                         <button
                           onClick={() => router.push(`/dc/create-dp/${a.id}`)}
                           className="text-xs text-emerald-600 border border-emerald-300 px-2.5 py-1 rounded hover:bg-emerald-50 transition">
                           Create DP Form
                         </button>
-                      )}
+                      )} */}
 
                       {/* 5. เพิ่มปุ่มลบ (เฉพาะ DRAFT และ REJECTED) */}
                       {(a.status === 'DRAFT' || a.status === 'REJECTED') && (
