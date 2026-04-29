@@ -490,20 +490,20 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Field label="ชื่อ-นามสกุล / ชื่อองค์กร" required>
               <input type="text" value={rec.name} onChange={e => setRec(r => ({ ...r, name: e.target.value }))}
-                placeholder="ชื่อผู้ลงบันทึก" className={inp} />
+                placeholder="" className={inp} />
             </Field>
             <Field label="เบอร์โทรศัพท์">
               <input type="tel" value={rec.phone} onChange={e => setRec(r => ({ ...r, phone: e.target.value }))}
-                placeholder="02-xxx-xxxx" className={inp} />
+                placeholder="" className={inp} />
             </Field>
           </div>
           <Field label="ที่อยู่">
             <textarea rows={2} value={rec.address} onChange={e => setRec(r => ({ ...r, address: e.target.value }))}
-              placeholder="ที่อยู่องค์กร" className={txa} />
+              placeholder="" className={txa} />
           </Field>
           <Field label="อีเมล" required>
             <input type="email" value={rec.email} onChange={e => setRec(r => ({ ...r, email: e.target.value }))}
-              placeholder="email@company.com" className={inp} />
+              placeholder="" className={inp} />
           </Field>
         </div>
       )}
@@ -516,16 +516,16 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <Field label="ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" required>
                 <input type="text" value={processorName} onChange={e => setProcessorName(e.target.value)}
-                  placeholder="ชื่อบริษัท / องค์กรผู้ประมวลผล" className={inp} />
+                  placeholder="" className={inp} />
               </Field>
               <Field label="ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" required>
                 <input type="text" value={ctrlAddress} onChange={e => setCtrlAddress(e.target.value)}
-                  placeholder="ที่อยู่ผู้ว่าจ้าง / ผู้ควบคุมข้อมูล" className={inp} />
+                  placeholder="" className={inp} />
               </Field>
             </div>
             <Field label="กิจกรรมการประมวลผลหลัก" required>
               <input type="text" value={mainActivity} onChange={e => setMainActivity(e.target.value)}
-                placeholder="เช่น เพื่อการปฏิบัติตามสัญญาระหว่างคู่ค้า" className={inp} />
+                placeholder="" className={inp} />
             </Field>
           </div>
 

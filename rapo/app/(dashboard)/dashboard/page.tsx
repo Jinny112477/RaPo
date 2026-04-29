@@ -1,3 +1,4 @@
+//หน้าactivity ทั้งหมดในระบบ
 'use client';
 
 import { useState } from 'react';
@@ -108,7 +109,11 @@ export default function DashboardPage() {
           <tbody className="text-sm text-gray-700">
             {filtered.length > 0 ? (
               filtered.map((a) => (
-                <tr key={a.id} className="border-t hover:bg-gray-50 transition">
+                <tr
+                  key={a.id}
+                  onClick={() => router.push(`/ropa/${a.id}`)}
+                  className="border-t hover:bg-gray-100 transition cursor-pointer"
+                >
                   <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
                   <td className="px-4 py-3 text-gray-500">{a.department}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{a.legalBasis}</td>
