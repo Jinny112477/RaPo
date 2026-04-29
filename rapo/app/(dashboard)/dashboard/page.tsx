@@ -64,7 +64,7 @@ const ActivityModal = ({ data, onClose, isDataOwner }: { data: any; onClose: () 
 };
 
 export default function DashboardPage() {
-  const { deleteActivity, activities } = useRopa();
+  const { } = useRopa();
   const { user, role, isLoading } = useAuth();
   const router = useRouter();
 

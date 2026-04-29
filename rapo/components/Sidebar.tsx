@@ -131,6 +131,7 @@ const navItems: NavItem[] = [
 const roleLabelMap: Record<Role, string> = {
   admin: 'Administrator',
   dataOwner: 'Data Owner',
+  customerService: 'Customer Service',
   dpo: 'Data Protection Officer',
   auditor: 'Auditor',
   executive: 'Executive',

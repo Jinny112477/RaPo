@@ -1049,7 +1049,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
             </button>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
