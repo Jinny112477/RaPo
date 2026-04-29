@@ -756,7 +756,7 @@ export default function DPOReviewPage() {
                     <p className="text-xs text-gray-400 mt-0.5">{getDepartmentName(act.department)} · {act.owner} · {act.updatedAt}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setViewingDC(act)}
+                    <button onClick={() => setViewingDCId(act.id)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                       <EyeIcon /> ดู
                     </button>
@@ -764,7 +764,7 @@ export default function DPOReviewPage() {
                       className="p-2 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100" title="อนุมัติ">
                       <CheckIcon />
                     </button>
-                    <button onClick={() => setViewingDC(act)}
+                    <button onClick={() => setViewingDCId(act.id)}
                       className="p-2 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100" title="ปฏิเสธ">
                       <XIcon />
                     </button>
@@ -841,7 +841,7 @@ export default function DPOReviewPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setViewingDP(dp)}
+                      <button onClick={() => setViewingDPId(dp.id)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                         <EyeIcon /> ดู
                       </button>
@@ -849,7 +849,7 @@ export default function DPOReviewPage() {
                         className="p-2 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100" title="อนุมัติ">
                         <CheckIcon />
                       </button>
-                      <button onClick={() => setViewingDP(dp)}
+                      <button onClick={() => setViewingDPId(dp.id)}
                         className="p-2 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100" title="ปฏิเสธ">
                         <XIcon />
                       </button>

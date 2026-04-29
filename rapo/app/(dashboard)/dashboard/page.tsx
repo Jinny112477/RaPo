@@ -11,6 +11,8 @@ type DepartmentOption = {
   department_id: string;
   department_name: string;
 };
+import { useRopa } from '@/lib/ropaContext';
+import { Plus } from "lucide-react";
 
 export default function DashboardPage() {
   const { role } = useAuth();
@@ -19,7 +21,6 @@ export default function DashboardPage() {
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
   const [deptFilter, setDeptFilter] = useState('ALL');
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
@@ -96,41 +97,22 @@ export default function DashboardPage() {
   }, []);
 
   const filtered = useMemo(() => {
-    return activities.filter(a => {
-      const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-      const departmentName = getDepartmentName(a.department);
-      const matchDept = deptFilter === 'ALL' || a.department === deptFilter || departmentName === deptFilter;
-      return matchSearch && matchStatus && matchDept;
-    });
-  }, [activities, search, statusFilter, deptFilter, departments]);
+    return activities
+      .filter(a => a.status === 'ACTIVE')
+      .filter(a => {
+        const matchSearch =
+          a.activityName?.toLowerCase().includes(search.toLowerCase());
 
-  const stats = [
-    {
-      key: 'ALL',
-      title: 'Total ROPA',
-      value: activities.length,
-      color: 'text-gray-900'
-    },
-    {
-      key: 'ACTIVE',
-      title: 'Active',
-      value: activities.filter(a => a.status === 'ACTIVE').length,
-      color: 'text-green-600'
-    },
-    {
-      key: 'REVIEW',
-      title: 'Under Review',
-      value: activities.filter(a => a.status === 'REVIEW').length,
-      color: 'text-yellow-600'
-    },
-    {
-      key: 'REJECTED',
-      title: 'Rejected',
-      value: activities.filter(a => a.status === 'REJECTED').length,
-      color: 'text-red-600'
-    },
-  ];
+        const departmentName = getDepartmentName(a.department);
+
+        const matchDept =
+          deptFilter === 'ALL' ||
+          a.department === deptFilter ||
+          departmentName === deptFilter;
+
+        return matchSearch && matchDept;
+      });
+  }, [activities, search, deptFilter]);
 
   const statusBadge = (status: string) => {
     if (status === 'ACTIVE') return 'bg-green-100 text-green-700';
@@ -160,35 +142,6 @@ export default function DashboardPage() {
         <p className="text-sm text-gray-500 mt-1">
           กิจกรรมทั้งหมดในระบบ
         </p>
-      </div>
-
-      {/* STATS block grid*/}
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        {stats.map((s) => {
-          const isActive = statusFilter === s.key;
-
-          return (
-            <button
-              key={s.key}
-              onClick={() => setStatusFilter(s.key)}
-              className={`
-          bg-white border rounded-xl p-4 text-left transition-all
-          hover:shadow-md hover:border-[#203690]
-          ${isActive
-                  ? 'border-[#203690] ring-2 ring-[#203690]'
-                  : 'border-gray-200'}
-        `}
-            >
-              <p className="text-xs text-gray-500">
-                {s.title}
-              </p>
-
-              <p className={`text-2xl font-semibold mt-1 ${s.color}`}>
-                {s.value}
-              </p>
-            </button>
-          );
-        })}
       </div>
 
       {/* TABLE */}
@@ -236,11 +189,7 @@ export default function DashboardPage() {
               <th className="px-4 py-2 text-left">แผนก</th>
               <th className="px-4 py-2 text-left">ฐานกฎหมาย</th>
               <th className="px-4 py-2 text-left">ความเสี่ยง</th>
-              <th className="px-4 py-2 text-left">สถานะ</th>
               <th className="px-4 py-2 text-left">อัปเดตล่าสุด</th>
-              {role !== 'dataOwner' && (
-                <th className="px-4 py-2 text-left">จัดการ</th>
-              )}
             </tr>
           </thead>
           <tbody className="text-sm text-gray-700">
@@ -255,89 +204,53 @@ export default function DashboardPage() {
                       {a.riskLevel}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${statusBadge(a.status)}`}>
-                      {a.status}
-                    </span>
-                  </td>
                   <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
-                  {role !== 'dataOwner' && (
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-
-                        {/* ดู */}
-                        <button
-                          onClick={() => router.push(`/ropa/${a.id}`)}
-                          className="text-xs text-blue-600 hover:underline"
-                        >
-                          ดู
-                        </button>
-
-                        {/* Edit */}
-                        {role === 'admin' && (
-                          <button
-                            onClick={() => router.push(`/ropa/edit/${a.id}`)}
-                            className="text-xs text-gray-500 hover:underline"
-                          >
-                            Edit
-                          </button>
-                        )}
-
-                        {role === 'admin' && (
-                          <button
-                            onClick={() => deleteActivity(a.id)}
-                            className="text-xs text-red-500 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        )}
-
-                      </div>
-                    </td>
-                  )}
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-gray-400">
-                  {loading ? 'กำลังโหลดข้อมูล...' : 'ไม่พบข้อมูลกิจกรรม'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+  <td colSpan={7} className="text-center py-10 text-gray-400">
+    {loading ? 'กำลังโหลดข้อมูล...' : 'ไม่พบข้อมูลกิจกรรม'}
+    </td>
+  </tr>
+            )
+}
+          </tbody >
+        </table >
+      </div >
 
 
-      {/* Floating Add Button */}
-      {(role === 'admin' || role === 'dataOwner') && (
-        <div className="fixed bottom-6 right-6 z-50 group">
-          <button
-            onClick={() => router.push('/ropa/create')}
-            className="bg-[#203690] text-white w-14 h-14 flex items-center justify-center
+  {/* Floating Add Button */ }
+{
+  (role === 'admin' || role === 'dataOwner') && (
+    <div className="fixed bottom-6 right-6 z-50 group">
+      <button
+        onClick={() => router.push('/ropa/create')}
+        className="bg-[#203690] text-white w-14 h-14 flex items-center justify-center
               rounded-xl shadow-lg hover:bg-[#182a73]
               hover:shadow-xl transition duration-200"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
-            </svg>
-          </button>
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-6 h-6"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
 
-          <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
+      <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
             text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100
             transition whitespace-nowrap">
-            Create DC Form
-          </div>
-        </div>
-      )}
-
+        Create DC Form
+      </div>
     </div>
+  )
+}
+
+    </div >
   );
 }

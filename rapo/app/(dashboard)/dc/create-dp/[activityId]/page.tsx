@@ -10,7 +10,7 @@ export default function CreateDPPage() {
   const editRequestId = searchParams.get('edit') || undefined
 
   return (
-    <div className="p-6">
+    <div className="max-w-2xl mx-auto py-6">
       <RopaDPForm activityId={activityId} editRequestId={editRequestId} />
     </div>
   )

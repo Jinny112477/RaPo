@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Info } from 'lucide-react';
+import { Activity } from '@/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -198,9 +199,14 @@ function SectionHeader({ step, title, sub }: { step: number; title: string; sub:
 
 interface RopaFormProps {
   editActivityId?: string;
+}
+
+type Props = {
+  initialData?: any; // หรือใช้ Activity ตามที่คุณต้องการ
+  readOnly?: boolean;
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
-}
+};
 
 const splitCsv = (value?: string | null) =>
   String(value || '')
@@ -227,8 +233,47 @@ const parseDraftPayload = (value?: string | null) => {
 };
 
 export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: RopaFormProps) {
+const mapToFormData = (activity: any) => {
+  const sub = activity.subActivities?.[0] || {};
+
+  return {
+    companyName: activity.recorder?.name || '',
+    department: activity.department || '',
+    activityName: activity.activityName || '',
+    dataOwner: activity.dataOwnerName || '',
+    recorderEmail: activity.recorder?.email || '',
+    recordDate: activity.createdAt?.slice(0, 10) || '',
+    dpcName: '',
+
+    purpose: sub.purpose || '',
+    legalBasis: sub.legalBasis || [],
+    legalBasisNote: '',
+
+    dataSubjects: sub.dataCategory || [],
+    personalDataTypes: sub.dataType || [],
+    sensitiveData: [],
+
+    collectionMethods: sub.collectionMethod || [],
+    otherDataNote: '',
+
+    retentionValue: sub.retentionPeriod || '',
+    retentionUnit: 'ปี',
+    retentionCriteria: '',
+    deletionMethods: [],
+    retentionNote: '',
+
+    secOrg: activity.securityMeasures?.organizational || '',
+    secTech: activity.securityMeasures?.technical || '',
+    secPhysical: activity.securityMeasures?.physical || '',
+    secAccess: activity.securityMeasures?.accessControl || '',
+    secResponsibility: activity.securityMeasures?.userResponsibility || '',
+    secAudit: activity.securityMeasures?.auditTrail || '',
+  };
+};
+
+export default function RopaDCForm({ initialData, readOnly, onSubmit, onSaveDraft }: Props) {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(INIT);
+  const [form, setForm] = useState<FormData>(initialData ? mapToFormData(initialData) : INIT);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
@@ -432,7 +477,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
   }
 
   return (
-    <div className="space-y-3">
+    <div className="max-w-3xl mx-auto space-y-4 px-4">
 
       {/* Progress bar */}
       <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4">
@@ -469,6 +514,9 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
             ส่วนที่ {step}/{STEPS.length}
           </span>
           <span className="text-xs text-gray-500">{STEPS[step - 1].label}</span>
+          <span className="ml-auto flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+            Data Controller Form
+          </span>
         </div>
       </div>
 
@@ -493,7 +541,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
               </Field>
             </div>
             <Field label="ลักษณะกิจกรรมการประมวลผล" required>
-              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} placeholder="การบันทึกข้อมูลเพื่อการสมัครงานและออกจากงาน" className={inp} />
+              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} disabled={readOnly} placeholder="การบันทึกข้อมูลเพื่อการสมัครงานและออกจากงาน" className={inp} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="ผู้รับผิดชอบ (DATA OWNER)">
