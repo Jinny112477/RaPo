@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Info } from 'lucide-react';
 
@@ -34,6 +34,36 @@ interface FormData {
   secResponsibility: string;
   secAudit: string;
 }
+
+interface DepartmentOption {
+  department_id: string;
+  department_name: string;
+}
+
+type ApiFormResponse = {
+  activity_id: string;
+  activity_name?: string;
+  activity_subject?: string;
+  purpose?: string;
+  consentless_data?: string | null;
+  denial_details?: string | null;
+  source?: { name?: string };
+  legal_basis?: { name?: string };
+  obtaining_data?: { name?: string };
+  policy?: {
+    retention_period?: string;
+    deletion_method?: string;
+    data_type?: string;
+  };
+  security_measurement?: {
+    organizational_measures?: string;
+    technical_measures?: string;
+    physical_measures?: string;
+    access_control?: string;
+    define_responsibility?: string;
+    audit_trail?: string;
+  };
+};
 
 const INIT: FormData = {
   companyName: '', department: '', activityName: '', dataOwner: '',
@@ -167,23 +197,125 @@ function SectionHeader({ step, title, sub }: { step: number; title: string; sub:
 }
 
 interface RopaFormProps {
+  editActivityId?: string;
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
 }
 
-export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
+const splitCsv = (value?: string | null) =>
+  String(value || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const parseRetention = (value?: string | null) => {
+  const [retentionValue = '', retentionUnit = 'ปี', retentionCriteria = ''] = String(value || '')
+    .split(' - ')
+    .map((item) => item.trim());
+
+  return { retentionValue, retentionUnit, retentionCriteria };
+};
+
+const parseDraftPayload = (value?: string | null) => {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+};
+
+export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: RopaFormProps) {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INIT);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [editingActivityId, setEditingActivityId] = useState<string | undefined>(editActivityId);
   const { user } = useAuth();
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/departments`);
+        const data = await res.json();
+
+        if (!res.ok) return;
+
+        setDepartments(data.data || []);
+      } catch (error) {
+        console.error('FETCH DEPARTMENTS ERROR:', error);
+      }
+    };
+
+    fetchDepartments();
+  }, [API_URL]);
+
+  useEffect(() => {
+    const fetchExistingDraft = async () => {
+      if (!editActivityId) return;
+
+      try {
+        const res = await fetch(`${API_URL}/api/form/${editActivityId}`);
+        const response = await res.json();
+
+        if (!res.ok) {
+          const detail = Array.isArray(response.detail)
+            ? response.detail.join('\n')
+            : response.detail;
+          alert(detail || response.error || 'โหลดแบบร่างไม่สำเร็จ');
+          return;
+        }
+
+        const data = response.data as ApiFormResponse;
+        const draftPayload = parseDraftPayload(data.consentless_data);
+        const retention = parseRetention(draftPayload?.retentionPeriod || data.policy?.retention_period);
+
+        setEditingActivityId(data.activity_id);
+        setForm({
+          companyName: draftPayload?.companyName || data.source?.name || '',
+          department: draftPayload?.department || data.activity_subject || '',
+          activityName: draftPayload?.activityName || data.activity_name || '',
+          dataOwner: draftPayload?.dataOwner || '',
+          recorderEmail: draftPayload?.recorderEmail || '',
+          recordDate: draftPayload?.recordDate || '',
+          dpcName: draftPayload?.dpcName || '',
+          purpose: draftPayload?.purpose || data.purpose || '',
+          legalBasis: draftPayload?.legalBasis || splitCsv(data.legal_basis?.name),
+          legalBasisNote: draftPayload?.legalBasisNote || '',
+          dataSubjects: draftPayload?.dataSubjects || [],
+          personalDataTypes: draftPayload?.personalDataTypes || splitCsv(data.policy?.data_type),
+          sensitiveData: draftPayload?.sensitiveData || [],
+          collectionMethods: draftPayload?.collectionMethods || [],
+          otherDataNote: draftPayload?.otherDataNote || '',
+          retentionValue: draftPayload?.retentionValue || retention.retentionValue,
+          retentionUnit: draftPayload?.retentionUnit || retention.retentionUnit,
+          retentionCriteria: draftPayload?.retentionCriteria || retention.retentionCriteria,
+          deletionMethods: draftPayload?.deletionMethods || splitCsv(data.policy?.deletion_method),
+          retentionNote: draftPayload?.retentionNote || '',
+          secOrg: draftPayload?.secOrg || data.security_measurement?.organizational_measures || '',
+          secTech: draftPayload?.secTech || data.security_measurement?.technical_measures || '',
+          secPhysical: draftPayload?.secPhysical || data.security_measurement?.physical_measures || '',
+          secAccess: draftPayload?.secAccess || data.security_measurement?.access_control || '',
+          secResponsibility: draftPayload?.secResponsibility || data.security_measurement?.define_responsibility || '',
+          secAudit: draftPayload?.secAudit || data.security_measurement?.audit_trail || '',
+        });
+      } catch (error) {
+        console.error(error);
+        alert('โหลดแบบร่างไม่สำเร็จ');
+      }
+    };
+
+    fetchExistingDraft();
+  }, [API_URL, editActivityId]);
 
   const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
 
   const canNext = () => {
     if (step === 1) {
-      return form.companyName.trim() && form.activityName.trim() && form.recorderEmail.trim();
+      return form.companyName.trim() && form.department.trim() && form.activityName.trim() && form.recorderEmail.trim();
     }
 
     if (step === 2) {
@@ -205,18 +337,64 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
     return true;
   };
 
-  const handleSaveDraft = () => {
-    onSaveDraft?.(form as unknown as Record<string, unknown>);
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 2500);
+  const handleSaveDraft = async () => {
+    try {
+      if (!user?.id) {
+        alert('กรุณาเข้าสู่ระบบใหม่ก่อนบันทึกแบบร่าง');
+        return;
+      }
+
+      const endpoint = editingActivityId ? `${API_URL}/api/form/${editingActivityId}` : `${API_URL}/api/form`;
+      const method = editingActivityId ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          formType: 'controller',
+          approval_status: 'draft',
+          save_as_draft: true,
+          departmentId: form.department,
+          ...form,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const detail = Array.isArray(data.detail) ? data.detail.join('\n') : data.detail;
+        alert(detail || data.error || 'บันทึกแบบร่างไม่สำเร็จ');
+        return;
+      }
+
+      onSaveDraft?.({
+        ...form,
+        activity_id: data.activity_id || editingActivityId,
+      } as unknown as Record<string, unknown>);
+
+      if (data.activity_id) {
+        setEditingActivityId(data.activity_id);
+      }
+
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2500);
+    } catch (err) {
+      alert((err as Error).message);
+    }
   };
+
+  const selectedDepartment = departments.find((d) => d.department_id === form.department)?.department_name || form.department || '—';
 
   const handleSubmit = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/form/submit`, {
-        method: 'POST',
+      const endpoint = editingActivityId ? `${API_URL}/api/form/${editingActivityId}` : `${API_URL}/api/form/submit`;
+      const method = editingActivityId ? 'PUT' : 'POST';
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user?.id, formType: 'controller', ...form }),
+        body: JSON.stringify({ userId: user?.id, formType: 'controller', departmentId: form.department, ...form }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -303,8 +481,15 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <Field label="ชื่อบริษัท / องค์กร" required>
                 <input type="text" value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="ABC Co., Ltd." className={inp} />
               </Field>
-              <Field label="แผนก / ฝ่ายที่รับผิดชอบ">
-                <input type="text" value={form.department} onChange={e => set('department', e.target.value)} placeholder="ฝ่ายบุคคล" className={inp} />
+              <Field label="แผนก / ฝ่ายที่รับผิดชอบ" required>
+                <select value={form.department} onChange={e => set('department', e.target.value)} className={inp}>
+                  <option value="">เลือกแผนก</option>
+                  {departments.map((department) => (
+                    <option key={department.department_id} value={department.department_id}>
+                      {department.department_name}
+                    </option>
+                  ))}
+                </select>
               </Field>
             </div>
             <Field label="ลักษณะกิจกรรมการประมวลผล" required>
@@ -453,7 +638,7 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <p className="text-xs text-gray-400 mb-0.5">บริษัท / องค์กร</p>
                 <p className="text-sm font-semibold text-gray-800">{form.companyName || '—'}</p>
-                <p className="text-xs text-gray-500">{form.department || '—'}</p>
+                <p className="text-xs text-gray-500">{selectedDepartment}</p>
               </div>
               <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
                 <p className="text-xs text-gray-400 mb-0.5">ผู้บันทึก</p>
@@ -502,8 +687,8 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         <button type="button" onClick={handleSaveDraft}
           className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
           {draftSaved
-            ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกร่างแล้ว</span></>
-            : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>บันทึกร่าง</>}
+            ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกแบบร่างแล้ว</span></>
+            : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>บันทึกแบบร่าง</>}
         </button>
         <div className="flex items-center gap-2">
           {step > 1 && (

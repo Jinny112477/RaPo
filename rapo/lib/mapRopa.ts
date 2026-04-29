@@ -4,6 +4,7 @@ export type ApiRopa = {
   activity_name?: string;
   activity_subject?: string;
   purpose?: string;
+  denial_details?: string;
   approval_status?: string;
   created_at?: string;
   updated_at?: string | null;
@@ -33,13 +34,15 @@ export const mapStatus = (status?: string) => {
 };
 
 export const mapApiRopaToActivity = (item: ApiRopa) => {
+  const isDraft = item.approval_status === "pending" && item.denial_details === "__DRAFT__";
+
   return {
     id: item.activity_id,
     user_id: item.user_id,
     activityName: item.activity_name || "-",
     department: item.activity_subject || item.source?.name || "-",
     owner: item.activity_subject || item.source?.name || "-",
-    status: mapStatus(item.approval_status),
+    status: isDraft ? "DRAFT" : mapStatus(item.approval_status),
     riskLevel: "LOW",
     legalBasis: item.legal_basis?.name || "-",
     retentionPeriod: item.policy?.retention_period || "-",

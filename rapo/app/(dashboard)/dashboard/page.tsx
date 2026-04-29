@@ -7,6 +7,11 @@ import { mapApiRopaToActivity } from '@/lib/mapRopa';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
+type DepartmentOption = {
+  department_id: string;
+  department_name: string;
+};
+
 export default function DashboardPage() {
   const { role } = useAuth();
   const router = useRouter();
@@ -16,6 +21,13 @@ export default function DashboardPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+
+  const getDepartmentName = (departmentIdOrName?: string) => {
+    if (!departmentIdOrName) return '-';
+    const found = departments.find((department) => department.department_id === departmentIdOrName);
+    return found?.department_name || departmentIdOrName;
+  };
 
   const fetchActivities = async () => {
     try {
@@ -67,14 +79,31 @@ export default function DashboardPage() {
     fetchActivities();
   }, []);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/departments`);
+        const data = await res.json();
+
+        if (!res.ok) return;
+        setDepartments(data.data || []);
+      } catch (error) {
+        console.error('FETCH DEPARTMENTS ERROR:', error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   const filtered = useMemo(() => {
     return activities.filter(a => {
       const matchSearch = a.activityName?.toLowerCase().includes(search.toLowerCase());
       const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-      const matchDept = deptFilter === 'ALL' || a.department === deptFilter;
+      const departmentName = getDepartmentName(a.department);
+      const matchDept = deptFilter === 'ALL' || a.department === deptFilter || departmentName === deptFilter;
       return matchSearch && matchStatus && matchDept;
     });
-  }, [activities, search, statusFilter, deptFilter]);
+  }, [activities, search, statusFilter, deptFilter, departments]);
 
   const stats = [
     {
@@ -182,10 +211,11 @@ export default function DashboardPage() {
             focus:outline-none focus:ring-1 focus:ring-[#203690]"
             >
               <option value="ALL">ทุกแผนก</option>
-              {/* แก้ value ให้ตรงกับข้อมูล department ใน mockActivities */}
-              <option value="ฝ่ายทรัพยากรบุคคล">ฝ่ายทรัพยากรบุคคล (HR)</option>
-              <option value="ฝ่ายการตลาด">ฝ่ายการตลาด (Marketing)</option>
-              <option value="ฝ่ายไอที">ฝ่ายไอที (IT)</option>
+              {departments.map((department) => (
+                <option key={department.department_id} value={department.department_id}>
+                  {department.department_name}
+                </option>
+              ))}
             </select>
 
             <input
@@ -218,7 +248,7 @@ export default function DashboardPage() {
               filtered.map((a) => (
                 <tr key={a.id} className="border-t hover:bg-gray-50 transition">
                   <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
-                  <td className="px-4 py-3 text-gray-500">{a.department}</td>
+                  <td className="px-4 py-3 text-gray-500">{getDepartmentName(a.department)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{a.legalBasis}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${riskBadge(a.riskLevel)}`}>

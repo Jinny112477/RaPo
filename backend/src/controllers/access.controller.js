@@ -1,5 +1,15 @@
 import { supabase } from "../lib/supabaseClient.js";
 
+const ACCESS_DRAFT_PREFIX = "__ACCESS_DRAFT__:";
+
+const buildAccessDraftDuration = (duration, draftPayload) => {
+  if (draftPayload) {
+    return `${ACCESS_DRAFT_PREFIX}${draftPayload}`;
+  }
+
+  return duration || null;
+};
+
 const APPROVED_ROPA_SELECT = `
   activity_id,
   user_id,
@@ -54,19 +64,23 @@ const sendError = (res, status, message, detail = null) => {
 
 const getUserId = (req) => {
   return (
-    req.body.userId ||
-    req.body.user_id ||
-    req.body.requested_by ||
-    req.query.user_id
+    req.body?.userId ||
+    req.body?.user_id ||
+    req.body?.requestedBy ||
+    req.body?.requested_by ||
+    req.query?.userId ||
+    req.query?.user_id
   );
 };
 
 const getApproverId = (req) => {
   return (
-    req.body.userId ||
-    req.body.user_id ||
-    req.body.approve_by ||
-    req.query.user_id
+    req.body?.userId ||
+    req.body?.user_id ||
+    req.body?.approveBy ||
+    req.body?.approve_by ||
+    req.query?.userId ||
+    req.query?.user_id
   );
 };
 
@@ -150,6 +164,33 @@ export const createAccessRequest = async (req, res) => {
 
     if (existingError) {
       return sendError(res, 500, "Check existing request failed", existingError.message);
+    }
+
+    if (existing?.approval_status === "draft") {
+      const { data: promotedDraft, error: promoteError } = await supabase
+        .from("access_requests")
+        .update({
+          purpose,
+          scope: scope || null,
+          duration: duration || null,
+          processor_name: processor_name || null,
+          processor_address: processor_address || null,
+          approval_status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("request_id", existing.request_id)
+        .select(ACCESS_REQUEST_SELECT)
+        .single();
+
+      if (promoteError) {
+        return sendError(res, 500, "Submit draft access request failed", promoteError.message);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Access request submitted successfully",
+        data: promotedDraft,
+      });
     }
 
     if (existing) {
@@ -402,7 +443,7 @@ export const updateAccessRequest = async (req, res) => {
       ...(scope !== undefined ? { scope } : {}),
       ...(duration !== undefined ? { duration } : {}),
       ...(processor_name !== undefined ? { processor_name } : {}),
-      ...(processor_address !== undefined ? { processor_address } : {}),
+...(processor_address !== undefined ? { processor_address } : {}),
       ...(approval_status !== undefined ? { approval_status } : {}),
       updated_at: new Date().toISOString(),
     };
@@ -453,5 +494,116 @@ export const deleteAccessRequest = async (req, res) => {
     });
   } catch (err) {
     return sendError(res, 500, "Delete access request failed", err.message);
+  }
+};
+
+// POST /api/access/draft
+// Processor / DP บันทึกคำขอเป็นแบบร่าง
+export const saveAccessDraft = async (req, res) => {
+  try {
+    const {
+      request_id,
+      activity_id,
+      purpose,
+      scope,
+      duration,
+      draft_payload,
+      processor_name,
+      processor_address,
+    } = req.body;
+
+    const requestedBy = getUserId(req);
+
+    if (!activity_id) {
+      return sendError(res, 400, "activity_id is required");
+    }
+
+    if (!requestedBy) {
+      return sendError(res, 400, "requested_by is required");
+    }
+
+    const { data: activity, error: activityError } = await supabase
+      .from("activities")
+      .select("activity_id")
+      .eq("activity_id", activity_id)
+      .single();
+
+    if (activityError || !activity) {
+      return sendError(res, 404, "ROPA not found", activityError?.message);
+    }
+
+    const payload = {
+      activity_id,
+      requested_by: requestedBy,
+      purpose: (purpose || "").trim() || "-",
+      scope: scope || null,
+      duration: buildAccessDraftDuration(duration, draft_payload),
+      processor_name: processor_name || null,
+      processor_address: processor_address || null,
+      approval_status: "draft",
+      updated_at: new Date().toISOString(),
+    };
+
+    const findBaseQuery = supabase
+      .from("access_requests")
+      .select("request_id")
+      .eq("activity_id", activity_id)
+      .eq("requested_by", requestedBy);
+
+    const { data: existingByRequest, error: findByRequestError } = request_id
+      ? await findBaseQuery.eq("request_id", request_id).maybeSingle()
+      : { data: null, error: null };
+
+    if (findByRequestError) {
+      return sendError(res, 500, "Find draft request failed", findByRequestError.message);
+    }
+
+    const { data: existingByUser, error: findByUserError } = !request_id
+      ? await findBaseQuery.maybeSingle()
+      : { data: null, error: null };
+
+    if (findByUserError) {
+      return sendError(res, 500, "Find draft request failed", findByUserError.message);
+    }
+
+    const targetRequestId = existingByRequest?.request_id || existingByUser?.request_id || request_id;
+
+    if (targetRequestId) {
+      const { data, error } = await supabase
+        .from("access_requests")
+        .update(payload)
+        .eq("request_id", targetRequestId)
+        .eq("requested_by", requestedBy)
+        .select(ACCESS_REQUEST_SELECT)
+        .single();
+
+      if (error) {
+        return sendError(res, 500, "Save access draft failed", error.message);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Access draft saved successfully",
+        data,
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("access_requests")
+      .insert(payload)
+      .select(ACCESS_REQUEST_SELECT)
+      .single();
+
+    if (error) {
+      return sendError(res, 500, "Save access draft failed", error.message);
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Access draft saved successfully",
+      data,
+    });
+  } catch (err) {
+    return sendError(res, 500, "Save access draft failed", err.message);
   }
 };

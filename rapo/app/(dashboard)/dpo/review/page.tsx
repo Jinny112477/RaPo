@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRopa } from '@/lib/ropaContext';
 import { StatusBadge, RiskBadge } from '@/components/StatusBadge';
 import { Activity, DpRecord } from '@/types';
@@ -49,6 +49,20 @@ type ApiRopa = {
   };
 };
 
+type DepartmentOption = {
+  department_id: string;
+  department_name: string;
+};
+
+const isToday = (value?: string | null) => {
+  if (!value) return false;
+
+  const date = new Date(value);
+  const today = new Date();
+
+  return date.toDateString() === today.toDateString();
+};
+
 const mapApiRopaToActivity = (item: ApiRopa): Activity => {
   const status =
     item.approval_status === 'approved'
@@ -77,11 +91,12 @@ const mapApiRopaToActivity = (item: ApiRopa): Activity => {
 };
 
 // ─── Modal ดู DC ────────────────────────────────────────────────────────────────
-function DCModal({ activity, onClose, onApprove, onReject }: {
+function DCModal({ activity, onClose, onApprove, onReject, getDepartmentName }: {
   activity: Activity;
   onClose: () => void;
   onApprove: (id: string) => void | Promise<void>;
   onReject: (id: string, reason: string) => void | Promise<void>;
+  getDepartmentName: (departmentIdOrName?: string) => string;
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
@@ -94,7 +109,7 @@ function DCModal({ activity, onClose, onApprove, onReject }: {
             <p className="text-xs font-semibold text-blue-600 mb-0.5">DC Form</p>
             <h2 className="text-base font-bold text-gray-800">{activity.activityName}</h2>
             <p className="text-xs text-gray-500">
-              {activity.department}
+              {getDepartmentName(activity.department)}
             </p>
           </div>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-gray-100">
@@ -167,11 +182,12 @@ function DCModal({ activity, onClose, onApprove, onReject }: {
   );
 }
 
-function DPModal({ dp, onClose, onApprove, onReject }: {
+function DPModal({ dp, onClose, onApprove, onReject, getDepartmentName }: {
   dp: DpRecordUI;
   onClose: () => void;
   onApprove: (id: string) => void | Promise<void>;
   onReject: (id: string, reason: string) => void | Promise<void>;
+  getDepartmentName: (departmentIdOrName?: string) => string;
 }) {
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState('');
@@ -197,7 +213,7 @@ function DPModal({ dp, onClose, onApprove, onReject }: {
           <div className="p-3 rounded-lg bg-blue-50 border border-blue-100">
             <p className="text-xs font-semibold text-blue-600 mb-1">DC Record ที่ผูกอยู่</p>
             <p className="text-sm font-medium text-gray-800">{dp.activityName}</p>
-            <p className="text-xs text-gray-500">{dp.activitySubject}</p>
+            <p className="text-xs text-gray-500">{getDepartmentName(dp.activitySubject)}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -309,31 +325,11 @@ type ApiAccessRequest = {
   processor_address?: string | null;
   approval_status: string;
   created_at: string;
-  requester?: {
-    user_id?: string;
-    name?: string;
-    email?: string;
-  };
+  updated_at?: string | null;
   activity?: {
     activity_id: string;
     activity_name?: string;
     activity_subject?: string;
-    purpose?: string;
-    source?: {
-      name?: string;
-    };
-    legal_basis?: {
-      name?: string;
-    };
-    obtaining_data?: {
-      name?: string;
-    };
-    obtaining_method_detail?: {
-      name?: string;
-    };
-    policy?: {
-      retention_period?: string;
-    };
   };
 };
 
@@ -341,15 +337,16 @@ type DpRecordUI = DpRecord & {
   activityName?: string;
   activitySubject?: string;
   processorAddress?: string | null;
-  dcPurpose?: string;
-  dcSource?: string;
+
   dcLegalBasis?: string;
   dcPersonalData?: string;
   dcMethod?: string;
   dcRetention?: string;
+
   scope?: string | null;
   duration?: string | null;
 };
+
 const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
   return {
     id: item.request_id,
@@ -358,38 +355,27 @@ const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
     processorName:
       item.processor_name ||
       item.activity?.activity_subject ||
-      item.activity?.activity_name ||
-      'ไม่ระบุผู้ประมวลผล',
+      "ไม่ระบุผู้ประมวลผล",
 
-    processorAddress: item.processor_address || '-',
+    processorAddress: item.processor_address || "-",
 
-    purpose: item.purpose || '-',
+    purpose: item.purpose || "-",
 
     status:
-      item.approval_status === 'approved'
-        ? 'APPROVED'
-        : item.approval_status === 'rejected'
-          ? 'REJECTED'
-          : 'PENDING',
+      item.approval_status === "approved"
+        ? "APPROVED"
+        : item.approval_status === "rejected"
+          ? "REJECTED"
+          : "PENDING",
 
-    createdBy:
-      item.requester?.name ||
-      item.requester?.email ||
-      'ไม่ระบุผู้สร้าง',
+    createdBy: item.requested_by,
 
-    createdAt: item.created_at
-      ? new Date(item.created_at).toLocaleDateString('th-TH')
-      : '-',
+    createdAt: item.updated_at || item.created_at
+      ? new Date(item.updated_at || item.created_at).toLocaleDateString("th-TH")
+      : "-",
 
-    activityName: item.activity?.activity_name || '-',
-    activitySubject: item.activity?.activity_subject || '-',
-    dcPurpose: item.activity?.purpose || '-',
-    dcSource: item.activity?.source?.name || '-',
-    dcLegalBasis: item.activity?.legal_basis?.name || '-',
-    dcPersonalData: item.activity?.obtaining_data?.name || '-',
-    dcMethod: item.activity?.obtaining_method_detail?.name || '-',
-    dcRetention: item.activity?.policy?.retention_period || '-',
-
+    activityName: item.activity?.activity_name || "-",
+    activitySubject: item.activity?.activity_subject || "-",
     scope: item.scope,
     duration: item.duration,
   } as DpRecordUI;
@@ -405,11 +391,21 @@ export default function DPOReviewPage() {
   const [dcLoading, setDcLoading] = useState(false);
   const [dcProcessed, setDcProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDC, setViewingDC] = useState<Activity | null>(null);
+  const [allDcRows, setAllDcRows] = useState<ApiRopa[]>([]);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
 
   const [dpQueue, setDpQueue] = useState<DpRecordUI[]>([]);
   const [dpLoading, setDpLoading] = useState(false);
   const [dpProcessed, setDpProcessed] = useState<{ id: string; action: 'approved' | 'rejected' }[]>([]);
   const [viewingDP, setViewingDP] = useState<DpRecordUI | null>(null);
+  const [allDpRows, setAllDpRows] = useState<ApiAccessRequest[]>([]);
+
+  const getDepartmentName = (departmentIdOrName?: string) => {
+    if (!departmentIdOrName) return '-';
+
+    const found = departments.find((department) => department.department_id === departmentIdOrName);
+    return found?.department_name || departmentIdOrName;
+  };
 
   const fetchPendingRopa = async () => {
     try {
@@ -436,6 +432,46 @@ export default function DPOReviewPage() {
 
   useEffect(() => {
     fetchPendingRopa();
+  }, []);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/departments`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          console.log('FETCH DEPARTMENTS ERROR:', data);
+          return;
+        }
+
+        setDepartments(data.data || []);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
+  const fetchAllRopa = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/dpo/ropa`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('FETCH ALL DPO ROPA ERROR:', data);
+        return;
+      }
+
+      setAllDcRows(data.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllRopa();
   }, []);
 
   const fetchPendingDPForms = async () => {
@@ -465,6 +501,40 @@ export default function DPOReviewPage() {
     fetchPendingDPForms();
   }, []);
 
+  const fetchAllDPForms = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/access`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('FETCH ALL DP ERROR:', data);
+        return;
+      }
+
+      setAllDpRows(data.data || []);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllDPForms();
+  }, []);
+
+  const approvedTodayCount = useMemo(() => {
+    const dcApproved = allDcRows.filter((item) => item.approval_status === 'approved' && isToday(item.updated_at || item.created_at)).length;
+    const dpApproved = allDpRows.filter((item) => item.approval_status === 'approved' && isToday(item.updated_at || item.created_at)).length;
+
+    return dcApproved + dpApproved;
+  }, [allDcRows, allDpRows]);
+
+  const rejectedTodayCount = useMemo(() => {
+    const dcRejected = allDcRows.filter((item) => item.approval_status === 'rejected' && isToday(item.updated_at || item.created_at)).length;
+    const dpRejected = allDpRows.filter((item) => item.approval_status === 'rejected' && isToday(item.updated_at || item.created_at)).length;
+
+    return dcRejected + dpRejected;
+  }, [allDcRows, allDpRows]);
+
   const handleDCApprove = async (id: string) => {
     try {
       const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/approve`, {
@@ -485,6 +555,7 @@ export default function DPOReviewPage() {
 
       setDcQueue(q => q.filter(a => a.id !== id));
       setDcProcessed(p => [...p, { id, action: 'approved' }]);
+      setAllDcRows((rows) => rows.map((item) => item.activity_id === id ? { ...item, approval_status: 'approved', updated_at: new Date().toISOString() } : item));
       setViewingDC(null);
     } catch (error) {
       console.error(error);
@@ -512,6 +583,7 @@ export default function DPOReviewPage() {
 
       setDcQueue(q => q.filter(a => a.id !== id));
       setDcProcessed(p => [...p, { id, action: 'rejected' }]);
+      setAllDcRows((rows) => rows.map((item) => item.activity_id === id ? { ...item, approval_status: 'rejected', updated_at: new Date().toISOString() } : item));
       setViewingDC(null);
     } catch (error) {
       console.error(error);
@@ -539,6 +611,7 @@ export default function DPOReviewPage() {
 
       setDpQueue(q => q.filter(d => d.id !== id));
       setDpProcessed(p => [...p, { id, action: 'approved' }]);
+      setAllDpRows((rows) => rows.map((item) => item.request_id === id ? { ...item, approval_status: 'approved', updated_at: new Date().toISOString() } : item));
       setViewingDP(null);
     } catch (error) {
       console.error(error);
@@ -566,6 +639,7 @@ export default function DPOReviewPage() {
 
       setDpQueue(q => q.filter(d => d.id !== id));
       setDpProcessed(p => [...p, { id, action: 'rejected' }]);
+      setAllDpRows((rows) => rows.map((item) => item.request_id === id ? { ...item, approval_status: 'rejected', updated_at: new Date().toISOString() } : item));
       setViewingDP(null);
     } catch (error) {
       console.error(error);
@@ -591,8 +665,8 @@ export default function DPOReviewPage() {
         {[
           { label: 'Form DC รออนุมัติ', value: dcQueue.length, color: 'text-yellow-700', bg: 'bg-yellow-50 border-yellow-200' },
           { label: 'Form DP รออนุมัติ', value: dpQueue.length, color: 'text-blue-700', bg: 'bg-blue-50 border-blue-200' },
-          { label: 'อนุมัติวันนี้', value: dcProcessed.filter(p => p.action === 'approved').length + dpProcessed.filter(p => p.action === 'approved').length, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
-          { label: 'ปฏิเสธวันนี้', value: dcProcessed.filter(p => p.action === 'rejected').length + dpProcessed.filter(p => p.action === 'rejected').length, color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
+          { label: 'อนุมัติวันนี้', value: approvedTodayCount, color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200' },
+          { label: 'ปฏิเสธวันนี้', value: rejectedTodayCount, color: 'text-red-700', bg: 'bg-red-50 border-red-200' },
         ].map(s => (
           <div key={s.label} className={`rounded-xl border ${s.bg} p-4 text-center`}>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -659,7 +733,7 @@ export default function DPOReviewPage() {
                       <RiskBadge level={act.riskLevel} />
                     </div>
                     <p className="text-sm font-semibold text-gray-800">{act.activityName}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{act.department} · {act.owner} · {act.updatedAt}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{getDepartmentName(act.department)} · {act.owner} · {act.updatedAt}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <button onClick={() => setViewingDC(act)}
@@ -696,7 +770,7 @@ export default function DPOReviewPage() {
                     </span>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-800">{act.activityName}</p>
-                      <p className="text-xs text-gray-400">{act.department}</p>
+                      <p className="text-xs text-gray-400">{getDepartmentName(act.department)}</p>
                     </div>
                     <span className={`text-xs font-semibold ${action === 'approved' ? 'text-emerald-600' : 'text-red-500'}`}>
                       {action === 'approved' ? 'อนุมัติ' : 'ปฏิเสธ'}
@@ -800,11 +874,11 @@ export default function DPOReviewPage() {
       {/* Modals */}
       {viewingDC && (
         <DCModal activity={viewingDC} onClose={() => setViewingDC(null)}
-          onApprove={handleDCApprove} onReject={handleDCReject} />
+          onApprove={handleDCApprove} onReject={handleDCReject} getDepartmentName={getDepartmentName} />
       )}
       {viewingDP && (
         <DPModal dp={viewingDP} onClose={() => setViewingDP(null)}
-          onApprove={handleDPApprove} onReject={handleDPReject} />
+          onApprove={handleDPApprove} onReject={handleDPReject} getDepartmentName={getDepartmentName} />
       )}
     </div>
   );

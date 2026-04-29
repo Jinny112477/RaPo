@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Clock8 } from 'lucide-react';
 import { SearchAlert } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const ACCESS_DRAFT_PREFIX = '__ACCESS_DRAFT__:';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -409,16 +410,40 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 
 interface RopaFormProps {
   activityId?: string
+  editRequestId?: string;
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
 }
 
-export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFormProps) {
+type AccessRequestDetail = {
+  request_id: string;
+  purpose?: string | null;
+  scope?: string | null;
+  duration?: string | null;
+  processor_name?: string | null;
+  processor_address?: string | null;
+  activity?: {
+    activity_name?: string | null;
+  };
+};
+
+const parseAccessDraftPayload = (value?: string | null) => {
+  if (!value?.startsWith(ACCESS_DRAFT_PREFIX)) return null;
+
+  try {
+    return JSON.parse(value.slice(ACCESS_DRAFT_PREFIX.length));
+  } catch {
+    return null;
+  }
+};
+
+export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSaveDraft }: RopaFormProps) {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [formType] = useState<FormType>('processor');
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [requestId, setRequestId] = useState<string | undefined>(editRequestId);
 
   // Part 1
   const [rec, setRec] = useState<RecorderInfo>({ name: '', address: '', email: '', phone: '' });
@@ -439,6 +464,53 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
   const [secAccess, setSecAccess] = useState('');
   const [secUser, setSecUser] = useState('');
   const [secAudit, setSecAudit] = useState('');
+
+  useEffect(() => {
+    const fetchExistingRequest = async () => {
+      if (!editRequestId) return;
+
+      try {
+        const res = await fetch(`${API_URL}/api/access/${editRequestId}`);
+        const response = await res.json();
+
+        if (!res.ok) {
+          const detail = Array.isArray(response.detail)
+            ? response.detail.join('\n')
+            : response.detail;
+          alert(detail || response.error || 'โหลด DP Form ไม่สำเร็จ');
+          return;
+        }
+
+        const request = response.data as AccessRequestDetail;
+        const draftPayload = parseAccessDraftPayload(request.duration);
+        setRequestId(request.request_id);
+        setRec(draftPayload?.rec || { name: '', address: '', email: '', phone: '' });
+        setProcessorName(draftPayload?.processorName || request.processor_name || '');
+        setCtrlAddress(draftPayload?.ctrlAddress || request.processor_address || '');
+        setMainActivity(draftPayload?.mainActivity || request.activity?.activity_name || '');
+        setSubs(draftPayload?.subs || (() => {
+          const current = newSub(0);
+          return [{
+            ...current,
+            purpose: request.purpose || '',
+            scope: request.scope || '',
+            retentionPeriod: request.duration?.startsWith(ACCESS_DRAFT_PREFIX) ? '' : request.duration || '',
+          }];
+        })());
+        setSecOrg(draftPayload?.secOrg || '');
+        setSecTech(draftPayload?.secTech || '');
+        setSecPhysical(draftPayload?.secPhysical || '');
+        setSecAccess(draftPayload?.secAccess || '');
+        setSecUser(draftPayload?.secUser || '');
+        setSecAudit(draftPayload?.secAudit || '');
+      } catch (error) {
+        console.error(error);
+        alert('โหลด DP Form ไม่สำเร็จ');
+      }
+    };
+
+    fetchExistingRequest();
+  }, [editRequestId]);
 
   const isCtrl = formType === 'controller';
 
@@ -478,10 +550,78 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
   };
   const prev = () => setStep(s => Math.max(1, s - 1));
 
-  const handleSaveDraft = () => {
-    onSaveDraft?.({ formType, mainActivity });
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 2500);
+  const handleSaveDraft = async () => {
+    try {
+      if (!user?.id) {
+        alert('กรุณาเข้าสู่ระบบใหม่ก่อนบันทึกแบบร่าง');
+        return;
+      }
+
+      if (!activityId) {
+        alert('ไม่พบ ROPA ที่ต้องการขอใช้งาน');
+        return;
+      }
+
+      const firstSub = subs[0] || newSub(0);
+
+      const res = await fetch(`${API_URL}/api/access/draft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request_id: requestId,
+          activity_id: activityId,
+          requested_by: user.id,
+          purpose: firstSub.purpose,
+          scope: firstSub.scope,
+          duration: firstSub.retentionPeriod || '',
+          draft_payload: JSON.stringify({
+            rec,
+            processorName,
+            ctrlAddress,
+            mainActivity,
+            subs,
+            secOrg,
+            secTech,
+            secPhysical,
+            secAccess,
+            secUser,
+            secAudit,
+          }),
+          processor_name: processorName,
+          processor_address: ctrlAddress,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.join('\n')
+          : data.detail;
+
+        alert(detail || data.error || 'บันทึกแบบร่างไม่สำเร็จ');
+        return;
+      }
+
+      const savedRequestId = data.data?.request_id;
+      if (savedRequestId) {
+        setRequestId(savedRequestId);
+      }
+
+      onSaveDraft?.({
+        request_id: savedRequestId,
+        formType,
+        mainActivity,
+      });
+
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2500);
+    } catch (error) {
+      console.error(error);
+      alert('บันทึกแบบร่างไม่สำเร็จ');
+    }
   };
 
   const handleSubmit = async () => {
@@ -820,8 +960,8 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
         <button type="button" onClick={handleSaveDraft}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
           {draftSaved
-            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกร่างแล้ว!</span></>
-            : 'save draft'}
+            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกแบบร่างแล้ว</span></>
+            : 'บันทึกแบบร่าง'}
         </button>
         <div className="flex items-center gap-2">
           {step > 1 && (

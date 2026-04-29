@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   approveAccessRequest,
   createAccessRequest,
+  saveAccessDraft,
   getAllAccessRequests,
   getAvailableRopa,
   getMyAccessRequests,
@@ -20,6 +21,7 @@ router.get("/pending", getPendingAccessRequests);
 router.get("/", getAllAccessRequests);
 
 router.post("/request", createAccessRequest);
+router.post("/draft", saveAccessDraft);
 
 router.patch("/:request_id/approve", approveAccessRequest);
 router.patch("/:request_id/reject", rejectAccessRequest);

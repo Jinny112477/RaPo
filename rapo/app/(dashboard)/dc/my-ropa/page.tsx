@@ -3,24 +3,99 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { useRopa } from '@/lib/ropaContext';
 import { DpRecord } from '@/types';
 import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { MessageSquareWarning } from 'lucide-react';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
+type ApiAccessRequest = {
+  request_id: string;
+  activity_id: string;
+  requested_by: string;
+  purpose: string;
+  scope?: string | null;
+  duration?: string | null;
+  processor_name?: string | null;
+  processor_address?: string | null;
+  approval_status: string;
+  created_at: string;
+  updated_at?: string | null;
+  activity?: {
+    activity_id: string;
+    activity_name?: string;
+    activity_subject?: string;
+  };
+};
+
+type DpRecordUI = DpRecord & {
+  activityName?: string;
+  activitySubject?: string;
+  processorAddress?: string | null;
+  scope?: string | null;
+  duration?: string | null;
+  rejectionReason?: string | null;
+};
+
+type DepartmentOption = {
+  department_id: string;
+  department_name: string;
+};
+
+const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
+  return {
+    id: item.request_id,
+    activityId: item.activity_id,
+
+    processorName:
+      item.processor_name ||
+      'ไม่ระบุผู้ประมวลผล',
+
+    processorAddress: item.processor_address || '-',
+
+    purpose: item.purpose || '-',
+
+    status:
+      item.approval_status === 'approved'
+        ? 'APPROVED'
+        : item.approval_status === 'draft'
+          ? 'DRAFT'
+        : item.approval_status === 'rejected'
+          ? 'REJECTED'
+          : 'PENDING',
+
+    createdBy: item.requested_by,
+
+    createdAt: item.updated_at || item.created_at
+      ? new Date(item.updated_at || item.created_at).toLocaleDateString('th-TH')
+      : '-',
+
+    activityName: item.activity?.activity_name || '-',
+    activitySubject: item.activity?.activity_subject || '-',
+    scope: item.scope,
+    duration: item.duration,
+  } as DpRecordUI;
+};
+
 export default function MyRopaPage() {
   const { user } = useAuth();
   const router = useRouter();
-
-  const { activities: contextActivities, dpRecords, deleteDpRecord } = useRopa();
 
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingDC, setLoadingDC] = useState(false);
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [myDP, setMyDP] = useState<DpRecordUI[]>([]);
+  const [dpLoading, setDpLoading] = useState(false);
+  const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+
+  const getDepartmentName = (departmentIdOrName?: string) => {
+    if (!departmentIdOrName) return '-';
+
+    const found = departments.find((department) => department.department_id === departmentIdOrName);
+    return found?.department_name || departmentIdOrName;
+  };
 
   const fetchMyActivities = async () => {
     try {
@@ -48,8 +123,6 @@ export default function MyRopaPage() {
   };
 
   const deleteActivity = async (id: string) => {
-    if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
-
     try {
       const res = await fetch(`${API_URL}/api/form/${id}`, {
         method: 'DELETE',
@@ -74,6 +147,22 @@ export default function MyRopaPage() {
     fetchMyActivities();
   }, [user?.id]);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/departments`);
+        const data = await res.json();
+
+        if (!res.ok) return;
+        setDepartments(data.data || []);
+      } catch (error) {
+        console.error('FETCH DEPARTMENTS ERROR:', error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   const myDC = activities;
 
   const filteredDC = useMemo(() => {
@@ -84,12 +173,44 @@ export default function MyRopaPage() {
     });
   }, [myDC, search, statusFilter]);
 
-  // ── DP data ──────────────────────────────────────────────────────────────────
-  // 4. เปลี่ยนไปใช้ dpRecords จาก Context แทน mockDpRecords
-  const myDP: DpRecord[] = dpRecords.filter((d: DpRecord) => d.createdBy === user?.name);
-  const filteredDP = myDP.filter((d: DpRecord) => {
-    const matchSearch = d.processorName?.toLowerCase().includes(search.toLowerCase());
+  const fetchMyDPForms = async () => {
+    try {
+      if (!user?.id) return;
+
+      setDpLoading(true);
+
+      const res = await fetch(`${API_URL}/api/access/my-requests?user_id=${user.id}`);
+      const data = await res.json();
+
+      console.log('MY DP RESPONSE:', data);
+
+      if (!res.ok) {
+        alert(data.detail || data.error || 'โหลด DP Form ไม่สำเร็จ');
+        return;
+      }
+
+      const mapped = (data.data || []).map(mapAccessToDpRecord);
+      setMyDP(mapped);
+    } catch (error) {
+      console.error(error);
+      alert('โหลด DP Form ไม่สำเร็จ');
+    } finally {
+      setDpLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMyDPForms();
+  }, [user?.id]);
+
+  const filteredDP = myDP.filter((d: DpRecordUI) => {
+    const matchSearch =
+      d.processorName?.toLowerCase().includes(search.toLowerCase()) ||
+      d.activityName?.toLowerCase().includes(search.toLowerCase()) ||
+      d.purpose?.toLowerCase().includes(search.toLowerCase());
+
     const matchStatus = statusFilter === 'ALL' || d.status === statusFilter;
+
     return matchSearch && matchStatus;
   });
 
@@ -218,7 +339,7 @@ export default function MyRopaPage() {
                   className="border-t hover:bg-blue-50 transition cursor-pointer"
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
-                  <td className="px-4 py-3 text-gray-500">{a.department}</td>
+                  <td className="px-4 py-3 text-gray-500">{getDepartmentName(a.department)}</td>
                   <td className="px-4 py-3 text-gray-500 text-xs">{a.legalBasis}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${riskBadge(a.riskLevel)}`}>
@@ -237,7 +358,7 @@ export default function MyRopaPage() {
                       {/* DRAFT — ปุ่มEdit */}
                       {a.status === 'DRAFT' && (
                         <button
-                          onClick={() => router.push(`/ropa/edit/${a.id}`)}
+                          onClick={() => router.push(`/ropa/create?edit=${a.id}`)}
                           className="text-xs text-gray-600 border border-gray-300 px-2.5 py-1 rounded hover:bg-gray-50 transition">
                           Edit
                         </button>
@@ -312,16 +433,18 @@ export default function MyRopaPage() {
               </tr>
             </thead>
             <tbody className="text-sm text-gray-700">
-              {filteredDP.length > 0 ? filteredDP.map((d: DpRecord) => {
-                // 6. เปลี่ยนเป็น activities จาก Context แทน mockActivities
-              const linked = [...activities, ...contextActivities].find(a => a.id === d.activityId);
-              return (
+              {filteredDP.length > 0 ? filteredDP.map((d: DpRecordUI) => {
+                const linked = activities.find(a => a.id === d.activityId);
+                const activityName = linked?.activityName || d.activityName || '-';
+                const activityDept = getDepartmentName(linked?.department || d.activitySubject || '-');
+
+                return (
                   <tr key={d.id} className="border-t hover:bg-gray-50 transition">
                     <td className="px-4 py-3 font-medium text-gray-900">{d.processorName}</td>
                     <td className="px-4 py-3">
                       <div>
-                        <p className="text-sm text-gray-700">{linked?.activityName ?? d.activityId}</p>
-                        <p className="text-xs text-gray-400">{linked?.department}</p>
+                        <p className="text-sm text-gray-700">{activityName}</p>
+                        <p className="text-xs text-gray-400">{activityDept}</p>
                       </div>
                     </td>
                     <td className="px-4 py-3 text-gray-500 text-xs">{d.purpose}</td>
@@ -354,17 +477,36 @@ export default function MyRopaPage() {
                           </button>
                         )}
 
-                        {/* ถ้าต้องการเพิ่มปุ่มลบในตาราง DP ด้วย (เป็น option เสริม): */}
-                        {/* {(d.status === 'DRAFT' || d.status === 'REJECTED') && (
+                        {(d.status === 'DRAFT' || d.status === 'PENDING' || d.status === 'REJECTED') && (
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (confirm(`ลบ DP ของ "${d.processorName}" ใช่ไหม?`)) deleteDpRecord(d.id)
+                            onClick={async (e) => {
+                              e.stopPropagation();
+
+                              if (!confirm(`ลบ DP Form ของ "${d.processorName}" ใช่ไหม?`)) return;
+
+                              try {
+                                const res = await fetch(`${API_URL}/api/access/${d.id}`, {
+                                  method: 'DELETE',
+                                });
+
+                                const data = await res.json();
+
+                                if (!res.ok) {
+                                  alert(data.detail || data.error || 'ลบ DP Form ไม่สำเร็จ');
+                                  return;
+                                }
+
+                                setMyDP(prev => prev.filter(item => item.id !== d.id));
+                              } catch (error) {
+                                console.error(error);
+                                alert('ลบ DP Form ไม่สำเร็จ');
+                              }
                             }}
-                            className="text-xs text-red-400 border border-red-200 px-2.5 py-1 rounded hover:bg-red-50 transition">
+                            className="text-xs text-red-400 border border-red-200 px-2.5 py-1 rounded hover:bg-red-50 transition"
+                          >
                             ลบ
                           </button>
-                        )} */}
+                        )}
 
                       </div>
 
@@ -382,7 +524,11 @@ export default function MyRopaPage() {
                   </tr>
                 );
               }) : (
-                <tr><td colSpan={6} className="text-center py-10 text-gray-400">ไม่พบข้อมูล</td></tr>
+                <tr>
+                  <td colSpan={6} className="text-center py-10 text-gray-400">
+                    {dpLoading ? 'กำลังโหลดข้อมูล...' : 'ไม่พบข้อมูล'}
+                  </td>
+                </tr>
               )}
             </tbody>
           </table>

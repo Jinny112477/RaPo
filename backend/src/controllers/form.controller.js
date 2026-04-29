@@ -18,6 +18,43 @@ const LOOKUP_TABLES = {
   },
 };
 
+const DRAFT_MARKER = "__DRAFT__";
+
+const serializeDraftPayload = (body = {}) => {
+  try {
+    return JSON.stringify({
+      companyName: body.companyName || "",
+      department: body.departmentId || body.department || "",
+      activityName: body.activityName || body.activity_name || "",
+      dataOwner: body.dataOwner || "",
+      recorderEmail: body.recorderEmail || "",
+      recordDate: body.recordDate || "",
+      dpcName: body.dpcName || "",
+      purpose: body.purpose || "",
+      legalBasis: body.legalBasis || [],
+      legalBasisNote: body.legalBasisNote || "",
+      dataSubjects: body.dataSubjects || [],
+      personalDataTypes: body.personalDataTypes || [],
+      sensitiveData: body.sensitiveData || [],
+      collectionMethods: body.collectionMethods || [],
+      otherDataNote: body.otherDataNote || "",
+      retentionValue: body.retentionValue || "",
+      retentionUnit: body.retentionUnit || "ปี",
+      retentionCriteria: body.retentionCriteria || "",
+      deletionMethods: body.deletionMethods || [],
+      retentionNote: body.retentionNote || "",
+      secOrg: body.secOrg || "",
+      secTech: body.secTech || "",
+      secPhysical: body.secPhysical || "",
+      secAccess: body.secAccess || "",
+      secResponsibility: body.secResponsibility || "",
+      secAudit: body.secAudit || "",
+    });
+  } catch {
+    return null;
+  }
+};
+
 const FORM_SELECT = `
   *,
   obtaining_data:obtaining_data_id(*),
@@ -36,6 +73,7 @@ const LIST_SELECT = `
   activity_name,
   activity_subject,
   purpose,
+  denial_details,
   approval_status,
   created_at,
   updated_at,
@@ -110,6 +148,10 @@ const getUserId = (body) => {
   return body.userId || body.user_id || body.created_by || body.updated_by;
 };
 
+const isDraftRequest = (body = {}) => {
+  return body.save_as_draft === true || body.approval_status === "draft";
+};
+
 const getFirstSub = (body) => {
   if (Array.isArray(body.subs) && body.subs.length > 0) return body.subs[0];
   if (Array.isArray(body.subActivities) && body.subActivities.length > 0) return body.subActivities[0];
@@ -121,6 +163,7 @@ const getActivityName = (body) => {
 };
 
 const getActivitySubject = (body) => {
+  if (body.departmentId) return body.departmentId;
   if (body.activity_subject) return body.activity_subject;
   if (body.ownerName) return body.ownerName;
   if (body.processorName) return body.processorName;
@@ -246,20 +289,48 @@ const findLookupId = async (config, value, fieldName) => {
   return matched[config.idColumn];
 };
 
-const resolveLookupIds = async (body, sub) => {
-  const legalBasisId = await findLookupId(
+const findDefaultLookupId = async (config, fieldName) => {
+  const { data, error } = await supabase
+    .from(config.table)
+    .select(config.idColumn)
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(`${fieldName} lookup failed: ${error.message}`);
+  return data?.[config.idColumn];
+};
+
+const resolveLookupIds = async (body, sub, options = {}) => {
+  const { allowMissing = false, useDefaultWhenMissing = false } = options;
+
+  const resolveId = async (config, rawValue, fieldName) => {
+    try {
+      const resolved = await findLookupId(config, rawValue, fieldName);
+
+      if (resolved !== undefined) return resolved;
+      if (useDefaultWhenMissing) return await findDefaultLookupId(config, fieldName);
+
+      return undefined;
+    } catch (err) {
+      if (!allowMissing) throw err;
+      if (useDefaultWhenMissing) return await findDefaultLookupId(config, fieldName);
+      return undefined;
+    }
+  };
+
+  const legalBasisId = await resolveId(
     LOOKUP_TABLES.legalBasis,
     getLegalBasisInput(body, sub),
     "legalBasis"
   );
 
-  const obtainingDataId = await findLookupId(
+  const obtainingDataId = await resolveId(
     LOOKUP_TABLES.obtainingData,
     getObtainingDataInput(body, sub),
     "obtainingData"
   );
 
-  const obtainingMethodId = await findLookupId(
+  const obtainingMethodId = await resolveId(
     LOOKUP_TABLES.obtainingMethod,
     getObtainingMethodInput(body, sub),
     "obtainingMethod"
@@ -272,10 +343,14 @@ const resolveLookupIds = async (body, sub) => {
   };
 };
 
-const buildFormPayload = async (body, mode = "create") => {
+const buildFormPayload = async (body, mode = "create", options = {}) => {
   const sub = getFirstSub(body);
   const finalUserId = getUserId(body);
-  const lookupIds = await resolveLookupIds(body, sub);
+  const isDraft = options.isDraft ?? isDraftRequest(body);
+  const lookupIds = await resolveLookupIds(body, sub, {
+    allowMissing: isDraft,
+    useDefaultWhenMissing: isDraft,
+  });
   const value = mode === "create" ? toNullable : toOptional;
 
   return {
@@ -309,25 +384,42 @@ const buildFormPayload = async (body, mode = "create") => {
 
     activity: {
       user_id: mode === "create" ? finalUserId : undefined,
-      activity_name: value(getActivityName(body)),
-      activity_subject: value(getActivitySubject(body)),
-      purpose: value(getPurpose(body, sub)),
+      activity_name:
+        mode === "create" && isDraft
+          ? toRequiredText(getActivityName(body), "แบบร่างกิจกรรม")
+          : value(getActivityName(body)),
+      activity_subject:
+        mode === "create" && isDraft
+          ? toRequiredText(getActivitySubject(body), "ไม่ระบุแผนก")
+          : value(getActivitySubject(body)),
+      purpose:
+        mode === "create" && isDraft
+          ? toRequiredText(getPurpose(body, sub), "-")
+          : value(getPurpose(body, sub)),
 
       obtaining_data_id: lookupIds.obtaining_data_id,
       obtaining_method: lookupIds.obtaining_method,
       legal_basis_id: lookupIds.legal_basis_id,
 
       consentless_data:
-        mode === "create"
+        mode === "create" && isDraft
+          ? serializeDraftPayload(body)
+          : mode === "create"
           ? toRequiredText(body.exemptDisclosure || sub.exemptDisclosure)
-          : toOptional(body.exemptDisclosure || sub.exemptDisclosure),
+          : isDraft
+            ? serializeDraftPayload(body)
+            : toOptional(body.exemptDisclosure || sub.exemptDisclosure),
 
       denial_details:
-        mode === "create"
+        mode === "create" && isDraft
+          ? DRAFT_MARKER
+          : mode === "create"
           ? toRequiredText(body.rightsDenial || sub.rightsDenial)
           : toOptional(body.rightsDenial || sub.rightsDenial),
 
-      approval_status: body.approval_status || (mode === "create" ? "pending" : undefined),
+      approval_status: isDraft
+        ? "pending"
+        : body.approval_status || (mode === "create" ? "pending" : undefined),
       created_by: mode === "create" ? finalUserId : undefined,
       updated_by: finalUserId,
     },
@@ -343,7 +435,10 @@ const buildFormPayload = async (body, mode = "create") => {
   };
 };
 
-const validateCreatePayload = (payload) => {
+const validateCreatePayload = (payload, options = {}) => {
+  const { isDraft = false } = options;
+  if (isDraft) return [];
+
   const errors = [];
 
   if (!payload.finalUserId) errors.push("userId is required");
@@ -451,8 +546,9 @@ const deleteRelatedTable = async (table, idColumn, id) => {
 
 export const createForm = async (req, res) => {
   try {
-    const payload = await buildFormPayload(req.body, "create");
-    const errors = validateCreatePayload(payload);
+    const isDraft = isDraftRequest(req.body);
+    const payload = await buildFormPayload(req.body, "create", { isDraft });
+    const errors = validateCreatePayload(payload, { isDraft });
 
     if (errors.length > 0) return sendError(res, 400, "Invalid form data", errors);
 
@@ -470,7 +566,7 @@ export const createForm = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: "Form created successfully",
+      message: isDraft ? "Draft saved successfully" : "Form created successfully",
       activity_id: data.activity_id,
     });
   } catch (err) {
@@ -523,12 +619,15 @@ export const updateForm = async (req, res) => {
   try {
     const activityId = getActivityId(req);
     if (!activityId) return sendError(res, 400, "activity_id is required");
+    const isDraft = isDraftRequest(req.body);
 
     const { data: oldActivity, error: findError } = await supabase
       .from("activities")
       .select(`
         activity_id,
         user_id,
+        consentless_data,
+        denial_details,
         source_id,
         minor_consent_id,
         policy_id,
@@ -539,7 +638,7 @@ export const updateForm = async (req, res) => {
 
     if (findError) return sendError(res, 404, "Activity not found", findError.message);
 
-    const payload = await buildFormPayload(req.body, "update");
+    const payload = await buildFormPayload(req.body, "update", { isDraft });
 
     await updateRelatedTable("sources", "source_id", oldActivity.source_id, payload.source);
     await updateRelatedTable("minor_consent", "minor_consent_id", oldActivity.minor_consent_id, payload.minorConsent);
@@ -554,8 +653,14 @@ export const updateForm = async (req, res) => {
       obtaining_data_id: payload.activity.obtaining_data_id,
       obtaining_method: payload.activity.obtaining_method,
       legal_basis_id: payload.activity.legal_basis_id,
-      consentless_data: payload.activity.consentless_data,
-      denial_details: payload.activity.denial_details,
+      consentless_data:
+        !isDraft && oldActivity.denial_details === DRAFT_MARKER
+          ? null
+          : payload.activity.consentless_data,
+      denial_details:
+        !isDraft && oldActivity.denial_details === DRAFT_MARKER
+          ? null
+          : payload.activity.denial_details,
       approval_status: payload.activity.approval_status,
       updated_by: payload.finalUserId || oldActivity.user_id,
       updated_at: new Date().toISOString(),
@@ -570,7 +675,11 @@ export const updateForm = async (req, res) => {
 
     if (error) return sendError(res, 500, "Update form failed", error.message);
 
-    return res.status(200).json({ success: true, message: "Form updated successfully", data });
+    return res.status(200).json({
+      success: true,
+      message: isDraft ? "Draft updated successfully" : "Form updated successfully",
+      data,
+    });
   } catch (err) {
     return sendError(res, 500, "Update form failed", err.message);
   }
