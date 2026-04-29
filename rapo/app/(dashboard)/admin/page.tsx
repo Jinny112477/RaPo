@@ -98,7 +98,7 @@ export default function UsersPage() {
       setUsers((prev) => [...prev, { ...newUser, user_id: data.user_id }]);
       setOpen(false);
       setNewUser({ name: "", email: "", phone: "", department_id: "", department_name: "", role: "" });
-      alert(`User created!\n\nEmail: ${newUser.email}\nPassword: Temp1234\n\nShare this with the user.`);
+      alert("User created!");
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -12,12 +12,10 @@ export const createUsers = async (req, res) => {
   try {
     const { email, name, phone, department_id, role } = req.body;
 
-    // ✅ validate
     if (!email || !name || !department_id || !role) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // ✅ check duplicate email
     const { data: existingUser } = await supabase
       .from("profiles")
       .select("email")
@@ -28,10 +26,8 @@ export const createUsers = async (req, res) => {
       return res.status(400).json({ error: "Email already exists" });
     }
 
-    // ✅ generate password
     const tempPassword = generateTempPassword();
 
-    // ✅ create auth user
     const { data: authData, error: authError } =
       await supabase.auth.admin.createUser({
         email,

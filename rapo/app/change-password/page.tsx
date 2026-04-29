@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
+
 export default function ChangePasswordPage() {
     const router = useRouter();
     const [password, setPassword] = useState("");
@@ -48,7 +49,7 @@ export default function ChangePasswordPage() {
             if (!user) throw new Error("User not authenticated");
             const userId = user.id;
 
-            // Step 1: Update the DB flag FIRST (before password change kills the session)
+            // Step 1: Update the DB flag FIRST
             const { error: profileError } = await supabase
                 .from("profiles")
                 .update({ password_change: true })
@@ -63,20 +64,16 @@ export default function ChangePasswordPage() {
                 .single();
             if (!verified?.password_change) throw new Error("Failed to save flag. Please try again.");
 
-            // Step 3: NOW update the password (this may invalidate the session)
+            // Step 3: Update password
             const { error: authError } = await supabase.auth.updateUser({ password });
             if (authError) throw authError;
 
-            // Step 4: Sign out cleanly — session is unreliable after password change
-            await supabase.auth.signOut();
-
-            // ✅ No setTimeout needed — just redirect directly
-            setSuccess("Password updated! Please sign in with your new password.");
-            router.replace("/login?changed=true");
+            // Step 4: Hard navigate — bypasses all React/Next.js routing conflicts
+            sessionStorage.setItem('passwordJustChanged', 'true');
+            router.replace('/dashboard');
 
         } catch (err: any) {
             console.error("CHANGE PASSWORD ERROR:", err);
-            // If password update failed but flag was set, revert the flag
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 await supabase.from("profiles")
