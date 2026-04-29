@@ -50,7 +50,7 @@ export default function RopaEditPage() {
           onClick={() => router.back()}
           className="px-4 py-2 border rounded"
         >
-          กลับ
+          back to my activity
         </button>
       </div>
     </div>

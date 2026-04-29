@@ -319,7 +319,7 @@ export default function RopaDetailPage() {
             className="px-4 py-2 text-sm text-slate-600 border border-slate-200
               rounded-lg hover:bg-slate-50 transition-colors"
           >
-            ← กลับ
+            back to my activity
           </button>
 
           <div className="flex items-center gap-2">
