@@ -25,6 +25,18 @@ export type ApiRopa = {
   };
 };
 
+const formatRetentionPeriod = (value?: string) => {
+  const raw = String(value || "").trim();
+  if (!raw) return "-";
+
+  const [retentionValue = "", retentionUnit = ""] = raw
+    .split(" - ")
+    .map((item) => item.trim());
+
+  if (retentionValue && retentionUnit) return `${retentionValue} ${retentionUnit}`;
+  return raw;
+};
+
 export const mapStatus = (status?: string) => {
   if (status === "approved") return "ACTIVE";
   if (status === "rejected") return "REJECTED";
@@ -45,7 +57,7 @@ export const mapApiRopaToActivity = (item: ApiRopa) => {
     status: isDraft ? "DRAFT" : mapStatus(item.approval_status),
     riskLevel: "LOW",
     legalBasis: item.legal_basis?.name || "-",
-    retentionPeriod: item.policy?.retention_period || "-",
+    retentionPeriod: formatRetentionPeriod(item.policy?.retention_period),
     dataSubject: [item.source?.name || "-"],
     personalData: [item.obtaining_data?.name || "-"],
     processing: [item.obtaining_method_detail?.name || "-"],

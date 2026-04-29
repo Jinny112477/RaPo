@@ -63,6 +63,18 @@ const isToday = (value?: string | null) => {
   return date.toDateString() === today.toDateString();
 };
 
+const formatRetentionPeriod = (value?: string | null) => {
+  const raw = String(value || '').trim();
+  if (!raw) return '-';
+
+  const [retentionValue = '', retentionUnit = ''] = raw
+    .split(' - ')
+    .map((item) => item.trim());
+
+  if (retentionValue && retentionUnit) return `${retentionValue} ${retentionUnit}`;
+  return raw;
+};
+
 const mapApiRopaToActivity = (item: ApiRopa): Activity => {
   const status =
     item.approval_status === 'approved'
@@ -79,7 +91,7 @@ const mapApiRopaToActivity = (item: ApiRopa): Activity => {
     status,
     riskLevel: 'LOW',
     legalBasis: item.legal_basis?.name || '-',
-    retentionPeriod: item.policy?.retention_period || '-',
+    retentionPeriod: formatRetentionPeriod(item.policy?.retention_period),
     dataSubject: [item.source?.name || '-'],
     personalData: [item.obtaining_data?.name || '-'],
     processing: [item.obtaining_method_detail?.name || '-'],
@@ -318,6 +330,11 @@ type ApiAccessRequest = {
   request_id: string;
   activity_id: string;
   requested_by: string;
+  requester?: {
+    user_id?: string;
+    name?: string;
+    email?: string;
+  };
   purpose: string;
   scope?: string | null;
   duration?: string | null;
@@ -368,7 +385,10 @@ const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
           ? "REJECTED"
           : "PENDING",
 
-    createdBy: item.requested_by,
+    createdBy:
+      item.requester?.name ||
+      item.requester?.email ||
+      item.requested_by,
 
     createdAt: item.updated_at || item.created_at
       ? new Date(item.updated_at || item.created_at).toLocaleDateString("th-TH")
