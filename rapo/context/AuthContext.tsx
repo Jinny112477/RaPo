@@ -33,9 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', supabaseUser.id)
       .single();
 
-    const membership = (profile?.user_membership as any) ?? {};
-    const role = membership.role ?? 'user';
-    const department = membership.departments?.department_name ?? '';
+    // user_membership อาจเป็น array หรือ object ขึ้นอยู่กับ relation
+    const membershipRaw = profile?.user_membership;
+    const membership = Array.isArray(membershipRaw)
+      ? membershipRaw[0]
+      : membershipRaw ?? {};
+
+    const role = membership?.role ?? 'user';
+    const department = membership?.departments?.department_name ?? '';
     const name = profile?.name ?? '';
 
     return {
@@ -78,8 +83,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // LOGIN: handler
   const login = async (email: string, password: string): Promise<boolean> => {
-    console.log('TRY LOGIN:', email);
-
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
@@ -87,7 +90,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return false;
     }
 
-    console.log('LOGIN SUCCESS:', data);
     return true;
   };
 
