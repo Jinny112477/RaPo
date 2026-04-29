@@ -36,6 +36,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [accepted, setAccepted] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -44,6 +45,10 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
+    if (!accepted) {
+      setLoading(false);
+      return setError('Please accept the privacy policy.');
+    }
     const ok = await login(email, password || 'Temp1234');
     setLoading(false);
     if (ok) router.push('/dashboard');
@@ -51,56 +56,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1e36] flex">
-      {/* Left panel - branding */}
-      <div className="hidden lg:flex flex-col justify-between w-[420px] bg-[#0a1628] border-r border-white/10 p-10 flex-shrink-0">
-        <div>
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-11 h-11 bg-blue-500 rounded-xl flex items-center justify-center">
-              <ShieldIcon />
-            </div>
-            <div>
-              <p className="text-white font-bold text-lg leading-tight">ROPA</p>
-              <p className="text-slate-400 text-xs">Management System</p>
-            </div>
-          </div>
-
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-white text-3xl font-bold leading-tight mb-3">
-                Privacy compliance<br />made simple.
-              </h2>
-              <p className="text-slate-400 text-sm leading-relaxed">
-                Manage your Record of Processing Activities in one secure, organized platform built for modern enterprises.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {[
-                { icon: '🔒', label: 'GDPR Compliant Workflows' },
-                { icon: '📋', label: 'Automated Risk Assessment' },
-                { icon: '👥', label: 'Role-Based Access Control' },
-                { icon: '📊', label: 'Real-time Analytics & Reports' },
-              ].map((f) => (
-                <div key={f.label} className="flex items-center gap-3">
-                  <span className="w-8 h-8 bg-blue-900/50 rounded-lg flex items-center justify-center text-sm">{f.icon}</span>
-                  <span className="text-slate-300 text-sm">{f.label}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-white/10 pt-6">
-          <p className="text-xs text-slate-500">
-            © 2024 ROPA Management System. Enterprise Edition v2.4
-          </p>
-        </div>
-      </div>
-
-      {/* Right panel - login form */}
-      <div className="flex-1 flex items-center justify-center p-6">
-        <div className="w-full max-w-[400px]">
+    <div className="min-h-screen bg-[#0f1e36] flex items-center justify-center p-6">
+      <div className="w-full max-w-[400px]">
           {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center">
@@ -155,9 +112,26 @@ export default function LoginPage() {
                 </div>
               </div>
 
+              <div className="flex items-start gap-3 pt-2">
+                <input
+                  id="privacy-consent"
+                  type="checkbox"
+                  checked={accepted}
+                  onChange={(e) => setAccepted(e.target.checked)}
+                  className="mt-1.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label htmlFor="privacy-consent" className="text-sm text-slate-700">
+                  I agree to the{' '}
+                  <span className="text-blue-600 underline hover:text-blue-700 cursor-pointer">
+                    Privacy Policy
+                  </span>{' '}
+                  and consent to the processing of my personal data.
+                </label>
+              </div>
+
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !accepted}
                 className="w-full py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-200 shadow-sm shadow-blue-200 mt-2"
               >
                 {loading ? (
@@ -173,6 +147,5 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-    </div>
   );
 }
