@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/authContext';
+import { useAuth } from '@/context/AuthContext';
 import { useRopa } from '@/lib/ropaContext';
 import { Plus } from "lucide-react";
 
@@ -26,19 +26,19 @@ export default function DashboardPage() {
   const stats = [
     {
       key: 'ALL',
-      title: 'Total ROPA',
+      title: 'Total',
       value: activities.length,
       color: 'text-gray-900'
     },
     {
       key: 'ACTIVE',
-      title: 'Active',
+      title: 'Approved',
       value: activities.filter(a => a.status === 'ACTIVE').length,
       color: 'text-green-600'
     },
     {
       key: 'REVIEW',
-      title: 'Under Review',
+      title: 'Pending',
       value: activities.filter(a => a.status === 'REVIEW').length,
       color: 'text-yellow-600'
     },
