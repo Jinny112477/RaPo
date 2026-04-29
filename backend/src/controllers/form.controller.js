@@ -537,6 +537,49 @@ const upsertInternationalTransfer = async (activityId, payload) => {
   if (error) throw new Error(`international_transfers: ${error.message}`);
 };
 
+const upsertDpoPendingReview = async ({ activityId, userId }) => {
+  const { data: existing, error: findError } = await supabase
+    .from("dpo_ropa_approval")
+    .select("ropa_approval_id")
+    .eq("activity_id", activityId)
+    .maybeSingle();
+
+  if (findError) throw new Error(`dpo_ropa_approval: ${findError.message}`);
+
+  const payload = {
+    approval_status: "pending",
+    comment: null,
+    return_at: null,
+    ...(userId ? { user_id: userId } : {}),
+  };
+
+  if (existing?.ropa_approval_id) {
+    const { error: updateError } = await supabase
+      .from("dpo_ropa_approval")
+      .update(payload)
+      .eq("ropa_approval_id", existing.ropa_approval_id);
+
+    if (updateError) throw new Error(`dpo_ropa_approval: ${updateError.message}`);
+    return;
+  }
+
+  if (!userId) {
+    throw new Error("dpo_ropa_approval: user_id is required");
+  }
+
+  const { error: insertError } = await supabase
+    .from("dpo_ropa_approval")
+    .insert({
+      activity_id: activityId,
+      user_id: userId,
+      approval_status: "pending",
+      comment: null,
+      return_at: null,
+    });
+
+  if (insertError) throw new Error(`dpo_ropa_approval: ${insertError.message}`);
+};
+
 const deleteRelatedTable = async (table, idColumn, id) => {
   if (!id) return;
 
@@ -563,6 +606,12 @@ export const createForm = async (req, res) => {
     if (error) return sendError(res, 500, "Create activity failed", error.message);
 
     await insertInternationalTransfer(data.activity_id, payload);
+    if (!isDraft) {
+      await upsertDpoPendingReview({
+        activityId: data.activity_id,
+        userId: payload.finalUserId,
+      });
+    }
 
     return res.status(201).json({
       success: true,
@@ -674,6 +723,13 @@ export const updateForm = async (req, res) => {
       .single();
 
     if (error) return sendError(res, 500, "Update form failed", error.message);
+
+    if (!isDraft && data?.activity_id) {
+      await upsertDpoPendingReview({
+        activityId: data.activity_id,
+        userId: payload.finalUserId || oldActivity.user_id,
+      });
+    }
 
     return res.status(200).json({
       success: true,

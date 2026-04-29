@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { notifyError, notifySuccess } from "@/lib/notify";
 
 const DEPARTMENTS = [
   { department_id: "06315740-4498-4146-91a7-576504c4ad4a", department_name: "Information Technology" },
@@ -95,7 +96,7 @@ export default function UsersPage() {
       setUsers((prev) => [...prev, { ...newUser, user_id: data.user_id }]);
       setOpen(false);
       setNewUser({ name: "", email: "", phone: "", department_id: "", department_name: "", role: "" });
-      alert(`User created!\n\nEmail: ${newUser.email}\nPassword: Temp1234\n\nShare this with the user.`);
+      notifySuccess(`User created!\n\nEmail: ${newUser.email}\nPassword: Temp1234\n\nShare this with the user.`, 7000);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -129,7 +130,7 @@ export default function UsersPage() {
       setActionModal(null);
       setSelectedUser(null);
     } catch (err: any) {
-      alert("Failed to update user: " + err.message);
+      notifyError("Failed to update user: " + err.message);
     } finally {
       setSaving(false);
     }
@@ -150,7 +151,7 @@ export default function UsersPage() {
       setActionModal(null);
       setSelectedUser(null);
     } catch (err: any) {
-      alert("Failed to delete user: " + err.message);
+      notifyError("Failed to delete user: " + err.message);
     } finally {
       setSaving(false);
     }

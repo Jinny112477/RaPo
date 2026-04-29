@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useRopa } from '@/lib/ropaContext';
 import { StatusBadge, RiskBadge } from '@/components/StatusBadge';
 import { Activity, DpRecord } from '@/types';
+import { notifyError } from '@/lib/notify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -71,7 +73,8 @@ const formatRetentionPeriod = (value?: string | null) => {
     .split(' - ')
     .map((item) => item.trim());
 
-  if (retentionValue && retentionUnit) return `${retentionValue} ${retentionUnit}`;
+  if (/(ปี|เดือน|วัน)/.test(retentionValue)) return retentionValue;
+  if (retentionValue && /^(ปี|เดือน|วัน)$/.test(retentionUnit)) return `${retentionValue} ${retentionUnit}`;
   return raw;
 };
 
@@ -403,6 +406,7 @@ const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
 
 // ─── Main Page ──────────────────────────────────────────────────────────────────
 export default function DPOReviewPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'dc' | 'dp'>('dc');
 
   const { activities } = useRopa();
@@ -436,7 +440,7 @@ export default function DPOReviewPage() {
 
       if (!res.ok) {
         console.log('FETCH DPO ROPA ERROR:', data);
-        alert(data.detail || data.error || 'โหลดรายการ ROPA ไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'โหลดรายการ ROPA ไม่สำเร็จ');
         return;
       }
 
@@ -444,7 +448,7 @@ export default function DPOReviewPage() {
       setDcQueue(mapped);
     } catch (error) {
       console.error(error);
-      alert('โหลดรายการ ROPA ไม่สำเร็จ');
+      notifyError('โหลดรายการ ROPA ไม่สำเร็จ');
     } finally {
       setDcLoading(false);
     }
@@ -503,7 +507,7 @@ export default function DPOReviewPage() {
 
       if (!res.ok) {
         console.log('FETCH DP PENDING ERROR:', data);
-        alert(data.detail || data.error || 'โหลด DP Form ไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'โหลด DP Form ไม่สำเร็จ');
         return;
       }
 
@@ -511,7 +515,7 @@ export default function DPOReviewPage() {
       setDpQueue(mapped);
     } catch (error) {
       console.error(error);
-      alert('โหลด DP Form ไม่สำเร็จ');
+      notifyError('โหลด DP Form ไม่สำเร็จ');
     } finally {
       setDpLoading(false);
     }
@@ -569,7 +573,7 @@ export default function DPOReviewPage() {
 
       if (!res.ok) {
         console.log('APPROVE ROPA ERROR:', data);
-        alert(data.detail || data.error || 'อนุมัติไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'อนุมัติไม่สำเร็จ');
         return;
       }
 
@@ -579,7 +583,7 @@ export default function DPOReviewPage() {
       setViewingDC(null);
     } catch (error) {
       console.error(error);
-      alert('อนุมัติไม่สำเร็จ');
+      notifyError('อนุมัติไม่สำเร็จ');
     }
   };
 
@@ -597,7 +601,7 @@ export default function DPOReviewPage() {
 
       if (!res.ok) {
         console.log('REJECT ROPA ERROR:', data);
-        alert(data.detail || data.error || 'ปฏิเสธไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'ปฏิเสธไม่สำเร็จ');
         return;
       }
 
@@ -607,7 +611,7 @@ export default function DPOReviewPage() {
       setViewingDC(null);
     } catch (error) {
       console.error(error);
-      alert('ปฏิเสธไม่สำเร็จ');
+      notifyError('ปฏิเสธไม่สำเร็จ');
     }
   };
 
@@ -625,7 +629,7 @@ export default function DPOReviewPage() {
 
       if (!res.ok) {
         console.log('APPROVE DP ERROR:', data);
-        alert(data.detail || data.error || 'อนุมัติ DP Form ไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'อนุมัติ DP Form ไม่สำเร็จ');
         return;
       }
 
@@ -635,7 +639,7 @@ export default function DPOReviewPage() {
       setViewingDP(null);
     } catch (error) {
       console.error(error);
-      alert('อนุมัติ DP Form ไม่สำเร็จ');
+      notifyError('อนุมัติ DP Form ไม่สำเร็จ');
     }
   };
 
@@ -653,7 +657,7 @@ export default function DPOReviewPage() {
 
       if (!res.ok) {
         console.log('REJECT DP ERROR:', data);
-        alert(data.detail || data.error || 'ปฏิเสธ DP Form ไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'ปฏิเสธ DP Form ไม่สำเร็จ');
         return;
       }
 
@@ -663,7 +667,7 @@ export default function DPOReviewPage() {
       setViewingDP(null);
     } catch (error) {
       console.error(error);
-      alert('ปฏิเสธ DP Form ไม่สำเร็จ');
+      notifyError('ปฏิเสธ DP Form ไม่สำเร็จ');
     }
   };
 
@@ -756,7 +760,7 @@ export default function DPOReviewPage() {
                     <p className="text-xs text-gray-400 mt-0.5">{getDepartmentName(act.department)} · {act.owner} · {act.updatedAt}</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <button onClick={() => setViewingDCId(act.id)}
+                    <button onClick={() => router.push(`/dpo/review/dc/${act.id}`)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                       <EyeIcon /> ดู
                     </button>
@@ -764,7 +768,7 @@ export default function DPOReviewPage() {
                       className="p-2 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100" title="อนุมัติ">
                       <CheckIcon />
                     </button>
-                    <button onClick={() => setViewingDCId(act.id)}
+                    <button onClick={() => router.push(`/dpo/review/dc/${act.id}`)}
                       className="p-2 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100" title="ปฏิเสธ">
                       <XIcon />
                     </button>
@@ -841,7 +845,7 @@ export default function DPOReviewPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setViewingDPId(dp.id)}
+                      <button onClick={() => router.push(`/dpo/review/dp/${dp.id}`)}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100">
                         <EyeIcon /> ดู
                       </button>
@@ -849,7 +853,7 @@ export default function DPOReviewPage() {
                         className="p-2 rounded-lg text-emerald-600 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100" title="อนุมัติ">
                         <CheckIcon />
                       </button>
-                      <button onClick={() => setViewingDPId(dp.id)}
+                      <button onClick={() => router.push(`/dpo/review/dp/${dp.id}`)}
                         className="p-2 rounded-lg text-red-500 bg-red-50 border border-red-200 hover:bg-red-100" title="ปฏิเสธ">
                         <XIcon />
                       </button>
@@ -889,16 +893,6 @@ export default function DPOReviewPage() {
             </div>
           )}
         </div>
-      )}
-
-      {/* Modals */}
-      {viewingDC && (
-        <DCModal activity={viewingDC} onClose={() => setViewingDC(null)}
-          onApprove={handleDCApprove} onReject={handleDCReject} getDepartmentName={getDepartmentName} />
-      )}
-      {viewingDP && (
-        <DPModal dp={viewingDP} onClose={() => setViewingDP(null)}
-          onApprove={handleDPApprove} onReject={handleDPReject} getDepartmentName={getDepartmentName} />
       )}
     </div>
   );

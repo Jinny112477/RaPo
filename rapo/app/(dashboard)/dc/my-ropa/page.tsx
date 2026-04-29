@@ -1,13 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 // 1. ตรวจสอบให้แน่ใจว่า import useRopa มาแล้ว
 import { useRopa } from '@/lib/ropaContext'
 import { DpRecord } from '@/types';
 import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { MessageSquareWarning } from 'lucide-react';
+import { notifyError } from '@/lib/notify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -82,6 +83,7 @@ const mapAccessToDpRecord = (item: ApiAccessRequest): DpRecordUI => {
 export default function MyRopaPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [activities, setActivities] = useState<any[]>([]);
   const [loadingDC, setLoadingDC] = useState(false);
@@ -91,6 +93,7 @@ export default function MyRopaPage() {
   const [myDP, setMyDP] = useState<DpRecordUI[]>([]);
   const [dpLoading, setDpLoading] = useState(false);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const getDepartmentName = (departmentIdOrName?: string) => {
     if (!departmentIdOrName) return '-';
@@ -110,7 +113,7 @@ export default function MyRopaPage() {
 
       if (!res.ok) {
         console.log('FETCH MY RECORD ERROR:', data);
-        alert(data.detail || data.error || 'โหลด My Record ไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'โหลด My Record ไม่สำเร็จ');
         return;
       }
 
@@ -118,7 +121,7 @@ export default function MyRopaPage() {
       setActivities(mapped);
     } catch (error) {
       console.error(error);
-      alert('โหลด My Record ไม่สำเร็จ');
+      notifyError('โหลด My Record ไม่สำเร็จ');
     } finally {
       setLoadingDC(false);
     }
@@ -134,14 +137,14 @@ export default function MyRopaPage() {
 
       if (!res.ok) {
         console.log('DELETE MY RECORD ERROR:', data);
-        alert(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
         return;
       }
 
       setActivities(prev => prev.filter(a => a.id !== id));
     } catch (error) {
       console.error(error);
-      alert('ลบข้อมูลไม่สำเร็จ');
+      notifyError('ลบข้อมูลไม่สำเร็จ');
     }
   };
 
@@ -187,7 +190,7 @@ export default function MyRopaPage() {
       console.log('MY DP RESPONSE:', data);
 
       if (!res.ok) {
-        alert(data.detail || data.error || 'โหลด DP Form ไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'โหลด DP Form ไม่สำเร็จ');
         return;
       }
 
@@ -195,7 +198,7 @@ export default function MyRopaPage() {
       setMyDP(mapped);
     } catch (error) {
       console.error(error);
-      alert('โหลด DP Form ไม่สำเร็จ');
+      notifyError('โหลด DP Form ไม่สำเร็จ');
     } finally {
       setDpLoading(false);
     }
@@ -204,6 +207,26 @@ export default function MyRopaPage() {
   useEffect(() => {
     fetchMyDPForms();
   }, [user?.id]);
+
+  useEffect(() => {
+    const noticeType = searchParams.get('notice');
+    const form = searchParams.get('form');
+
+    if (noticeType !== 'draft-saved') return;
+
+    if (form === 'dp') {
+      setActiveTab('dp');
+      setNotice('บันทึกแบบร่าง DP Form สำเร็จแล้ว');
+    } else {
+      setActiveTab('dc');
+      setNotice('บันทึกแบบร่าง DC Form สำเร็จแล้ว');
+    }
+
+    const timer = setTimeout(() => setNotice(null), 3500);
+    router.replace('/dc/my-ropa');
+
+    return () => clearTimeout(timer);
+  }, [searchParams, router]);
 
   const filteredDP = myDP.filter((d: DpRecordUI) => {
     const matchSearch =
@@ -286,6 +309,19 @@ export default function MyRopaPage() {
         <p className="text-sm text-gray-500 mt-1">กิจกรรมที่คุณ {user?.name} สร้าง</p>
       </div>
 
+      {notice && (
+        <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="text-sm font-medium text-emerald-800">{notice}</p>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            className="text-xs font-semibold text-emerald-700 hover:text-emerald-900"
+          >
+            ปิด
+          </button>
+        </div>
+      )}
+
       {/* TABS */}
       <div className="flex gap-2 mb-4">
         <button onClick={() => handleTabChange('dc')}
@@ -306,7 +342,7 @@ export default function MyRopaPage() {
 
       {/* STATS */}
       <div className="grid grid-cols-4 gap-4 mb-6">
-        {activeStats.map(s => (
+        {activeStats.map((s: { key: string; title: string; value: number; color: string }) => (
           <button key={s.key} onClick={() => setStatusFilter(s.key)}
             className={`bg-white border rounded-xl p-4 text-left transition-all
               hover:shadow-md hover:border-[#203690]
@@ -511,14 +547,14 @@ export default function MyRopaPage() {
                                 const data = await res.json();
 
                                 if (!res.ok) {
-                                  alert(data.detail || data.error || 'ลบ DP Form ไม่สำเร็จ');
+                                  notifyError(data.detail || data.error || 'ลบ DP Form ไม่สำเร็จ');
                                   return;
                                 }
 
                                 setMyDP(prev => prev.filter(item => item.id !== d.id));
                               } catch (error) {
                                 console.error(error);
-                                alert('ลบ DP Form ไม่สำเร็จ');
+                                notifyError('ลบ DP Form ไม่สำเร็จ');
                               }
                             }}
                             className="text-xs text-red-400 border border-red-200 px-2.5 py-1 rounded hover:bg-red-50 transition"
@@ -583,88 +619,8 @@ export default function MyRopaPage() {
   opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
           Create Menu
         </div>
-
-
-        {openMenu && (
-          <div
-            ref={menuRef}
-            className="absolute bottom-16 right-0 bg-white border rounded-xl shadow-lg w-48 overflow-hidden"
-          >
-
-            <button
-              onClick={() => router.push('/ropa/create')}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100"
-            >
-              Create Activity
-            </button>
-
-            <button
-              onClick={() => {
-                setOpenImport(true);
-                setOpenMenu(false);
-              }}
-              className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100"
-            >
-              Import CSV
-            </button>
-          </div>
-
-        )}
-        {openImport && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
-
-            {/* backdrop */}
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setOpenImport(false)}
-            />
-
-            {/* modal */}
-            <div className="relative bg-white w-[400px] rounded-xl shadow-lg p-6 z-10">
-
-              <h2 className="text-lg font-semibold mb-4">
-                Import CSV / Excel
-              </h2>
-
-              <input
-                type="file"
-                accept=".csv,.xlsx"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                className="w-full border p-2 rounded text-sm"
-              />
-
-              {file && (
-                <p className="text-xs text-gray-500 mt-2">
-                  Selected: {file.name}
-                </p>
-              )}
-
-              <div className="flex justify-end gap-2 mt-5">
-
-                <button
-                  onClick={() => setOpenImport(false)}
-                  className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={() => {
-                    console.log("upload file:", file);
-                    // TODO: parse CSV later
-                    setOpenImport(false);
-                  }}
-                  className="px-3 py-1.5 text-sm bg-[#203690] text-white rounded hover:bg-[#182a73]"
-                >
-                  Upload
-                </button>
-
-              </div>
-            </div>
-          </div>
-        )}
       </div>
-    </div>
 
+    </div>
   );
 }

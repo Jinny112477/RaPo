@@ -48,6 +48,53 @@ const getReviewerId = (req) => {
   return req.body.userId || req.body.user_id || req.body.updated_by || req.query.user_id;
 };
 
+const upsertDpoApproval = async ({ activityId, userId, status, comment = null }) => {
+  const now = new Date().toISOString();
+  const { data: existing, error: findError } = await supabase
+    .from("dpo_ropa_approval")
+    .select("ropa_approval_id")
+    .eq("activity_id", activityId)
+    .maybeSingle();
+
+  if (findError) {
+    throw new Error(`dpo_ropa_approval lookup failed: ${findError.message}`);
+  }
+
+  const payload = {
+    approval_status: status,
+    comment,
+    return_at: now,
+    ...(userId ? { user_id: userId } : {}),
+  };
+
+  if (existing?.ropa_approval_id) {
+    const { error: updateError } = await supabase
+      .from("dpo_ropa_approval")
+      .update(payload)
+      .eq("ropa_approval_id", existing.ropa_approval_id);
+
+    if (updateError) {
+      throw new Error(`dpo_ropa_approval update failed: ${updateError.message}`);
+    }
+
+    return;
+  }
+
+  const { error: insertError } = await supabase
+    .from("dpo_ropa_approval")
+    .insert({
+      activity_id: activityId,
+      user_id: userId,
+      approval_status: status,
+      comment,
+      return_at: now,
+    });
+
+  if (insertError) {
+    throw new Error(`dpo_ropa_approval insert failed: ${insertError.message}`);
+  }
+};
+
 // GET /api/dpo/ropa
 // ดู ROPA ทั้งหมด หรือ filter ด้วย status ได้
 export const getAllRopaForDpo = async (req, res) => {
@@ -86,10 +133,57 @@ export const getAllRopaForDpo = async (req, res) => {
 // ดูเฉพาะ ROPA ที่รอ DPO ตรวจ
 export const getPendingRopaForDpo = async (req, res) => {
   try {
+    const { data: pendingRows, error: pendingError } = await supabase
+      .from("dpo_ropa_approval")
+      .select("activity_id")
+      .eq("approval_status", "pending");
+
+    if (pendingError) {
+      return sendError(res, 500, "Fetch pending ROPA failed", pendingError.message);
+    }
+
+    const activityIds = (pendingRows || []).map((row) => row.activity_id).filter(Boolean);
+
+    if (activityIds.length === 0) {
+      const { data: legacyPending, error: legacyError } = await supabase
+        .from("activities")
+        .select(ROPA_LIST_SELECT)
+        .eq("approval_status", "pending")
+        .neq("denial_details", "__DRAFT__")
+        .order("created_at", { ascending: false });
+
+      if (legacyError) {
+        return sendError(res, 500, "Fetch pending ROPA failed", legacyError.message);
+      }
+
+      if ((legacyPending || []).length > 0) {
+        const backfillRows = (legacyPending || [])
+          .filter((row) => row.activity_id && row.user_id)
+          .map((row) => ({
+            activity_id: row.activity_id,
+            user_id: row.user_id,
+            approval_status: "pending",
+            comment: null,
+            return_at: null,
+          }));
+
+        if (backfillRows.length > 0) {
+          await supabase
+            .from("dpo_ropa_approval")
+            .upsert(backfillRows, { onConflict: "activity_id" });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        data: legacyPending || [],
+      });
+    }
+
     const { data, error } = await supabase
       .from("activities")
       .select(ROPA_LIST_SELECT)
-      .eq("approval_status", "pending")
+      .in("activity_id", activityIds)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -125,9 +219,18 @@ export const getRopaDetailForDpo = async (req, res) => {
       return sendError(res, 404, "ROPA not found", error.message);
     }
 
+    const { data: reviewData } = await supabase
+      .from("dpo_ropa_approval")
+      .select("approval_status, comment, return_at, user_id")
+      .eq("activity_id", activityId)
+      .maybeSingle();
+
     return res.status(200).json({
       success: true,
-      data,
+      data: {
+        ...data,
+        dpo_review: reviewData || null,
+      },
     });
   } catch (err) {
     return sendError(res, 500, "Fetch ROPA detail failed", err.message);
@@ -165,6 +268,13 @@ export const approveRopa = async (req, res) => {
       return sendError(res, 500, "Approve ROPA failed", error.message);
     }
 
+    await upsertDpoApproval({
+      activityId,
+      userId: reviewerId || data.user_id,
+      status: "approved",
+      comment: null,
+    });
+
     return res.status(200).json({
       success: true,
       message: "ROPA approved successfully",
@@ -187,6 +297,10 @@ export const rejectRopa = async (req, res) => {
       return sendError(res, 400, "activity_id is required");
     }
 
+    if (!String(reason || "").trim()) {
+      return sendError(res, 400, "reason is required");
+    }
+
     const updateData = {
       approval_status: "rejected",
       updated_at: new Date().toISOString(),
@@ -194,15 +308,6 @@ export const rejectRopa = async (req, res) => {
 
     if (reviewerId) {
       updateData.updated_by = reviewerId;
-    }
-
-    /*
-      ตอนนี้ activities ไม่มี column สำหรับเก็บเหตุผล reject โดยตรง
-      เลยเอา reason ไปต่อท้าย denial_details ก่อน
-      ถ้าอนาคตอยาก clean กว่านี้ ค่อยเพิ่ม column เช่น dpo_comment หรือ reject_reason
-    */
-    if (reason) {
-      updateData.denial_details = `DPO Reject Reason: ${reason}`;
     }
 
     const { data, error } = await supabase
@@ -215,6 +320,13 @@ export const rejectRopa = async (req, res) => {
     if (error) {
       return sendError(res, 500, "Reject ROPA failed", error.message);
     }
+
+    await upsertDpoApproval({
+      activityId,
+      userId: reviewerId || data.user_id,
+      status: "rejected",
+      comment: String(reason || "").trim(),
+    });
 
     return res.status(200).json({
       success: true,

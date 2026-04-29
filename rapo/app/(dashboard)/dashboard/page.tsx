@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { mapApiRopaToActivity } from '@/lib/mapRopa';
+import { notifyError } from '@/lib/notify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -39,7 +40,7 @@ export default function DashboardPage() {
 
       if (!res.ok) {
         console.log('FETCH DASHBOARD ERROR:', data);
-        alert(data.detail || data.error || 'โหลดข้อมูลไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'โหลดข้อมูลไม่สำเร็จ');
         return;
       }
 
@@ -47,7 +48,7 @@ export default function DashboardPage() {
       setActivities(mapped);
     } catch (error) {
       console.error(error);
-      alert('โหลดข้อมูลไม่สำเร็จ');
+      notifyError('โหลดข้อมูลไม่สำเร็จ');
     } finally {
       setLoading(false);
     }
@@ -65,14 +66,14 @@ export default function DashboardPage() {
 
       if (!res.ok) {
         console.log('DELETE FORM ERROR:', data);
-        alert(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
+        notifyError(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
         return;
       }
 
       setActivities(prev => prev.filter(a => a.id !== id));
     } catch (error) {
       console.error(error);
-      alert('ลบข้อมูลไม่สำเร็จ');
+      notifyError('ลบข้อมูลไม่สำเร็จ');
     }
   };
 

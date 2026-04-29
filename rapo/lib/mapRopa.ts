@@ -33,7 +33,8 @@ const formatRetentionPeriod = (value?: string) => {
     .split(" - ")
     .map((item) => item.trim());
 
-  if (retentionValue && retentionUnit) return `${retentionValue} ${retentionUnit}`;
+  if (/(ปี|เดือน|วัน)/.test(retentionValue)) return retentionValue;
+  if (retentionValue && /^(ปี|เดือน|วัน)$/.test(retentionUnit)) return `${retentionValue} ${retentionUnit}`;
   return raw;
 };
 

@@ -6,6 +6,7 @@ import { Clock8 } from 'lucide-react';
 import { SearchAlert } from 'lucide-react';
 import { useRopa } from '@/lib/ropaContext';
 import { useAuth } from '@/context/AuthContext';
+import { notifyError } from '@/lib/notify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
@@ -499,23 +500,23 @@ export default function RopaDPEditForm({ activity, requestId, onSubmit, onCancel
   const handleSubmit = async () => {
     try {
       if (!user?.id) {
-        alert('กรุณาเข้าสู่ระบบใหม่ก่อนส่งฟอร์ม');
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนส่งฟอร์ม');
         return;
       }
 
       if (!requestId) {
-        alert('ไม่พบ request_id ของ DP Form ที่ต้องการแก้ไข');
+        notifyError('ไม่พบ request_id ของ DP Form ที่ต้องการแก้ไข');
         return;
       }
 
       const firstSub = subs[0];
 
       if (!firstSub?.purpose?.trim()) {
-        alert('กรุณากรอกวัตถุประสงค์');
+        notifyError('กรุณากรอกวัตถุประสงค์');
         return;
       }
       if (!firstSub?.scope?.trim()) {
-        alert('กรุณากรอกขอบเขตการใช้งานข้อมูล');
+        notifyError('กรุณากรอกขอบเขตการใช้งานข้อมูล');
         return;
       }
 
@@ -541,7 +542,7 @@ export default function RopaDPEditForm({ activity, requestId, onSubmit, onCancel
           ? data.detail.join('\n')
           : data.detail;
 
-        alert(detail || data.error || 'แก้ไข DP Form ไม่สำเร็จ');
+        notifyError(detail || data.error || 'แก้ไข DP Form ไม่สำเร็จ');
         return;
       }
 
@@ -549,7 +550,7 @@ export default function RopaDPEditForm({ activity, requestId, onSubmit, onCancel
       setSubmitted(true);
     } catch (error) {
       console.error(error);
-      alert('แก้ไข DP Form ไม่สำเร็จ');
+      notifyError('แก้ไข DP Form ไม่สำเร็จ');
     }
   };
 
