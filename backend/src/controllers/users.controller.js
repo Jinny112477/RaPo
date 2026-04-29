@@ -194,7 +194,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// CHECK IF FIRST TIME LOGIN
+// CHECK IF FIRST TIME LzOGIN
 const checkFirstLogin = async () => {
   const {
     data: { user },
@@ -217,5 +217,56 @@ const checkFirstLogin = async () => {
     router.push("/change-password");
   } else {
     router.push("/dashboard");
+  }
+};
+
+// PUT: change password
+export const changePassword = async (req, res) => {
+  try {
+    const user = req.user; // ต้องมาจาก middleware
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
+    }
+
+    // ✅ STEP 1: update auth
+    const { error: authError } = await supabase.auth.admin.updateUserById(
+      user.id,
+      {
+        password,
+      },
+    );
+
+    if (authError) {
+      console.error("AUTH ERROR:", authError);
+      return res.status(500).json({ error: authError.message });
+    }
+
+    // ✅ STEP 2: update DB
+    const { data, error: profileError } = await supabase
+      .from("profiles")
+      .update({ password_change: true })
+      .eq("user_id", user.id)
+      .select();
+
+    console.log("UPDATED PROFILE:", data);
+
+    if (profileError) {
+      console.error("PROFILE ERROR:", profileError);
+      return res.status(500).json({ error: profileError.message });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("CHANGE PASSWORD ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
 };

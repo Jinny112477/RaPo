@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
 
 const ShieldIcon = () => (
   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -23,14 +22,6 @@ const EyeIcon = ({ open }: { open: boolean }) =>
     </svg>
   );
 
-const demoAccounts = [
-  { email: 'jikko@company.com', role: 'Admin', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { email: 'meimei@company.com', role: 'Data Owner', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  { email: 'jin.vasquez@company.com', role: 'DPO', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { email: 'kk@company.com', role: 'Auditor', color: 'bg-slate-100 text-slate-700 border-slate-200' },
-  { email: 'somshy@company.com', role: 'Executive', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-];
-
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
@@ -40,7 +31,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordChanged, setPasswordChanged] = useState(false);
-  
+
   useEffect(() => {
     if (sessionStorage.getItem('passwordJustChanged') === 'true') {
       setPasswordChanged(true);
@@ -54,29 +45,14 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const ok = await login(email, password);
+      const result = await login(email, password);
 
-      if (!ok) {
+      if (!result.ok) {
         setError("Invalid email or password");
         return;
       }
 
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
-        setError("User not found");
-        return;
-      }
-
-      const { data: profile, error } = await supabase
-        .from("profiles")
-        .select("password_change")
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw new Error(error.message);
-
-      if (!profile?.password_change) {
+      if (result.mustChangePassword) {
         router.replace("/change-password");
       } else {
         router.replace("/dashboard");

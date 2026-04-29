@@ -77,9 +77,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // LOGIN: handler
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return !error;
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !data.user) return { ok: false };
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("password_change")
+      .eq("user_id", data.user.id)
+      .single();
+
+    return {
+      ok: true,
+      mustChangePassword: !profile?.password_change,
+    };
   };
 
   // LOGOUT: handler

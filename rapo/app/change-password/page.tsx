@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
-
 export default function ChangePasswordPage() {
     const router = useRouter();
     const [password, setPassword] = useState("");
@@ -36,50 +35,50 @@ export default function ChangePasswordPage() {
 
     const handleChangePassword = async () => {
         setError("");
-        setSuccess("");
 
-        if (!password || !confirmPassword) return setError("All fields are required.");
-        if (password.length < 6) return setError("Password must be at least 6 characters.");
-        if (password !== confirmPassword) return setError("Passwords do not match.");
+        if (!password || !confirmPassword)
+            return setError("All fields are required.");
+
+        if (password.length < 6)
+            return setError("Password must be at least 6 characters.");
+
+        if (password !== confirmPassword)
+            return setError("Passwords do not match.");
 
         setLoading(true);
 
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("User not authenticated");
-            const userId = user.id;
+            // ✅ get session (IMPORTANT for token)
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
 
-            // Step 1: Update the DB flag FIRST
-            const { error: profileError } = await supabase
-                .from("profiles")
-                .update({ password_change: true })
-                .eq("user_id", userId);
-            if (profileError) throw profileError;
+            if (!session) {
+                throw new Error("Session not found. Please login again.");
+            }
 
-            // Step 2: Verify it saved
-            const { data: verified } = await supabase
-                .from("profiles")
-                .select("password_change")
-                .eq("user_id", userId)
-                .single();
-            if (!verified?.password_change) throw new Error("Failed to save flag. Please try again.");
+            // ✅ call backend API
+            const res = await fetch("http://localhost:5001/api/change-password", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${session.access_token}`, // 🔥 REQUIRED
+                },
+                body: JSON.stringify({ password }),
+            });
 
-            // Step 3: Update password
-            const { error: authError } = await supabase.auth.updateUser({ password });
-            if (authError) throw authError;
+            const data = await res.json();
 
-            // Step 4: Hard navigate — bypasses all React/Next.js routing conflicts
-            sessionStorage.setItem('passwordJustChanged', 'true');
-            router.replace('/dashboard');
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to change password");
+            }
+
+            // ✅ success flow
+            sessionStorage.setItem("passwordJustChanged", "true");
+            router.replace("/dashboard");
 
         } catch (err: any) {
             console.error("CHANGE PASSWORD ERROR:", err);
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                await supabase.from("profiles")
-                    .update({ password_change: false })
-                    .eq("user_id", user.id);
-            }
             setError(err.message);
         } finally {
             setLoading(false);
