@@ -484,7 +484,7 @@ export default function DPOReviewPage() {
           onApprove={handleDCApprove} onReject={handleDCReject} />
       )}
       {viewingDP && (
-        <DPModal dp={viewingDP} onClose={() => setViewingDPId(null);}
+        <DPModal dp={viewingDP} onClose={() => setViewingDPId(null)}
           onApprove={handleDPApprove} onReject={handleDPReject} />
       )}
     </div>
