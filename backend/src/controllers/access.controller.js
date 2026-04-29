@@ -193,10 +193,49 @@ export const createAccessRequest = async (req, res) => {
       });
     }
 
+    if (existing?.approval_status === "rejected") {
+      const { data: resubmitted, error: resubmitError } = await supabase
+        .from("access_requests")
+        .update({
+          purpose,
+          scope: scope || null,
+          duration: duration || null,
+          processor_name: processor_name || null,
+          processor_address: processor_address || null,
+          approval_status: "pending",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("request_id", existing.request_id)
+        .select(ACCESS_REQUEST_SELECT)
+        .single();
+
+      if (resubmitError) {
+        return sendError(res, 500, "Resubmit access request failed", resubmitError.message);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Access request resubmitted successfully",
+        data: resubmitted,
+      });
+    }
+
     if (existing) {
-      return sendError(res, 409, "You already requested access to this ROPA", {
-        request_id: existing.request_id,
-        approval_status: existing.approval_status,
+      const { data: existingRequest, error: existingRequestError } = await supabase
+        .from("access_requests")
+        .select(ACCESS_REQUEST_SELECT)
+        .eq("request_id", existing.request_id)
+        .single();
+
+      if (existingRequestError) {
+        return sendError(res, 500, "Fetch existing access request failed", existingRequestError.message);
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Access request already exists",
+        already_exists: true,
+        data: existingRequest,
       });
     }
 

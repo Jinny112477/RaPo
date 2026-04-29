@@ -897,12 +897,12 @@ export default function DPOReviewPage() {
 
       {/* Modals */}
       {viewingDC && (
-        <DCModal activity={viewingDC} onClose={() => setViewingDCId(null)}
-          onApprove={handleDCApprove} onReject={handleDCReject} />
+        <DCModal activity={viewingDC} onClose={() => setViewingDC(null)}
+          onApprove={handleDCApprove} onReject={handleDCReject} getDepartmentName={getDepartmentName} />
       )}
       {viewingDP && (
-        <DPModal dp={viewingDP} onClose={() => setViewingDPId(null)}
-          onApprove={handleDPApprove} onReject={handleDPReject} />
+        <DPModal dp={viewingDP} onClose={() => setViewingDP(null)}
+          onApprove={handleDPApprove} onReject={handleDPReject} getDepartmentName={getDepartmentName} />
       )}
     </div>
   );

@@ -144,15 +144,14 @@ const ReadArea = ({ label, value }: { label: string; value?: string | null }) =>
 );
 
 const ReadChips = ({ label, values }: { label: string; values: string[] }) => (
-  <div className="space-y-1.5">
+  <div className="space-y-1">
     <p className="text-xs font-semibold text-gray-500">{label}</p>
-    <div className="min-h-10 w-full rounded-lg border border-gray-200 bg-gray-50 px-2 py-2 flex flex-wrap gap-1.5">
-      {(values.length > 0 ? values : ['-']).map((value) => (
-        <span key={value} className="px-2 py-0.5 rounded-full text-xs border border-gray-300 bg-white text-gray-700">
-          {value}
-        </span>
-      ))}
-    </div>
+    <input
+      disabled
+      value={values.length > 0 ? values.join(', ') : '-'}
+      className="w-full px-3 py-2 rounded-lg border border-gray-200 bg-gray-50 text-sm text-gray-700"
+      readOnly
+    />
   </div>
 );
 

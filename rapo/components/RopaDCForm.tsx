@@ -1,40 +1,48 @@
 ﻿'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Info } from 'lucide-react';
 import { notifyError } from '@/lib/notify';
 
-// ΓöÇΓöÇΓöÇ Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Types ──────────────────────────────────────────────────────────────────
 
-interface FormData {
-  companyName: string;
-  department: string;
-  activityName: string;
-  dataOwner: string;
-  recorderEmail: string;
-  recordDate: string;
-  dpcName: string;
+type FormType = 'controller';
+
+interface RecorderInfo {
+  name: string;
+  address: string;
+  email: string;
+  phone: string;
+}
+
+interface SubActivity {
+  id: string;
   purpose: string;
+  personalDataItems: string[];
+  dataCategory: string[];
+  dataType: string[];
+  collectionMethod: string[];
+  sourceFromOwner: string;
+  sourceFromOther: string;
   legalBasis: string[];
-  legalBasisNote: string;
-  dataSubjects: string[];
-  personalDataTypes: string[];
-  sensitiveData: string[];
-  collectionMethods: string[];
-  otherDataNote: string;
-  retentionValue: string;
-  retentionUnit: string;
-  retentionCriteria: string;
-  deletionMethods: string[];
-  retentionNote: string;
-  secOrg: string;
-  secTech: string;
-  secPhysical: string;
-  secAccess: string;
-  secResponsibility: string;
-  secAudit: string;
+  minorConsentUnder10: string;
+  minorConsentAge10to20: string;
+  transferAbroad: string;
+  transferCountry: string;
+  transferAffiliate: string;
+  transferAffiliateCompany: string;
+  transferMethod: string;
+  transferStandard: string;
+  transferException28: string;
+  storageType: string[];
+  storageMethod: string;
+  retentionPeriod: string;
+  accessRights: string;
+  deletionMethod: string;
+  exemptDisclosure: string;
+  rightsDenial: string;
 }
 
 interface DepartmentOption {
@@ -67,142 +75,76 @@ type ApiFormResponse = {
   };
 };
 
-const INIT: FormData = {
-  companyName: '', department: '', activityName: '', dataOwner: '',
-  recorderEmail: '', recordDate: '', dpcName: '',
-  purpose: '', legalBasis: [], legalBasisNote: '',
-  dataSubjects: [], personalDataTypes: [], sensitiveData: [],
-  collectionMethods: [], otherDataNote: '',
-  retentionValue: '', retentionUnit: 'α╕¢α╕╡', retentionCriteria: '',
-  deletionMethods: [], retentionNote: '',
-  secOrg: '', secTech: '', secPhysical: '', secAccess: '', secResponsibility: '', secAudit: '',
-};
-
-const LEGAL_BASES = [
-  'α╕äα╕ºα╕▓α╕íα╕óα╕┤α╕Öα╕óα╕¡α╕í (Consent)',
-  'α╕üα╕▓α╕úα╕¢α╕Åα╕┤α╕Üα╕▒α╕òα╕┤α╕òα╕▓α╕íα╕¬α╕▒α╕ìα╕ìα╕▓ (Contract)',
-  'α╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╣éα╕öα╕óα╕èα╕¡α╕Üα╕öα╣ëα╕ºα╕óα╕üα╕Äα╕½α╕íα╕▓α╕ó (Legitimate Interest)',
-  'α╕üα╕▓α╕úα╕¢α╕Åα╕┤α╕Üα╕▒α╕òα╕┤α╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕òα╕▓α╕íα╕üα╕Äα╕½α╕íα╕▓α╕ó (Legal Obligation)',
-  'α╕áα╕▓α╕úα╕üα╕┤α╕êα╕¬α╕▓α╕ÿα╕▓α╕úα╕ôα╕░ (Public Task)',
-  'α╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╕¬α╕│α╕äα╕▒α╕ìα╕òα╣êα╕¡α╕èα╕╡α╕ºα╕┤α╕ò (Vital Interest)',
-];
-const DATA_SUBJECTS = ['α╕₧α╕Öα╕▒α╕üα╕çα╕▓α╕Ö / α╕Ñα╕╣α╕üα╕êα╣ëα╕▓α╕ç', 'α╕£α╕╣α╣ëα╕¬α╕íα╕▒α╕äα╕úα╕çα╕▓α╕Ö', 'α╕Ñα╕╣α╕üα╕äα╣ëα╕▓ / α╕£α╕╣α╣ëα╣âα╕èα╣ëα╕Üα╕úα╕┤α╕üα╕▓α╕ú', 'α╕äα╕╣α╣êα╕äα╣ëα╕▓ / α╕£α╕╣α╣ëα╕êα╕▒α╕öα╕êα╕│α╕½α╕Öα╣êα╕▓α╕ó', 'α╕¡α╕╖α╣êα╕Öα╣å'];
-const PERSONAL_DATA_TYPES = [
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕úα╕░α╕Üα╕╕α╕òα╕▒α╕ºα╕òα╕Ö (α╕èα╕╖α╣êα╕¡, α╕¡α╕╡α╣Çα╕íα╕Ñ, α╣Çα╕Üα╕¡α╕úα╣îα╣éα╕ùα╕ú)',
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕▓α╕çα╕üα╕▓α╕úα╣Çα╕çα╕┤α╕Ö (α╣Çα╕çα╕┤α╕Öα╣Çα╕öα╕╖α╕¡α╕Ö, α╕Üα╕▒α╕ìα╕èα╕╡α╕ÿα╕Öα╕▓α╕äα╕▓α╕ú)',
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╕╕α╕éα╕áα╕▓α╕₧',
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕èα╕╡α╕ºα╕áα╕▓α╕₧ (α╕Ñα╕▓α╕óα╕Öα╕┤α╣ëα╕ºα╕íα╕╖α╕¡, α╣âα╕Üα╕½α╕Öα╣ëα╕▓)',
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕₧α╕ñα╕òα╕┤α╕üα╕úα╕úα╕í / α╕üα╕▓α╕úα╣âα╕èα╣ëα╕çα╕▓α╕Ö',
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╣êα╕¡α╕Öα╣äα╕½α╕ºα╕¡α╕╖α╣êα╕Öα╣å (α╕¿α╕▓α╕¬α╕Öα╕▓, α╣Çα╕èα╕╖α╣ëα╕¡α╕èα╕▓α╕òα╕┤)',
-];
-const COLLECTION_METHODS = ['α╣üα╕Üα╕Üα╕ƒα╕¡α╕úα╣îα╕íα╕¡α╕¡α╕Öα╣äα╕Ñα╕Öα╣î', 'α╣Çα╕¡α╕üα╕¬α╕▓α╕úα╕üα╕úα╕░α╕öα╕▓α╕⌐', 'α╕úα╕░α╕Üα╕Ü HR / CRM', 'α╕Üα╕╕α╕äα╕äα╕Ñα╕ùα╕╡α╣êα╕¬α╕▓α╕í / API'];
-const DELETION_METHODS = [
-  'α╕Ñα╕Üα╕êα╕▓α╕üα╕úα╕░α╕Üα╕Üα╕öα╕┤α╕êα╕┤α╕ùα╕▒α╕Ñ (Secure Delete)',
-  'α╕ùα╕│α╕Ñα╕▓α╕óα╣Çα╕¡α╕üα╕¬α╕▓α╕ú (Shredding)',
-  'α╕ùα╕│α╣âα╕½α╣ëα╣äα╕íα╣êα╕¬α╕▓α╕íα╕▓α╕úα╕ûα╕úα╕░α╕Üα╕╕α╕òα╕▒α╕ºα╕òα╕Öα╣äα╕öα╣ë (Anonymization)',
-  'α╣éα╕¡α╕Öα╕óα╣ëα╕▓α╕óα╣äα╕¢α╣Çα╕üα╣çα╕Üα╕ûα╕▓α╕ºα╕ú (Archiving)',
-];
-const RETENTION_CRITERIA = ['α╕üα╕Äα╕½α╕íα╕▓α╕óα╕üα╕│α╕½α╕Öα╕ö', 'α╕Öα╣éα╕óα╕Üα╕▓α╕óα╕¡α╕çα╕äα╣îα╕üα╕ú', 'α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕¬α╕┤α╣ëα╕Öα╕¬α╕╕α╕ö', 'α╕¡α╕╖α╣êα╕Öα╣å'];
-const STEPS = [
-  { id: 1, label: 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╕çα╕äα╣îα╕üα╕ú' },
-  { id: 2, label: 'α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î' },
-  { id: 3, label: 'α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ' },
-  { id: 4, label: 'α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Ü' },
-  { id: 5, label: 'α╕íα╕▓α╕òα╕úα╕üα╕▓α╕ú' },
-  { id: 6, label: 'α╕¬α╕úα╕╕α╕¢α╣üα╕Ñα╕░α╕¬α╣êα╕ç' },
-];
-
-const inp = 'w-full px-3 py-2 rounded-lg bg-white border border-gray-200 text-gray-800 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all';
-const txa = `${inp} resize-none`;
-
-function Label({ text, required }: { text: string; required?: boolean }) {
-  return (
-    <label className="block text-xs font-semibold text-gray-600 mb-0.5">
-      {text}{required && <span className="text-red-500 ml-0.5">*</span>}
-    </label>
-  );
-}
-
-function Field({ label, required, children, className }: {
-  label: string; required?: boolean; children: React.ReactNode; className?: string;
-}) {
-  return (
-    <div className={className}>
-      <Label text={label} required={required} />
-      {children}
-    </div>
-  );
-}
-
-function CheckGrid({ options, selected, onChange, cols = 2 }: {
-  options: string[]; selected: string[]; onChange: (v: string[]) => void; cols?: number;
-}) {
-  const toggle = (o: string) =>
-    onChange(selected.includes(o) ? selected.filter(s => s !== o) : [...selected, o]);
-  return (
-    <div className={`grid gap-1.5 ${cols === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
-      {options.map(o => {
-        const on = selected.includes(o);
-        return (
-          <button key={o} type="button" onClick={() => toggle(o)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm text-left transition-all ${on
-              ? 'bg-blue-50 border-blue-400 text-blue-700 font-medium'
-              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50 hover:border-gray-300'
-              }`}>
-            <span className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border-2 transition-all ${on ? 'bg-blue-500 border-blue-500' : 'border-gray-300'}`}>
-              {on && <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
-            </span>
-            <span>{o}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function RadioGroup({ options, value, onChange }: {
-  options: string[]; value: string; onChange: (v: string) => void;
-}) {
-  return (
-    <div className="flex flex-wrap gap-2">
-      {options.map(o => {
-        const on = value === o;
-        return (
-          <button key={o} type="button" onClick={() => onChange(o)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm transition-all ${on
-              ? 'bg-blue-50 border-blue-400 text-blue-700 font-medium'
-              : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
-              }`}>
-            <span className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${on ? 'border-blue-500' : 'border-gray-300'}`}>
-              {on && <span className="w-1.5 h-1.5 rounded-full bg-blue-500 block" />}
-            </span>
-            {o}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function SectionHeader({ step, title, sub }: { step: number; title: string; sub: string }) {
-  return (
-    <div className="flex items-center gap-3 pb-4 mb-1 border-b border-gray-100">
-      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white flex-shrink-0">
-        {step}
-      </div>
-      <div>
-        <p className="text-sm font-bold text-gray-800">{title}</p>
-        <p className="text-xs text-gray-400">{sub}</p>
-      </div>
-    </div>
-  );
-}
-
 interface RopaFormProps {
   editActivityId?: string;
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
 }
+
+// ─── Constants from the first form ───────────────────────────────────────────
+
+const DATA_CATEGORIES = ['ข้อมูลลูกค้า', 'ข้อมูลคู่ค้า', 'ข้อมูลผู้ติดต่อ', 'ข้อมูลพนักงาน'];
+const DATA_TYPES = ['ข้อมูลทั่วไป', 'ข้อมูลอ่อนไหว'];
+const COLLECTION_METHODS = ['Soft File (ไฟล์อิเล็กทรอนิกส์)', 'Hard Copy (เอกสารกระดาษ)'];
+const LEGAL_BASES_TH = [
+  'ฐานความยินยอม (Consent)',
+  'ฐานสัญญา (Contract)',
+  'ฐานหน้าที่ตามกฎหมาย (Legal Obligation)',
+  'ฐานประโยชน์สำคัญต่อชีวิต (Vital Interest)',
+  'ฐานภารกิจสาธารณะ (Public Task)',
+  'ฐานประโยชน์โดยชอบด้วยกฎหมาย (Legitimate Interest)',
+];
+const PERSONAL_DATA_EXAMPLES = [
+  'ชื่อ-นามสกุล', 'ที่อยู่', 'เบอร์โทรศัพท์', 'อีเมล', 'เลขบัตรประชาชน',
+  'วันเดือนปีเกิด', 'ภาพถ่าย', 'ภาพเคลื่อนไหว/วิดีโอ', 'คลิปสัมภาษณ์',
+  'ข้อมูลทางการเงิน', 'ข้อมูลสุขภาพ', 'ข้อมูลชีวภาพ', 'IP Address', 'Cookie',
+];
+const STORAGE_TYPES = ['Soft File (ไฟล์อิเล็กทรอนิกส์)', 'Hard Copy (เอกสารกระดาษ)'];
+const TRANSFER_EXCEPTIONS = [
+  'ปฏิบัติตามกฎหมาย', 'ความยินยอม', 'ปฏิบัติตามสัญญา',
+  'ประโยชน์สาธารณะ', 'ประโยชน์สำคัญต่อชีวิต', 'ข้อยกเว้นอื่นๆ',
+];
+
+const STEPS = [
+  { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
+  { id: 2, label: 'กิจกรรมการประมวลผล', short: 'กิจกรรม' },
+  { id: 3, label: 'มาตรการรักษาความปลอดภัย', short: 'ความปลอดภัย' },
+  { id: 4, label: 'สรุปและส่ง', short: 'สรุป' },
+];
+
+const EMPTY_RECORDER: RecorderInfo = { name: '', address: '', email: '', phone: '' };
+
+function newSub(i: number): SubActivity {
+  return {
+    id: `s${Date.now()}${i}`,
+    purpose: '',
+    personalDataItems: [],
+    dataCategory: [],
+    dataType: [],
+    collectionMethod: [],
+    sourceFromOwner: '',
+    sourceFromOther: '',
+    legalBasis: [],
+    minorConsentUnder10: '',
+    minorConsentAge10to20: '',
+    transferAbroad: 'ไม่มี',
+    transferCountry: '',
+    transferAffiliate: 'ไม่ใช่',
+    transferAffiliateCompany: '',
+    transferMethod: '',
+    transferStandard: '',
+    transferException28: '',
+    storageType: [],
+    storageMethod: '',
+    retentionPeriod: '',
+    accessRights: '',
+    deletionMethod: '',
+    exemptDisclosure: '',
+    rightsDenial: '',
+  };
+}
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 const splitCsv = (value?: string | null) =>
   String(value || '')
@@ -210,56 +152,8 @@ const splitCsv = (value?: string | null) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
-const parseRetention = (value?: string | null) => {
-  const parts = String(value || '')
-    .split(' - ')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  if (parts.length >= 3) {
-    return {
-      retentionValue: parts[0],
-      retentionUnit: parts[1],
-      retentionCriteria: parts.slice(2).join(' - '),
-    };
-  }
-
-  if (parts.length === 2) {
-    const [first, second] = parts;
-    if (/(α╕¢α╕╡|α╣Çα╕öα╕╖α╕¡α╕Ö|α╕ºα╕▒α╕Ö)/.test(first) && !/^(α╕¢α╕╡|α╣Çα╕öα╕╖α╕¡α╕Ö|α╕ºα╕▒α╕Ö)$/.test(second)) {
-      return { retentionValue: first, retentionUnit: '', retentionCriteria: second };
-    }
-    return { retentionValue: first, retentionUnit: second, retentionCriteria: '' };
-  }
-
-  return {
-    retentionValue: parts[0] || '',
-    retentionUnit: 'α╕¢α╕╡',
-    retentionCriteria: '',
-  };
-};
-
-const parseRetentionDurationParts = (value?: string | null) => {
-  const raw = String(value || '');
-  const years = (raw.match(/(\d+)\s*α╕¢α╕╡/)?.[1] || '').trim();
-  const months = (raw.match(/(\d+)\s*α╣Çα╕öα╕╖α╕¡α╕Ö/)?.[1] || '').trim();
-  const days = (raw.match(/(\d+)\s*α╕ºα╕▒α╕Ö/)?.[1] || '').trim();
-  return { years, months, days };
-};
-
-const buildRetentionDuration = (years: string, months: string, days: string) => {
-  const parts = [
-    days ? `${days} α╕ºα╕▒α╕Ö` : '',
-    months ? `${months} α╣Çα╕öα╕╖α╕¡α╕Ö` : '',
-    years ? `${years} α╕¢α╕╡` : '',
-  ].filter(Boolean);
-
-  return parts.join(' ');
-};
-
 const parseDraftPayload = (value?: string | null) => {
   if (!value) return null;
-
   try {
     return JSON.parse(value);
   } catch {
@@ -267,28 +161,389 @@ const parseDraftPayload = (value?: string | null) => {
   }
 };
 
+const joinList = (items: string[]) => items.filter(Boolean).join(', ');
+
+const parseRetentionDurationParts = (value?: string) => {
+  const raw = String(value || '');
+  const days = (raw.match(/(\d+)\s*วัน/)?.[1] || '').trim();
+  const months = (raw.match(/(\d+)\s*เดือน/)?.[1] || '').trim();
+  const years = (raw.match(/(\d+)\s*ปี/)?.[1] || '').trim();
+  return { days, months, years };
+};
+
+const buildRetentionDuration = (days: string, months: string, years: string) => {
+  const parts = [
+    days ? `${days} วัน` : '',
+    months ? `${months} เดือน` : '',
+    years ? `${years} ปี` : '',
+  ].filter(Boolean);
+  return parts.join(' ');
+};
+
+const inp = 'w-full px-3.5 py-2.5 text-sm border border-slate-200 rounded-lg bg-white text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all duration-200';
+const txa = `${inp} resize-none`;
+const sel = `${inp} cursor-pointer`;
+
+function Field({ label, required, hint, children }: {
+  label: string;
+  required?: boolean;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label className="flex items-center gap-1 text-sm font-medium text-slate-700">
+        {label}{required && <span className="text-red-500">*</span>}
+      </label>
+      {children}
+      {hint && <p className="text-xs text-slate-400">{hint}</p>}
+    </div>
+  );
+}
+
+function MultiCheck({ options, selected, onChange, cols = 2 }: {
+  options: string[];
+  selected: string[];
+  onChange: (v: string[]) => void;
+  cols?: 2 | 3;
+}) {
+  const toggle = (o: string) =>
+    onChange(selected.includes(o) ? selected.filter(s => s !== o) : [...selected, o]);
+
+  return (
+    <div className={`grid gap-2 ${cols === 3 ? 'grid-cols-2 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2'}`}>
+      {options.map(o => {
+        const on = selected.includes(o);
+        return (
+          <button
+            key={o}
+            type="button"
+            onClick={() => toggle(o)}
+            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border text-sm text-left transition-all ${on ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium' : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'}`}
+          >
+            <span className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border-2 transition-colors ${on ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
+              {on && <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>}
+            </span>
+            <span className="leading-snug">{o}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function YesNo({ value, onChange, options = ['มี', 'ไม่มี'] }: {
+  value: string;
+  onChange: (v: string) => void;
+  options?: string[];
+}) {
+  return (
+    <div className="flex gap-2">
+      {options.map(v => (
+        <button
+          key={v}
+          type="button"
+          onClick={() => onChange(v)}
+          className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${value === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'}`}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function SectionHeader({ step, title, sub }: { step: number; title: string; sub?: string }) {
+  return (
+    <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+      <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">
+        {step}
+      </div>
+      <div>
+        <p className="text-sm font-semibold text-slate-800">{title}</p>
+        {sub && <p className="text-xs text-slate-400">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+function SubCard({ sub, idx, onChange, onRemove, canRemove }: {
+  sub: SubActivity;
+  idx: number;
+  onChange: (s: SubActivity) => void;
+  onRemove: () => void;
+  canRemove: boolean;
+}) {
+  const [open, setOpen] = useState(true);
+  const set = <K extends keyof SubActivity>(k: K, v: SubActivity[K]) => onChange({ ...sub, [k]: v });
+  const retentionParts = useMemo(
+    () => parseRetentionDurationParts(sub.retentionPeriod),
+    [sub.retentionPeriod],
+  );
+
+  const setRetentionPart = (part: 'days' | 'months' | 'years', value: string) => {
+    const sanitized = value.replace(/\D/g, '');
+    const current = {
+      days: retentionParts.days,
+      months: retentionParts.months,
+      years: retentionParts.years,
+    };
+
+    if (!sanitized) {
+      current[part] = '';
+    } else {
+      const numeric = Number(sanitized);
+      if (part === 'days') current.days = String(Math.min(numeric, 31));
+      if (part === 'months') current.months = String(Math.min(numeric, 12));
+      if (part === 'years') current.years = String(Math.min(numeric, 9999));
+    }
+
+    set('retentionPeriod', buildRetentionDuration(current.days, current.months, current.years));
+  };
+
+  return (
+    <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+      <div
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center justify-between px-5 py-3.5 cursor-pointer select-none transition-colors ${open ? 'bg-[#1a3a6b]' : 'bg-slate-50 hover:bg-slate-100'}`}
+      >
+        <div className="flex items-center gap-3">
+          <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${open ? 'bg-white text-blue-700' : 'bg-blue-600 text-white'}`}>
+            {idx + 1}
+          </span>
+          <div>
+            <p className={`text-sm font-semibold ${open ? 'text-white' : 'text-slate-700'}`}>
+                วัตถุประสงค์
+            </p>
+            {sub.purpose && (
+              <p className={`text-xs mt-0.5 ${open ? 'text-blue-200' : 'text-slate-400'}`}>
+                {sub.purpose.length > 50 ? `${sub.purpose.slice(0, 50)}…` : sub.purpose}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {canRemove && (
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); onRemove(); }}
+              className={`p-1.5 rounded-lg transition-colors ${open ? 'text-white/60 hover:text-white hover:bg-white/15' : 'text-red-400 hover:text-red-600 hover:bg-red-50'}`}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+              </svg>
+            </button>
+          )}
+          <span className={open ? 'text-white/70' : 'text-slate-400'}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        </div>
+      </div>
+
+      {open && (
+        <div className="p-5 space-y-5 bg-white">
+          <Field label="วัตถุประสงค์ของการประมวลผล" required>
+            <textarea rows={2} value={sub.purpose} onChange={e => set('purpose', e.target.value)} className={txa} placeholder="เช่น เพื่อสมัครสมาชิกและให้บริการลูกค้า" />
+          </Field>
+
+          <Field label="ข้อมูลส่วนบุคคลที่จัดเก็บ" required>
+            <MultiCheck options={PERSONAL_DATA_EXAMPLES} selected={sub.personalDataItems} onChange={v => set('personalDataItems', v)} cols={3} />
+          </Field>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="หมวดหมู่ของข้อมูล" required>
+              <MultiCheck options={DATA_CATEGORIES} selected={sub.dataCategory} onChange={v => set('dataCategory', v)} />
+            </Field>
+            <Field label="ประเภทของข้อมูล" required>
+              <MultiCheck options={DATA_TYPES} selected={sub.dataType} onChange={v => set('dataType', v)} />
+            </Field>
+          </div>
+
+          <Field label="วิธีการได้มาซึ่งข้อมูล" required>
+            <MultiCheck options={COLLECTION_METHODS} selected={sub.collectionMethod} onChange={v => set('collectionMethod', v)} />
+          </Field>
+
+          <Field label="แหล่งที่ได้มาซึ่งข้อมูล" required>
+            <div className="flex gap-3">
+              {['จากเจ้าของข้อมูลโดยตรง', 'จากแหล่งอื่น'].map(v => (
+                <button
+                  key={v}
+                  type="button"
+                  onClick={() => set('sourceFromOwner', v)}
+                  className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all ${sub.sourceFromOwner === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'}`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
+          </Field>
+
+          {sub.sourceFromOwner === 'จากแหล่งอื่น' && (
+            <Field label="ระบุแหล่งที่มาอื่น" required>
+              <input type="text" value={sub.sourceFromOther} onChange={e => set('sourceFromOther', e.target.value)} className={inp} placeholder="เช่น หน่วยงานภายนอก / API / คู่ค้า" />
+            </Field>
+          )}
+
+          <Field label="ฐานในการประมวลผล" required>
+            <MultiCheck options={LEGAL_BASES_TH} selected={sub.legalBasis} onChange={v => set('legalBasis', v)} />
+          </Field>
+
+          <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/60 space-y-4">
+            <span className="text-sm font-semibold text-amber-800">การขอความยินยอมของผู้เยาว์</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="อายุไม่เกิน 10 ปี" required>
+                <textarea rows={2} value={sub.minorConsentUnder10} onChange={e => set('minorConsentUnder10', e.target.value)} className={txa} placeholder="เช่น ต้องได้รับความยินยอมจากผู้ปกครอง" />
+              </Field>
+              <Field label="อายุ 10–20 ปี" required>
+                <textarea rows={2} value={sub.minorConsentAge10to20} onChange={e => set('minorConsentAge10to20', e.target.value)} className={txa} placeholder="เช่น ขอ consent จากเจ้าของข้อมูลและผู้ปกครองร่วม" />
+              </Field>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-4">
+            <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่" required>
+              <YesNo value={sub.transferAbroad} onChange={v => set('transferAbroad', v)} />
+            </Field>
+
+            {sub.transferAbroad === 'มี' && (
+              <div className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="ประเทศปลายทาง" required>
+                    <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)} className={inp} placeholder="เช่น Singapore / Japan" />
+                  </Field>
+                  <Field label="วิธีการโอนข้อมูล" required>
+                    <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)} className={inp} placeholder="เช่น API / Secure File Transfer" />
+                  </Field>
+                </div>
+
+                <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่" required>
+                  <YesNo value={sub.transferAffiliate} onChange={v => set('transferAffiliate', v)} options={['ใช่', 'ไม่ใช่']} />
+                </Field>
+
+                {sub.transferAffiliate === 'ใช่' && (
+                  <Field label="ชื่อบริษัทในเครือ" required>
+                    <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)} className={inp} placeholder="เช่น ABC Global Co., Ltd." />
+                  </Field>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง" required>
+                    <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)} className={inp} placeholder="เช่น GDPR / SCC" />
+                  </Field>
+                  <Field label="ข้อยกเว้นตามมาตรา 28" required>
+                    <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
+                      <option value="">เลือกข้อยกเว้น...</option>
+                      {TRANSFER_EXCEPTIONS.map(x => <option key={x} value={x}>{x}</option>)}
+                    </select>
+                  </Field>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-4">
+            <Field label="รูปแบบการเก็บรักษาข้อมูล" required>
+              <MultiCheck options={STORAGE_TYPES} selected={sub.storageType} onChange={v => set('storageType', v)} />
+            </Field>
+            <Field label="วิธีการเก็บรักษาข้อมูล" required>
+              <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)} className={txa} placeholder="เช่น จัดเก็บใน Cloud และระบบภายในองค์กร" />
+            </Field>
+            <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={31}
+                    value={retentionParts.days}
+                    onChange={e => setRetentionPart('days', e.target.value)}
+                    className={inp}
+                    placeholder="0"
+                  />
+                  <span className="text-sm text-slate-500 whitespace-nowrap">วัน</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={12}
+                    value={retentionParts.months}
+                    onChange={e => setRetentionPart('months', e.target.value)}
+                    className={inp}
+                    placeholder="0"
+                  />
+                  <span className="text-sm text-slate-500 whitespace-nowrap">เดือน</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    max={9999}
+                    value={retentionParts.years}
+                    onChange={e => setRetentionPart('years', e.target.value)}
+                    className={inp}
+                    placeholder="0"
+                  />
+                  <span className="text-sm text-slate-500 whitespace-nowrap">ปี</span>
+                </div>
+              </div>
+            </Field>
+            <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล" required>
+              <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)} className={txa} placeholder="เช่น จำกัดเฉพาะพนักงานที่ได้รับอนุญาต" />
+            </Field>
+            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา" required>
+              <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)} className={txa} placeholder="เช่น ลบจากระบบและทำลายเอกสาร" />
+            </Field>
+          </div>
+
+          <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม" required>
+            <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)} className={txa} placeholder="เช่น ใช้เพื่อปฏิบัติตามกฎหมาย" />
+          </Field>
+
+          <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล" required>
+            <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)} className={txa} placeholder="เช่น ปฏิเสธเนื่องจากกระทบสิทธิผู้อื่น" />
+          </Field>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: RopaFormProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<FormData>(INIT);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
-  const [retentionYears, setRetentionYears] = useState('');
-  const [retentionMonths, setRetentionMonths] = useState('');
-  const [retentionDays, setRetentionDays] = useState('');
   const [editingActivityId, setEditingActivityId] = useState<string | undefined>(editActivityId);
-  const { user } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
+  const [department, setDepartment] = useState('');
+  const [rec, setRec] = useState<RecorderInfo>(EMPTY_RECORDER);
+  const [ownerName, setOwnerName] = useState('');
+  const [mainActivity, setMainActivity] = useState('');
+  const [subs, setSubs] = useState<SubActivity[]>([newSub(0)]);
+  const [secOrg, setSecOrg] = useState('');
+  const [secTech, setSecTech] = useState('');
+  const [secPhysical, setSecPhysical] = useState('');
+  const [secAccess, setSecAccess] = useState('');
+  const [secResponsibility, setSecResponsibility] = useState('');
+  const [secAudit, setSecAudit] = useState('');
+
+  const formType: FormType = 'controller';
+  const firstSub = subs[0] || newSub(0);
 
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
         const res = await fetch(`${API_URL}/api/departments`);
         const data = await res.json();
-
         if (!res.ok) return;
-
         setDepartments(data.data || []);
       } catch (error) {
         console.error('FETCH DEPARTMENTS ERROR:', error);
@@ -307,112 +562,152 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         const response = await res.json();
 
         if (!res.ok) {
-          const detail = Array.isArray(response.detail)
-            ? response.detail.join('\n')
-            : response.detail;
-          notifyError(detail || response.error || 'α╣éα╕½α╕Ñα╕öα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+          const detail = Array.isArray(response.detail) ? response.detail.join('\n') : response.detail;
+          notifyError(detail || response.error || 'โหลดแบบร่างไม่สำเร็จ');
           return;
         }
 
         const data = response.data as ApiFormResponse;
         const draftPayload = parseDraftPayload(data.consentless_data);
-        const retention = parseRetention(draftPayload?.retentionPeriod || data.policy?.retention_period);
-        const retentionDurationSource =
-          draftPayload?.retentionPeriod ||
-          data.policy?.retention_period ||
-          [draftPayload?.retentionValue, draftPayload?.retentionUnit].filter(Boolean).join(' ');
-        const retentionParts = parseRetentionDurationParts(retentionDurationSource);
+        const draftSub = draftPayload?.subs?.[0];
 
         setEditingActivityId(data.activity_id);
-        setForm({
-          companyName: draftPayload?.companyName || data.source?.name || '',
-          department: draftPayload?.department || data.activity_subject || '',
-          activityName: draftPayload?.activityName || data.activity_name || '',
-          dataOwner: draftPayload?.dataOwner || '',
-          recorderEmail: draftPayload?.recorderEmail || '',
-          recordDate: draftPayload?.recordDate || '',
-          dpcName: draftPayload?.dpcName || '',
-          purpose: draftPayload?.purpose || data.purpose || '',
-          legalBasis: draftPayload?.legalBasis || splitCsv(data.legal_basis?.name),
-          legalBasisNote: draftPayload?.legalBasisNote || '',
-          dataSubjects: draftPayload?.dataSubjects || [],
-          personalDataTypes: draftPayload?.personalDataTypes || splitCsv(data.policy?.data_type),
-          sensitiveData: draftPayload?.sensitiveData || [],
-          collectionMethods: draftPayload?.collectionMethods || [],
-          otherDataNote: draftPayload?.otherDataNote || '',
-          retentionValue: draftPayload?.retentionValue || retention.retentionValue,
-          retentionUnit: draftPayload?.retentionUnit || retention.retentionUnit,
-          retentionCriteria: draftPayload?.retentionCriteria || retention.retentionCriteria,
-          deletionMethods: draftPayload?.deletionMethods || splitCsv(data.policy?.deletion_method),
-          retentionNote: draftPayload?.retentionNote || '',
-          secOrg: draftPayload?.secOrg || data.security_measurement?.organizational_measures || '',
-          secTech: draftPayload?.secTech || data.security_measurement?.technical_measures || '',
-          secPhysical: draftPayload?.secPhysical || data.security_measurement?.physical_measures || '',
-          secAccess: draftPayload?.secAccess || data.security_measurement?.access_control || '',
-          secResponsibility: draftPayload?.secResponsibility || data.security_measurement?.define_responsibility || '',
-          secAudit: draftPayload?.secAudit || data.security_measurement?.audit_trail || '',
+        setDepartment(draftPayload?.department || data.activity_subject || '');
+        setRec(draftPayload?.rec || {
+          name: draftPayload?.companyName || data.source?.name || '',
+          address: draftPayload?.recorderAddress || '',
+          email: draftPayload?.recorderEmail || '',
+          phone: draftPayload?.recorderPhone || '',
         });
-
-        setRetentionYears(retentionParts.years);
-        setRetentionMonths(retentionParts.months);
-        setRetentionDays(retentionParts.days);
+        setOwnerName(draftPayload?.ownerName || draftPayload?.dataOwner || '');
+        setMainActivity(draftPayload?.mainActivity || draftPayload?.activityName || data.activity_name || '');
+        setSubs(draftPayload?.subs?.length ? draftPayload.subs : [{
+          ...newSub(0),
+          purpose: draftSub?.purpose || draftPayload?.purpose || data.purpose || '',
+          legalBasis: draftSub?.legalBasis || draftPayload?.legalBasis || splitCsv(data.legal_basis?.name),
+          personalDataItems: draftSub?.personalDataItems || draftPayload?.personalDataItems || splitCsv(data.policy?.data_type),
+          collectionMethod: draftSub?.collectionMethod || draftPayload?.collectionMethod || splitCsv(data.obtaining_data?.name),
+          retentionPeriod: draftSub?.retentionPeriod || draftPayload?.retentionPeriod || data.policy?.retention_period || '',
+          deletionMethod: draftSub?.deletionMethod || data.policy?.deletion_method || '',
+        }]);
+        setSecOrg(draftPayload?.secOrg || data.security_measurement?.organizational_measures || '');
+        setSecTech(draftPayload?.secTech || data.security_measurement?.technical_measures || '');
+        setSecPhysical(draftPayload?.secPhysical || data.security_measurement?.physical_measures || '');
+        setSecAccess(draftPayload?.secAccess || data.security_measurement?.access_control || '');
+        setSecResponsibility(draftPayload?.secResponsibility || data.security_measurement?.define_responsibility || '');
+        setSecAudit(draftPayload?.secAudit || data.security_measurement?.audit_trail || '');
       } catch (error) {
         console.error(error);
-        notifyError('α╣éα╕½α╕Ñα╕öα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+        notifyError('โหลดแบบร่างไม่สำเร็จ');
       }
     };
 
     fetchExistingDraft();
   }, [API_URL, editActivityId]);
 
-  const set = <K extends keyof FormData>(k: K, v: FormData[K]) => setForm(f => ({ ...f, [k]: v }));
-  const setRetentionPart = (part: 'years' | 'months' | 'days', value: string) => {
-    const sanitized = value.replace(/\D/g, '');
+  const selectedDepartment = departments.find((d) => d.department_id === department)?.department_name || department || '—';
 
-    if (!sanitized) {
-      if (part === 'years') setRetentionYears('');
-      if (part === 'months') setRetentionMonths('');
-      if (part === 'days') setRetentionDays('');
-      return;
-    }
+  const buildPayload = (extra?: Record<string, unknown>) => {
+    const sub = subs[0] || newSub(0);
+    const companyName = rec.name;
+    const activityName = mainActivity;
+    const purpose = sub.purpose;
+    const retentionPeriod = sub.retentionPeriod;
 
-    const numeric = Number(sanitized);
+    return {
+      userId: user?.id,
+      formType,
+      departmentId: department,
 
-    if (part === 'years') {
-      setRetentionYears(String(Math.min(numeric, 9999)));
-      return;
-    }
+      // Names expected by the backend used in the second form
+      companyName,
+      department,
+      activityName,
+      dataOwner: ownerName,
+      recorderEmail: rec.email,
+      recorderAddress: rec.address,
+      recorderPhone: rec.phone,
+      recordDate: new Date().toISOString().slice(0, 10),
+      dpcName: '',
+      purpose,
+      legalBasis: sub.legalBasis,
+      legalBasisNote: '',
+      dataSubjects: sub.dataCategory,
+      personalDataTypes: sub.personalDataItems,
+      sensitiveData: sub.dataType.includes('ข้อมูลอ่อนไหว') ? sub.personalDataItems : [],
+      collectionMethods: sub.collectionMethod,
+      otherDataNote: sub.sourceFromOther,
+      retentionValue: retentionPeriod,
+      retentionUnit: 'รวม',
+      retentionCriteria: '',
+      deletionMethods: sub.deletionMethod ? [sub.deletionMethod] : [],
+      retentionNote: '',
+      retentionPeriod,
+      secOrg,
+      secTech,
+      secPhysical,
+      secAccess,
+      secResponsibility,
+      secAudit,
 
-    if (part === 'months') {
-      setRetentionMonths(String(Math.min(numeric, 12)));
-      return;
-    }
-
-    setRetentionDays(String(Math.min(numeric, 31)));
+      // Full payload from the first form kept for draft/edit restoration
+      rec,
+      ownerName,
+      mainActivity,
+      subs,
+      ...extra,
+    };
   };
-
-  const retentionDurationText = buildRetentionDuration(retentionYears, retentionMonths, retentionDays);
-  const retentionPeriodPayload = [retentionDurationText, form.retentionCriteria].filter(Boolean).join(' - ');
 
   const canNext = () => {
     if (step === 1) {
-      return form.companyName.trim() && form.department.trim() && form.activityName.trim() && form.recorderEmail.trim();
+      return rec.name.trim() && department.trim() && rec.email.trim() && rec.phone.trim() && rec.address.trim();
     }
 
     if (step === 2) {
-      return form.purpose.trim() && form.legalBasis.length > 0;
+      return (
+        mainActivity.trim() &&
+        ownerName.trim() &&
+        subs.every(s =>
+          s.purpose.trim() &&
+          s.personalDataItems.length > 0 &&
+          s.dataCategory.length > 0 &&
+          s.dataType.length > 0 &&
+          s.collectionMethod.length > 0 &&
+          s.sourceFromOwner.trim() &&
+          (s.sourceFromOwner !== 'จากแหล่งอื่น' || s.sourceFromOther.trim()) &&
+          s.legalBasis.length > 0 &&
+          s.minorConsentUnder10.trim() &&
+          s.minorConsentAge10to20.trim() &&
+          s.transferAbroad.trim() &&
+          (s.transferAbroad !== 'มี' || (
+            s.transferCountry.trim() &&
+            s.transferMethod.trim() &&
+            s.transferAffiliate.trim() &&
+            (s.transferAffiliate !== 'ใช่' || s.transferAffiliateCompany.trim()) &&
+            s.transferStandard.trim() &&
+            s.transferException28.trim()
+          )) &&
+          s.storageType.length > 0 &&
+          s.storageMethod.trim() &&
+          s.retentionPeriod.trim() &&
+          s.accessRights.trim() &&
+          s.deletionMethod.trim() &&
+          s.exemptDisclosure.trim() &&
+          s.rightsDenial.trim()
+        )
+      );
     }
 
     if (step === 3) {
       return (
-        form.dataSubjects.length > 0 &&
-        form.personalDataTypes.length > 0 &&
-        form.collectionMethods.length > 0
+        secOrg.trim() &&
+        secTech.trim() &&
+        secPhysical.trim() &&
+        secAccess.trim() &&
+        secResponsibility.trim() &&
+        secAudit.trim()
       );
-    }
-
-    if (step === 4) {
-      return retentionDurationText.trim() !== '' && form.retentionCriteria.trim() !== '';
     }
 
     return true;
@@ -421,7 +716,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
   const handleSaveDraft = async () => {
     try {
       if (!user?.id) {
-        notifyError('α╕üα╕úα╕╕α╕ôα╕▓α╣Çα╕éα╣ëα╕▓α╕¬α╕╣α╣êα╕úα╕░α╕Üα╕Üα╣âα╕½α╕íα╣êα╕üα╣êα╕¡α╕Öα╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕ç');
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนบันทึกแบบร่าง');
         return;
       }
 
@@ -431,106 +726,106 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user.id,
-          formType: 'controller',
+        body: JSON.stringify(buildPayload({
           approval_status: 'draft',
           save_as_draft: true,
-          departmentId: form.department,
-          ...form,
-          retentionValue: retentionDurationText,
-          retentionUnit: 'α╕úα╕ºα╕í',
-          retentionPeriod: retentionPeriodPayload,
-        }),
+        })),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         const detail = Array.isArray(data.detail) ? data.detail.join('\n') : data.detail;
-        notifyError(detail || data.error || 'α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+        notifyError(detail || data.error || 'บันทึกแบบร่างไม่สำเร็จ');
         return;
       }
 
-      onSaveDraft?.({
-        ...form,
-        activity_id: data.activity_id || editingActivityId,
-      } as unknown as Record<string, unknown>);
+      onSaveDraft?.({ ...buildPayload(), activity_id: data.activity_id || editingActivityId } as unknown as Record<string, unknown>);
 
       if (data.activity_id) {
         setEditingActivityId(data.activity_id);
       }
 
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 2500);
       router.push('/dc/my-ropa?notice=draft-saved&form=dc');
     } catch (err) {
       notifyError((err as Error).message);
     }
   };
 
-  const selectedDepartment = departments.find((d) => d.department_id === form.department)?.department_name || form.department || 'ΓÇö';
-
   const handleSubmit = async () => {
     try {
+      if (!user?.id) {
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนส่งฟอร์ม');
+        return;
+      }
+
       const endpoint = editingActivityId ? `${API_URL}/api/form/${editingActivityId}` : `${API_URL}/api/form/submit`;
       const method = editingActivityId ? 'PUT' : 'POST';
 
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: user?.id,
-          formType: 'controller',
-          departmentId: form.department,
-          ...form,
-          retentionValue: retentionDurationText,
-          retentionUnit: 'α╕úα╕ºα╕í',
-          retentionPeriod: retentionPeriodPayload,
-        }),
+        body: JSON.stringify(buildPayload()),
       });
+
       const data = await res.json();
       if (!res.ok) {
-        console.log("CREATE FORM ERROR:", data);
-
-        const detail = Array.isArray(data.detail)
-          ? data.detail.join("\n")
-          : data.detail;
-
-        notifyError(detail || data.error || "Create form failed");
+        console.log('CREATE FORM ERROR:', data);
+        const detail = Array.isArray(data.detail) ? data.detail.join('\n') : data.detail;
+        notifyError(detail || data.error || 'Create form failed');
         return;
       }
+
+      onSubmit?.(buildPayload() as unknown as Record<string, unknown>);
       setSubmitted(true);
     } catch (err) {
       notifyError((err as Error).message);
     }
   };
 
+  const resetForm = () => {
+    setStep(1);
+    setSubmitted(false);
+    setDepartment('');
+    setRec(EMPTY_RECORDER);
+    setOwnerName('');
+    setMainActivity('');
+    setSubs([newSub(0)]);
+    setSecOrg('');
+    setSecTech('');
+    setSecPhysical('');
+    setSecAccess('');
+    setSecResponsibility('');
+    setSecAudit('');
+    setEditingActivityId(undefined);
+  };
+
   if (submitted) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-        <div className="w-14 h-14 bg-emerald-100 border border-emerald-200 rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-12 text-center">
+        <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h3 className="text-lg font-bold text-gray-800 mb-1">α╕¬α╣êα╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕úα╕╡α╕óα╕Üα╕úα╣ëα╕¡α╕óα╣üα╕Ñα╣ëα╕º</h3>
-        <p className="text-sm text-gray-500 mb-5">α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕ûα╕╣α╕üα╕¬α╣êα╕çα╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕êα╕▓α╕ü DPO</p>
-        <div className="flex items-center justify-center gap-2 flex-wrap">
+        <h3 className="text-xl font-bold text-slate-800 mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
+        <p className="text-sm text-slate-500 mb-3">กิจกรรมการประมวลผลถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-sm text-blue-700 font-medium mb-6">
+          Data Controller · {mainActivity}
+        </div>
+        <br />
+        <div className="flex justify-center gap-2 flex-wrap">
           <button
             onClick={() => router.push('/dc/my-ropa')}
-            className="px-5 py-2 bg-white border border-blue-200 text-blue-700 text-sm font-semibold rounded-xl hover:bg-blue-50 transition-colors"
+            className="px-6 py-2.5 bg-white border border-blue-200 text-blue-700 text-sm font-semibold rounded-lg hover:bg-blue-50 transition-colors"
           >
-            α╣äα╕¢α╕½α╕Öα╣ëα╕▓ My Activity
+            ไปหน้า My Activity
           </button>
-          <button onClick={() => {
-            setStep(1);
-            setSubmitted(false);
-            setForm(INIT);
-            setRetentionYears('');
-            setRetentionMonths('');
-            setRetentionDays('');
-          }}
-            className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-            α╕¬α╕úα╣ëα╕▓α╕çα╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╣âα╕½α╕íα╣ê
+          <button onClick={resetForm} className="px-6 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
+            สร้างกิจกรรมใหม่
           </button>
         </div>
       </div>
@@ -538,313 +833,209 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 px-4">
-
-      {/* Progress bar */}
-      <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4">
-        <div className="flex items-start relative">
-          <div className="absolute top-4 left-4 right-4 h-px bg-gray-200 z-0" />
-          <div className="absolute top-4 left-4 h-px bg-blue-600 z-0 transition-all duration-500"
-            style={{ width: `calc(${((step - 1) / (STEPS.length - 1)) * 100}% - 2rem)` }} />
-          {STEPS.map(s => {
-            const done = s.id < step;
-            const active = s.id === step;
-            return (
-              <div key={s.id} className="flex-1 flex flex-col items-center gap-1.5 z-10">
-                <button
-                  onClick={() => done && setStep(s.id)}
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${done
-                    ? 'bg-blue-600 border-blue-600 text-white cursor-pointer hover:bg-blue-700'
-                    : active
-                      ? 'bg-white border-blue-600 text-blue-600 shadow-sm'
-                      : 'bg-white border-gray-300 text-gray-400 cursor-default'
-                    }`}>
-                  {done
-                    ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
-                    : s.id}
-                </button>
-                <span className={`text-[10px] font-medium text-center leading-tight hidden sm:block ${active ? 'text-blue-600' : done ? 'text-gray-500' : 'text-gray-400'}`}>
-                  {s.label}
-                </span>
-              </div>
-            );
-          })}
+    <div className="max-w-5xl mx-auto space-y-5 px-4">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-6 py-4">
+        <div className="flex items-center justify-between relative">
+          <div className="absolute left-0 right-0 top-4 h-px bg-slate-200 z-0" />
+          <div
+            className="absolute left-0 top-4 h-px bg-blue-500 z-0 transition-all duration-500"
+            style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
+          />
+          {STEPS.map(s => (
+            <div key={s.id} className="flex flex-col items-center gap-1.5 z-10">
+              <button
+                onClick={() => s.id < step && setStep(s.id)}
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' : s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' : 'bg-white border-slate-200 text-slate-400 cursor-default'}`}
+              >
+                {s.id < step ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg> : s.id}
+              </button>
+              <span className={`text-xs font-medium hidden md:block whitespace-nowrap ${s.id === step ? 'text-blue-600' : s.id < step ? 'text-slate-500' : 'text-slate-400'}`}>
+                {s.short}
+              </span>
+            </div>
+          ))}
         </div>
-        <div className="mt-6 flex items-center gap-2">
-          <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-            α╕¬α╣êα╕ºα╕Öα╕ùα╕╡α╣ê {step}/{STEPS.length}
-          </span>
-          <span className="text-xs text-gray-500">{STEPS[step - 1].label}</span>
-          <span className="ml-auto flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
+        <div className="mt-4 flex items-start justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">{STEPS[step - 1].label}</h2>
+            <p className="text-xs text-slate-400">ส่วนที่ {step} / {STEPS.length}</p>
+          </div>
+          <span className="flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border bg-blue-50 text-blue-700 border-blue-200">
             Data Controller Form
           </span>
         </div>
       </div>
 
-      {/* Step 1 */}
       {step === 1 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={1} title="α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╕çα╕äα╣îα╕üα╕ú / α╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕üα╕┤α╕êα╕üα╕úα╕úα╕í" sub="α╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╣üα╕Ñα╕░α╕úα╕▓α╕óα╕Ñα╕░α╣Çα╕¡α╕╡α╕óα╕öα╕üα╕┤α╕êα╕üα╕úα╕úα╕í" />
-          <div className="space-y-3 mt-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="α╕èα╕╖α╣êα╕¡α╕Üα╕úα╕┤α╕⌐α╕▒α╕ù / α╕¡α╕çα╕äα╣îα╕üα╕ú" required>
-                <input type="text" value={form.companyName} onChange={e => set('companyName', e.target.value)} placeholder="ABC Co., Ltd." className={inp} />
-              </Field>
-              <Field label="α╣üα╕£α╕Öα╕ü / α╕¥α╣êα╕▓α╕óα╕ùα╕╡α╣êα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Ü" required>
-                <select value={form.department} onChange={e => set('department', e.target.value)} className={inp}>
-                  <option value="">α╣Çα╕Ñα╕╖α╕¡α╕üα╣üα╕£α╕Öα╕ü</option>
-                  {departments.map((department) => (
-                    <option key={department.department_id} value={department.department_id}>
-                      {department.department_name}
-                    </option>
-                  ))}
-                </select>
-              </Field>
-            </div>
-            <Field label="α╕Ñα╕▒α╕üα╕⌐α╕ôα╕░α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" required>
-              <input type="text" value={form.activityName} onChange={e => set('activityName', e.target.value)} placeholder="α╕üα╕▓α╕úα╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕₧α╕╖α╣êα╕¡α╕üα╕▓α╕úα╕¬α╕íα╕▒α╕äα╕úα╕çα╕▓α╕Öα╣üα╕Ñα╕░α╕¡α╕¡α╕üα╕êα╕▓α╕üα╕çα╕▓α╕Ö" className={inp} />
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <SectionHeader step={1} title="ส่วนที่ 1: รายละเอียดของผู้ลงบันทึก ROPA" sub="ข้อมูลผู้รับผิดชอบการบันทึกกิจกรรมนี้" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="ชื่อ-นามสกุล / ชื่อองค์กร" required>
+              <input type="text" value={rec.name} onChange={e => setRec(r => ({ ...r, name: e.target.value }))} className={inp} />
             </Field>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="α╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Ü (DATA OWNER)">
-                <input type="text" value={form.dataOwner} onChange={e => set('dataOwner', e.target.value)} placeholder="α╕èα╕╖α╣êα╕¡-α╕¬α╕üα╕╕α╕Ñ" className={inp} />
-              </Field>
-              <Field label="α╕¡α╕╡α╣Çα╕íα╕Ñα╕£α╕╣α╣ëα╕Ñα╕çα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü" required>
-                <input type="email" value={form.recorderEmail} onChange={e => set('recorderEmail', e.target.value)} placeholder="email@company.com" className={inp} />
-              </Field>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="α╕ºα╕▒α╕Öα╕ùα╕╡α╣ê/α╣Çα╕öα╕╖α╕¡α╕Ö/α╕¢α╕╡α╕ùα╕╡α╣êα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü">
-                <input type="date" value={form.recordDate} onChange={e => set('recordDate', e.target.value)} className={inp} />
-              </Field>
-              <Field label="α╣Çα╕êα╣ëα╕▓α╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕äα╕╕α╣ëα╕íα╕äα╕úα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (DPO)">
-                <input type="text" value={form.dpcName} onChange={e => set('dpcName', e.target.value)} placeholder="α╕èα╕╖α╣êα╕¡ DPO" className={inp} />
-              </Field>
-            </div>
+            <Field label="แผนก / ฝ่ายที่รับผิดชอบ" required>
+              <select value={department} onChange={e => setDepartment(e.target.value)} className={sel}>
+                <option value="">เลือกแผนก</option>
+                {departments.map(d => <option key={d.department_id} value={d.department_id}>{d.department_name}</option>)}
+              </select>
+            </Field>
+            <Field label="เบอร์โทรศัพท์" required>
+              <input type="tel" value={rec.phone} onChange={e => setRec(r => ({ ...r, phone: e.target.value }))} className={inp} />
+            </Field>
+            <Field label="อีเมล" required>
+              <input type="email" value={rec.email} onChange={e => setRec(r => ({ ...r, email: e.target.value }))} className={inp} />
+            </Field>
           </div>
+          <Field label="ที่อยู่" required>
+            <textarea rows={2} value={rec.address} onChange={e => setRec(r => ({ ...r, address: e.target.value }))} className={txa} />
+          </Field>
         </div>
       )}
 
-      {/* Step 2 */}
       {step === 2 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={2} title="α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" sub="α╕úα╕░α╕Üα╕╕α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╣üα╕Ñα╕░α╕Éα╕▓α╕Öα╕ùα╕▓α╕çα╕üα╕Äα╕½α╕íα╕▓α╕óα╕ùα╕╡α╣êα╣âα╕èα╣ë" />
-          <div className="space-y-3 mt-3">
-            <Field label="α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕éα╕¡α╕çα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" required>
-              <textarea rows={3} value={form.purpose} onChange={e => set('purpose', e.target.value)}
-                placeholder="α╣Çα╕üα╣çα╕Üα╕úα╕ºα╕Üα╕úα╕ºα╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕₧α╕╖α╣êα╕¡α╣âα╕èα╣ëα╣âα╕Öα╕üα╕▓α╕úα╕Üα╕úα╕┤α╕½α╕▓α╕úα╕ùα╕úα╕▒α╕₧α╕óα╕▓α╕üα╕úα╕Üα╕╕α╕äα╕äα╕Ñ..." className={txa} />
+        <div className="space-y-4">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+            <SectionHeader step={2} title="ส่วนที่ 2: ตารางข้อมูลกิจกรรมการประมวลผล" sub="ระบุกิจกรรมหลักและวัตถุประสงค์" />
+
+            <Field label="ชื่อเจ้าของข้อมูลส่วนบุคคล" required>
+              <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)} className={inp} />
             </Field>
-            <Field label="α╕Éα╕▓α╕Öα╕ùα╕▓α╕çα╕üα╕Äα╕½α╕íα╕▓α╕ó (LEGAL BASIS)" required>
-              <CheckGrid options={LEGAL_BASES} selected={form.legalBasis} onChange={v => set('legalBasis', v)} cols={2} />
-            </Field>
-            <Field label="α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕α╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í">
-              <textarea rows={2} value={form.legalBasisNote} onChange={e => set('legalBasisNote', e.target.value)}
-                placeholder="α╕úα╕░α╕Üα╕╕α╕úα╕▓α╕óα╕Ñα╕░α╣Çα╕¡α╕╡α╕óα╕öα╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í (α╕ûα╣ëα╕▓α╕íα╕╡)" className={txa} />
+
+            <Field label="กิจกรรมการประมวลผลหลัก" required>
+              <input type="text" value={mainActivity} onChange={e => setMainActivity(e.target.value)} className={inp} />
             </Field>
           </div>
+
+          {subs.map((s, i) => (
+            <SubCard
+              key={s.id}
+              sub={s}
+              idx={i}
+              onChange={updated => setSubs(prev => prev.map((x, xi) => xi === i ? updated : x))}
+              onRemove={() => setSubs(prev => prev.filter((_, xi) => xi !== i))}
+              canRemove={false}
+            />
+          ))}
         </div>
       )}
 
-      {/* Step 3 */}
       {step === 3 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={3} title="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣üα╕Ñα╕░α╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" sub="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕£α╕╣α╣ëα╣Çα╕¢α╣çα╕Öα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣üα╕Ñα╕░α╕üα╕Ñα╕╕α╣êα╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕╡α╣êα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" />
-          <div className="space-y-3 mt-3">
-            <Field label="α╕üα╕Ñα╕╕α╣êα╕íα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (DATA SUBJECT)" required>
-              <CheckGrid options={DATA_SUBJECTS} selected={form.dataSubjects} onChange={v => set('dataSubjects', v)} cols={2} />
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
+          <SectionHeader step={3} title="ส่วนที่ 3: คำอธิบายเกี่ยวกับมาตรการรักษาความมั่นคงปลอดภัย" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Field label="มาตรการเชิงองค์กร (Organizational)" required>
+              <textarea rows={4} value={secOrg} onChange={e => setSecOrg(e.target.value)} className={txa} />
             </Field>
-            <Field label="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñα╕ùα╕╡α╣êα╣Çα╕üα╣çα╕Ü" required>
-              <CheckGrid options={PERSONAL_DATA_TYPES} selected={form.personalDataTypes} onChange={v => set('personalDataTypes', v)} cols={2} />
+            <Field label="มาตรการเชิงเทคนิค (Technical)" required>
+              <textarea rows={4} value={secTech} onChange={e => setSecTech(e.target.value)} className={txa} />
             </Field>
-            <Field label="α╕úα╕░α╕Üα╕╕α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í">
-              <input type="text" value={form.otherDataNote} onChange={e => set('otherDataNote', e.target.value)}
-                placeholder="α╣Çα╕èα╣êα╕Ö α╕½α╕íα╕▓α╕óα╣Çα╕Ñα╕éα╕¬α╕▒α╕ìα╕èα╕▓α╕òα╕┤, α╕ùα╕╡α╣êα╕¡α╕óα╕╣α╣ê, α╕¢α╕úα╕░α╕ºα╕▒α╕òα╕┤α╕üα╕▓α╕úα╕¿α╕╢α╕üα╕⌐α╕▓" className={inp} />
+            <Field label="มาตรการทางกายภาพ (Physical)" required>
+              <textarea rows={4} value={secPhysical} onChange={e => setSecPhysical(e.target.value)} className={txa} />
             </Field>
-            <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣Çα╕üα╣çα╕Üα╕úα╕ºα╕Üα╕úα╕ºα╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
-              <CheckGrid options={COLLECTION_METHODS} selected={form.collectionMethods} onChange={v => set('collectionMethods', v)} cols={2} />
+            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" required>
+              <textarea rows={4} value={secAccess} onChange={e => setSecAccess(e.target.value)} className={txa} />
+            </Field>
+            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" required>
+              <textarea rows={4} value={secResponsibility} onChange={e => setSecResponsibility(e.target.value)} className={txa} />
+            </Field>
+            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" required>
+              <textarea rows={4} value={secAudit} onChange={e => setSecAudit(e.target.value)} className={txa} />
             </Field>
           </div>
         </div>
       )}
 
-      {/* Step 4 */}
       {step === 4 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={4} title="α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓α╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" sub="α╕üα╕│α╕½α╕Öα╕öα╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣üα╕Ñα╕░α╕Öα╣éα╕óα╕Üα╕▓α╕óα╕üα╕▓α╕úα╕Ñα╕Üα╕½α╕úα╕╖α╕¡α╕ùα╕│α╕Ñα╕▓α╕óα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" />
-          <div className="space-y-3 mt-3">
-            <Field label="α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓" required>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    max={31}
-                    step={1}
-                    value={retentionDays}
-                    onChange={e => setRetentionPart('days', e.target.value)}
-                    placeholder="dd"
-                    className={inp}
-                  />
-                  <span className="text-sm text-gray-500 whitespace-nowrap">α╕ºα╕▒α╕Ö</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    max={12}
-                    step={1}
-                    value={retentionMonths}
-                    onChange={e => setRetentionPart('months', e.target.value)}
-                    placeholder="mm"
-                    className={inp}
-                  />
-                  <span className="text-sm text-gray-500 whitespace-nowrap">α╣Çα╕öα╕╖α╕¡α╕Ö</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    min={0}
-                    max={9999}
-                    step={1}
-                    value={retentionYears}
-                    onChange={e => setRetentionPart('years', e.target.value)}
-                    placeholder="yyyy"
-                    className={inp}
-                  />
-                  <span className="text-sm text-gray-500 whitespace-nowrap">α╕¢α╕╡</span>
-                </div>
-              </div>
-            </Field>
-            <Field label="α╣Çα╕üα╕ôα╕æα╣îα╕üα╕▓α╕úα╕üα╕│α╕½α╕Öα╕öα╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓" required>
-              <RadioGroup options={RETENTION_CRITERIA} value={form.retentionCriteria} onChange={v => set('retentionCriteria', v)} />
-            </Field>
-            <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╕ùα╕│α╕Ñα╕▓α╕óα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕íα╕╖α╣êα╕¡α╕äα╕úα╕Üα╕üα╕│α╕½α╕Öα╕ö">
-              <CheckGrid options={DELETION_METHODS} selected={form.deletionMethods} onChange={v => set('deletionMethods', v)} cols={2} />
-            </Field>
-            <Field label="α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕α╣Çα╕₧α╕┤α╣êα╕íα╣Çα╕òα╕┤α╕í">
-              <textarea rows={2} value={form.retentionNote} onChange={e => set('retentionNote', e.target.value)}
-                placeholder="α╣Çα╕èα╣êα╕Ö α╣Çα╕¡α╕üα╕¬α╕▓α╕úα╕ùα╕╡α╣êα╣Çα╕üα╕╡α╣êα╕óα╕ºα╕éα╣ëα╕¡α╕çα╕äα╕ºα╕úα╕êα╕░α╣Çα╕üα╣çα╕Üα╣äα╕ºα╣ëα╣äα╕íα╣êα╕üα╕╡α╣êα╕ºα╕▒α╕Öα╕üα╣êα╕¡α╕Öα╕ùα╕╡α╣êα╕êα╕░α╕Ñα╕Ü..." className={txa} />
-            </Field>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
+            <p className="text-sm font-semibold text-slate-800">สรุปข้อมูลก่อนส่ง</p>
+            <p className="text-xs text-slate-400 mt-0.5">กรุณาตรวจสอบความถูกต้องก่อนส่ง DPO เพื่อรออนุมัติ</p>
           </div>
-        </div>
-      )}
+          <div className="p-6 space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="text-xs text-slate-400 mb-1">ผู้ลงบันทึก</p>
+                <p className="text-sm font-semibold text-slate-800">{rec.name || '—'}</p>
+                <p className="text-xs text-slate-500">{rec.email || '—'} · {rec.phone || '—'}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <p className="text-xs text-slate-400 mb-1">แผนก</p>
+                <p className="text-sm font-semibold text-slate-800">{selectedDepartment}</p>
+              </div>
+            </div>
 
-      {/* Step 5 */}
-      {step === 5 && (
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
-          <SectionHeader step={5} title="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕úα╕▒α╕üα╕⌐α╕▓α╕äα╕ºα╕▓α╕íα╕¢α╕Ñα╕¡α╕öα╕áα╕▒α╕ó" sub="α╕äα╕│α╕¡α╕ÿα╕┤α╕Üα╕▓α╕óα╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕ùα╕╡α╣êα╣âα╕èα╣ëα╕¢α╕üα╕¢α╣ëα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╣Çα╕èα╕┤α╕çα╕¡α╕çα╕äα╣îα╕üα╕ú (Organizational)">
-              <textarea rows={3} value={form.secOrg} onChange={e => set('secOrg', e.target.value)}
-                placeholder="α╕Öα╣éα╕óα╕Üα╕▓α╕ó, α╕üα╕▓α╕úα╕¡α╕Üα╕úα╕í, PDPA committee..." className={txa} />
-            </Field>
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╣Çα╕èα╕┤α╕çα╣Çα╕ùα╕äα╕Öα╕┤α╕ä (Technical)">
-              <textarea rows={3} value={form.secTech} onChange={e => set('secTech', e.target.value)}
-                placeholder="Encryption, Firewall, 2FA..." className={txa} />
-            </Field>
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕ùα╕▓α╕çα╕üα╕▓α╕óα╕áα╕▓α╕₧ (Physical)">
-              <textarea rows={3} value={form.secPhysical} onChange={e => set('secPhysical', e.target.value)}
-                placeholder="α╕úα╕░α╕Üα╕Üα╕Ñα╣çα╕¡α╕ä, CCTV, α╕Üα╕▒α╕òα╕úα╕£α╣êα╕▓α╕Ö..." className={txa} />
-            </Field>
-            <Field label="α╕üα╕▓α╕úα╕äα╕ºα╕Üα╕äα╕╕α╕íα╕üα╕▓α╕úα╣Çα╕éα╣ëα╕▓α╕ûα╕╢α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (Access Control)">
-              <textarea rows={3} value={form.secAccess} onChange={e => set('secAccess', e.target.value)}
-                placeholder="Role-based access, Audit log..." className={txa} />
-            </Field>
-            <Field label="α╕üα╕▓α╕úα╕üα╕│α╕½α╕Öα╕öα╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕äα╕ºα╕▓α╕íα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╕éα╕¡α╕çα╕£α╕╣α╣ëα╣âα╕èα╣ëα╕çα╕▓α╕Ö">
-              <textarea rows={3} value={form.secResponsibility} onChange={e => set('secResponsibility', e.target.value)}
-                placeholder="α╕üα╕│α╕½α╕Öα╕ö role, α╕¬α╕┤α╕ùα╕ÿα╕┤α╣îα╕üα╕▓α╕úα╣âα╕èα╣ëα╕çα╕▓α╕Ö, α╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╣üα╕òα╣êα╕Ñα╕░α╕úα╕░α╕Üα╕Ü..." className={txa} />
-            </Field>
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕óα╣ëα╕¡α╕Öα╕½α╕Ñα╕▒α╕ç">
-              <textarea rows={3} value={form.secAudit} onChange={e => set('secAudit', e.target.value)}
-                placeholder="Audit log, α╕üα╕▓α╕úα╕ùα╕Üα╕ùα╕ºα╕Öα╕¬α╕┤α╕ùα╕ÿα╕┤α╣îα╕¢α╕úα╕░α╕êα╕│α╕¢α╕╡..." className={txa} />
-            </Field>
-          </div>
-        </div>
-      )}
+            <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
+              <p className="text-xs text-blue-500 mb-1 font-medium">กิจกรรมการประมวลผลหลัก</p>
+              <p className="text-base font-bold text-blue-800">{mainActivity || '—'}</p>
+              <p className="text-xs text-blue-600 mt-1">เจ้าของข้อมูล: {ownerName || '—'}</p>
+            </div>
 
-      {/* Step 6 */}
-      {step === 6 && (
-        <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-          <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
-            <p className="text-sm font-bold text-gray-800">α╕¬α╕úα╕╕α╕¢α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕ç</p>
-            <p className="text-xs text-gray-500">α╕üα╕úα╕╕α╕ôα╕▓α╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕äα╕ºα╕▓α╕íα╕ûα╕╣α╕üα╕òα╣ëα╕¡α╕çα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕çα╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕¡α╕Öα╕╕α╕íα╕▒α╕òα╕┤α╕êα╕▓α╕ü DPO</p>
-          </div>
-          <div className="p-5 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <p className="text-xs text-gray-400 mb-0.5">α╕Üα╕úα╕┤α╕⌐α╕▒α╕ù / α╕¡α╕çα╕äα╣îα╕üα╕ú</p>
-                <p className="text-sm font-semibold text-gray-800">{form.companyName || 'ΓÇö'}</p>
-                <p className="text-xs text-gray-500">{selectedDepartment}</p>
+            {subs.map((s, i) => (
+              <div key={s.id} className="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-3">
+                <p className="text-sm font-bold text-slate-800">วัตถุประสงค์</p>
+                <p className="text-sm text-slate-700">{s.purpose || '—'}</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-600">
+                  <p><span className="font-semibold">ข้อมูลที่จัดเก็บ:</span> {joinList(s.personalDataItems) || '—'}</p>
+                  <p><span className="font-semibold">หมวดหมู่:</span> {joinList(s.dataCategory) || '—'}</p>
+                  <p><span className="font-semibold">ประเภท:</span> {joinList(s.dataType) || '—'}</p>
+                  <p><span className="font-semibold">วิธีได้มา:</span> {joinList(s.collectionMethod) || '—'}</p>
+                  <p><span className="font-semibold">ฐานประมวลผล:</span> {joinList(s.legalBasis) || '—'}</p>
+                  <p><span className="font-semibold">ระยะเวลาเก็บ:</span> {s.retentionPeriod || '—'}</p>
+                </div>
               </div>
-              <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-                <p className="text-xs text-gray-400 mb-0.5">α╕£α╕╣α╣ëα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü</p>
-                <p className="text-sm font-semibold text-gray-800">{form.recorderEmail || 'ΓÇö'}</p>
-                <p className="text-xs text-gray-500">{form.recordDate || 'ΓÇö'}</p>
-              </div>
-            </div>
-            <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
-              <p className="text-xs text-blue-500 mb-0.5 font-medium">α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ</p>
-              <p className="text-sm font-bold text-gray-800">{form.activityName || 'ΓÇö'}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100 space-y-2">
-              <p className="text-xs text-gray-400 font-medium">α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î</p>
-              <p className="text-sm text-gray-700">{form.purpose || 'ΓÇö'}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {form.legalBasis.map(l => (
-                  <span key={l} className="text-xs px-2.5 py-0.5 bg-blue-100 border border-blue-200 rounded-full text-blue-700">{l}</span>
-                ))}
-              </div>
-            </div>
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-1.5 font-medium">α╕üα╕Ñα╕╕α╣êα╕íα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ</p>
-              <div className="flex flex-wrap gap-1.5">
-                {form.dataSubjects.map(s => (
-                  <span key={s} className="text-xs px-2.5 py-0.5 bg-white border border-gray-200 rounded-full text-gray-600">{s}</span>
-                ))}
-              </div>
-            </div>
-            <div className="p-3 rounded-xl bg-gray-50 border border-gray-100">
-              <p className="text-xs text-gray-400 mb-0.5 font-medium">α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓</p>
-              <p className="text-sm font-semibold text-gray-800">
-                {retentionDurationText || 'ΓÇö'}
-                {form.retentionCriteria && <span className="text-gray-400 font-normal ml-2">┬╖ {form.retentionCriteria}</span>}
-              </p>
-            </div>
+            ))}
+
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700 leading-relaxed">
-              <span className="font-semibold block mb-0.5"><Info className="w-4 h-4" /> α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕</span>
-              α╣Çα╕íα╕╖α╣êα╕¡α╕¬α╣êα╕çα╣üα╕Ñα╣ëα╕º α╕¬α╕ûα╕▓α╕Öα╕░α╕êα╕░α╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Öα╣Çα╕¢α╣çα╕Ö &ldquo;α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Ü&rdquo; α╣üα╕Ñα╕░ DPO α╕êα╕░α╕òα╣ëα╕¡α╕çα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╣üα╕Ñα╕░α╕¡α╕Öα╕╕α╕íα╕▒α╕òα╕┤α╕üα╣êα╕¡α╕Öα╕êα╕╢α╕çα╕êα╕░α╕íα╕╡α╕¬α╕ûα╕▓α╕Öα╕░ Active
+              <span className="font-semibold flex items-center gap-1 mb-0.5"><Info className="w-4 h-4" /> หมายเหตุ</span>
+              เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ&rdquo; และ DPO จะต้องตรวจสอบและอนุมัติก่อนจึงจะมีสถานะ Active
             </div>
           </div>
         </div>
       )}
 
-      {/* Footer navigation */}
-      <div className="bg-white rounded-2xl border border-gray-200 px-4 py-3 flex items-center justify-between gap-3">
-        <button type="button" onClick={handleSaveDraft}
-          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-          {draftSaved
-            ? <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣üα╕Ñα╣ëα╕º</span></>
-            : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕ç</>}
+      <div className="bg-white rounded-2xl border border-slate-200 px-4 py-3 flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={handleSaveDraft}
+          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-500 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+        >
+          {draftSaved ? (
+            <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="3"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกแบบร่างแล้ว</span></>
+          ) : (
+            <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>บันทึกแบบร่าง</>
+          )}
         </button>
+
         <div className="flex items-center gap-2">
           {step > 1 && (
-            <button type="button" onClick={() => setStep(s => s - 1)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-gray-600 bg-gray-100 border border-gray-200 rounded-xl hover:bg-gray-200 transition-colors">
+            <button
+              type="button"
+              onClick={() => setStep(s => s - 1)}
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 transition-colors"
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6" /></svg>
-              α╕óα╣ëα╕¡α╕Öα╕üα╕Ñα╕▒α╕Ü
+              ย้อนกลับ
             </button>
           )}
-          {step < 6 ? (
-            <button type="button" onClick={() => canNext() && setStep(s => s + 1)}
+
+          {step < STEPS.length ? (
+            <button
+              type="button"
+              onClick={() => canNext() && setStep(s => s + 1)}
               disabled={!canNext()}
-              className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              α╕ûα╕▒α╕öα╣äα╕¢
+              className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              ถัดไป
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
           ) : (
-            <button type="button" onClick={handleSubmit}
-              className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors">
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 transition-colors"
+            >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-              α╕óα╕╖α╕Öα╕óα╕▒α╕Öα╣üα╕Ñα╕░α╕¬α╣êα╕ç
+              ยืนยันและส่ง
             </button>
           )}
         </div>

@@ -1,6 +1,6 @@
-﻿'use client';
+'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock8, AlertCircle, SearchAlert } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -9,7 +9,7 @@ import { notifyError } from '@/lib/notify';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 const ACCESS_DRAFT_PREFIX = '__ACCESS_DRAFT__:';
 
-// ΓöÇΓöÇΓöÇ Types ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Types ─────────────────────────────────────────────────────────────────────
 
 type FormType = 'controller' | 'processor' | null;
 
@@ -46,38 +46,55 @@ interface SubActivity {
   rightsDenial: string;
 }
 
-// ΓöÇΓöÇΓöÇ Constants ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Constants ─────────────────────────────────────────────────────────────────
 
-const DATA_CATEGORIES = ['α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕Ñα╕╣α╕üα╕äα╣ëα╕▓', 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕äα╕╣α╣êα╕äα╣ëα╕▓', 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕£α╕╣α╣ëα╕òα╕┤α╕öα╕òα╣êα╕¡', 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕₧α╕Öα╕▒α╕üα╕çα╕▓α╕Ö'];
-const DATA_TYPES = ['α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕▒α╣êα╕ºα╣äα╕¢', 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¡α╣êα╕¡α╕Öα╣äα╕½α╕º'];
-const COLLECTION_METHODS = ['Soft File (α╣äα╕ƒα╕Ñα╣îα╕¡α╕┤α╣Çα╕Ñα╣çα╕üα╕ùα╕úα╕¡α╕Öα╕┤α╕üα╕¬α╣î)', 'Hard Copy (α╣Çα╕¡α╕üα╕¬α╕▓α╕úα╕üα╕úα╕░α╕öα╕▓α╕⌐)'];
+const DATA_CATEGORIES = ['ข้อมูลลูกค้า', 'ข้อมูลคู่ค้า', 'ข้อมูลผู้ติดต่อ', 'ข้อมูลพนักงาน'];
+const DATA_TYPES = ['ข้อมูลทั่วไป', 'ข้อมูลอ่อนไหว'];
+const COLLECTION_METHODS = ['Soft File (ไฟล์อิเล็กทรอนิกส์)', 'Hard Copy (เอกสารกระดาษ)'];
 const LEGAL_BASES_TH = [
-  'α╕Éα╕▓α╕Öα╕äα╕ºα╕▓α╕íα╕óα╕┤α╕Öα╕óα╕¡α╕í (Consent)',
-  'α╕Éα╕▓α╕Öα╕¬α╕▒α╕ìα╕ìα╕▓ (Contract)',
-  'α╕Éα╕▓α╕Öα╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕òα╕▓α╕íα╕üα╕Äα╕½α╕íα╕▓α╕ó (Legal Obligation)',
-  'α╕Éα╕▓α╕Öα╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╕¬α╕│α╕äα╕▒α╕ìα╕òα╣êα╕¡α╕èα╕╡α╕ºα╕┤α╕ò (Vital Interest)',
-  'α╕Éα╕▓α╕Öα╕áα╕▓α╕úα╕üα╕┤α╕êα╕¬α╕▓α╕ÿα╕▓α╕úα╕ôα╕░ (Public Task)',
-  'α╕Éα╕▓α╕Öα╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╣éα╕öα╕óα╕èα╕¡α╕Üα╕öα╣ëα╕ºα╕óα╕üα╕Äα╕½α╕íα╕▓α╕ó (Legitimate Interest)',
+  'ฐานความยินยอม (Consent)',
+  'ฐานสัญญา (Contract)',
+  'ฐานหน้าที่ตามกฎหมาย (Legal Obligation)',
+  'ฐานประโยชน์สำคัญต่อชีวิต (Vital Interest)',
+  'ฐานภารกิจสาธารณะ (Public Task)',
+  'ฐานประโยชน์โดยชอบด้วยกฎหมาย (Legitimate Interest)',
 ];
 const PERSONAL_DATA_EXAMPLES = [
-  'α╕èα╕╖α╣êα╕¡-α╕Öα╕▓α╕íα╕¬α╕üα╕╕α╕Ñ', 'α╕ùα╕╡α╣êα╕¡α╕óα╕╣α╣ê', 'α╣Çα╕Üα╕¡α╕úα╣îα╣éα╕ùα╕úα╕¿α╕▒α╕₧α╕ùα╣î', 'α╕¡α╕╡α╣Çα╕íα╕Ñ', 'α╣Çα╕Ñα╕éα╕Üα╕▒α╕òα╕úα╕¢α╕úα╕░α╕èα╕▓α╕èα╕Ö',
-  'α╕ºα╕▒α╕Öα╣Çα╕öα╕╖α╕¡α╕Öα╕¢α╕╡α╣Çα╕üα╕┤α╕ö', 'α╕áα╕▓α╕₧α╕ûα╣êα╕▓α╕ó', 'α╕áα╕▓α╕₧α╣Çα╕äα╕Ñα╕╖α╣êα╕¡α╕Öα╣äα╕½α╕º/α╕ºα╕┤α╕öα╕╡α╣éα╕¡', 'α╕äα╕Ñα╕┤α╕¢α╕¬α╕▒α╕íα╕áα╕▓α╕⌐α╕ôα╣î',
-  'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕▓α╕çα╕üα╕▓α╕úα╣Çα╕çα╕┤α╕Ö', 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╕╕α╕éα╕áα╕▓α╕₧', 'α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕èα╕╡α╕ºα╕áα╕▓α╕₧', 'IP Address', 'Cookie',
+  'ชื่อ-นามสกุล', 'ที่อยู่', 'เบอร์โทรศัพท์', 'อีเมล', 'เลขบัตรประชาชน',
+  'วันเดือนปีเกิด', 'ภาพถ่าย', 'ภาพเคลื่อนไหว/วิดีโอ', 'คลิปสัมภาษณ์',
+  'ข้อมูลทางการเงิน', 'ข้อมูลสุขภาพ', 'ข้อมูลชีวภาพ', 'IP Address', 'Cookie',
 ];
-const STORAGE_TYPES = ['Soft File (α╣äα╕ƒα╕Ñα╣îα╕¡α╕┤α╣Çα╕Ñα╣çα╕üα╕ùα╕úα╕¡α╕Öα╕┤α╕üα╕¬α╣î)', 'Hard Copy (α╣Çα╕¡α╕üα╕¬α╕▓α╕úα╕üα╕úα╕░α╕öα╕▓α╕⌐)'];
+const STORAGE_TYPES = ['Soft File (ไฟล์อิเล็กทรอนิกส์)', 'Hard Copy (เอกสารกระดาษ)'];
 const TRANSFER_EXCEPTIONS = [
-  'α╕¢α╕Åα╕┤α╕Üα╕▒α╕òα╕┤α╕òα╕▓α╕íα╕üα╕Äα╕½α╕íα╕▓α╕ó', 'α╕äα╕ºα╕▓α╕íα╕óα╕┤α╕Öα╕óα╕¡α╕í', 'α╕¢α╕Åα╕┤α╕Üα╕▒α╕òα╕┤α╕òα╕▓α╕íα╕¬α╕▒α╕ìα╕ìα╕▓',
-  'α╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╕¬α╕▓α╕ÿα╕▓α╕úα╕ôα╕░', 'α╕¢α╕úα╕░α╣éα╕óα╕èα╕Öα╣îα╕¬α╕│α╕äα╕▒α╕ìα╕òα╣êα╕¡α╕èα╕╡α╕ºα╕┤α╕ò', 'α╕éα╣ëα╕¡α╕óα╕üα╣Çα╕ºα╣ëα╕Öα╕¡α╕╖α╣êα╕Öα╣å',
+  'ปฏิบัติตามกฎหมาย', 'ความยินยอม', 'ปฏิบัติตามสัญญา',
+  'ประโยชน์สาธารณะ', 'ประโยชน์สำคัญต่อชีวิต', 'ข้อยกเว้นอื่นๆ',
 ];
+
+const parseRetentionDurationParts = (value?: string) => {
+  const raw = String(value || '');
+  const days = (raw.match(/(\d+)\s*วัน/)?.[1] || '').trim();
+  const months = (raw.match(/(\d+)\s*เดือน/)?.[1] || '').trim();
+  const years = (raw.match(/(\d+)\s*ปี/)?.[1] || '').trim();
+  return { days, months, years };
+};
+
+const buildRetentionDuration = (days: string, months: string, years: string) => {
+  const parts = [
+    days ? `${days} วัน` : '',
+    months ? `${months} เดือน` : '',
+    years ? `${years} ปี` : '',
+  ].filter(Boolean);
+  return parts.join(' ');
+};
 
 const STEPS = [
-  { id: 1, label: 'α╕£α╕╣α╣ëα╕Ñα╕çα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü', short: 'α╕£α╕╣α╣ëα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü' },
-  { id: 2, label: 'α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ', short: 'α╕üα╕┤α╕êα╕üα╕úα╕úα╕í' },
-  { id: 3, label: 'α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕úα╕▒α╕üα╕⌐α╕▓α╕äα╕ºα╕▓α╕íα╕¢α╕Ñα╕¡α╕öα╕áα╕▒α╕ó', short: 'α╕äα╕ºα╕▓α╕íα╕¢α╕Ñα╕¡α╕öα╕áα╕▒α╕ó' },
-  { id: 4, label: 'α╕¬α╕úα╕╕α╕¢α╣üα╕Ñα╕░α╕¬α╣êα╕ç', short: 'α╕¬α╕úα╕╕α╕¢' },
+  { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
+  { id: 2, label: 'กิจกรรมการประมวลผล', short: 'กิจกรรม' },
+  { id: 3, label: 'มาตรการรักษาความปลอดภัย', short: 'ความปลอดภัย' },
+  { id: 4, label: 'สรุปและส่ง', short: 'สรุป' },
 ];
 
-// ΓöÇΓöÇΓöÇ Small helper components ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Small helper components ───────────────────────────────────────────────────
 
 function Field({ label, required, hint, children }: {
   label: string; required?: boolean; hint?: string; children: React.ReactNode;
@@ -120,7 +137,7 @@ function MultiCheck({ options, selected, onChange, cols = 2 }: {
   );
 }
 
-function YesNo({ value, onChange, options = ['α╕íα╕╡', 'α╣äα╕íα╣êα╕íα╕╡'] }: {
+function YesNo({ value, onChange, options = ['มี', 'ไม่มี'] }: {
   value: string; onChange: (v: string) => void; options?: string[];
 }) {
   return (
@@ -149,9 +166,9 @@ function newSub(i: number): SubActivity {
     legalBasis: [],
     minorConsentUnder10: '',
     minorConsentAge10to20: '',
-    transferAbroad: 'α╣äα╕íα╣êα╕íα╕╡',
+    transferAbroad: 'ไม่มี',
     transferCountry: '',
-    transferAffiliate: 'α╣äα╕íα╣êα╣âα╕èα╣ê',
+    transferAffiliate: 'ไม่ใช่',
     transferAffiliateCompany: '',
     transferMethod: '',
     transferStandard: '',
@@ -166,7 +183,7 @@ function newSub(i: number): SubActivity {
   };
 }
 
-// ΓöÇΓöÇΓöÇ Sub-activity accordion ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Sub-activity accordion ────────────────────────────────────────────────────
 
 function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
   sub: SubActivity; idx: number; isCtrl: boolean;
@@ -174,6 +191,30 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 }) {
   const [open, setOpen] = useState(true);
   const set = <K extends keyof SubActivity>(k: K, v: SubActivity[K]) => onChange({ ...sub, [k]: v });
+  const retentionParts = useMemo(
+    () => parseRetentionDurationParts(sub.retentionPeriod),
+    [sub.retentionPeriod],
+  );
+
+  const setRetentionPart = (part: 'days' | 'months' | 'years', value: string) => {
+    const sanitized = value.replace(/\D/g, '');
+    const current = {
+      days: retentionParts.days,
+      months: retentionParts.months,
+      years: retentionParts.years,
+    };
+
+    if (!sanitized) {
+      current[part] = '';
+    } else {
+      const numeric = Number(sanitized);
+      if (part === 'days') current.days = String(Math.min(numeric, 31));
+      if (part === 'months') current.months = String(Math.min(numeric, 12));
+      if (part === 'years') current.years = String(Math.min(numeric, 9999));
+    }
+
+    set('retentionPeriod', buildRetentionDuration(current.days, current.months, current.years));
+  };
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -187,11 +228,11 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           </span>
           <div>
             <p className={`text-sm font-semibold ${open ? 'text-slate-700' : 'text-slate-700'}`}>
-              α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕ùα╕╡α╣ê {idx + 1}
+              วัตถุประสงค์ที่ {idx + 1}
             </p>
             {sub.purpose && (
               <p className={`text-xs mt-0.5 ${open ? 'text-blue-200' : 'text-slate-400'}`}>
-                {sub.purpose.length > 50 ? sub.purpose.slice(0, 50) + 'ΓÇª' : sub.purpose}
+                {sub.purpose.length > 50 ? sub.purpose.slice(0, 50) + '…' : sub.purpose}
               </p>
             )}
           </div>
@@ -218,46 +259,46 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
       {open && (
         <div className="p-5 space-y-5 bg-white">
 
-          {/* 1. α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î */}
-          <Field label="α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕éα╕¡α╕çα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" required>
+          {/* 1. วัตถุประสงค์ */}
+          <Field label="วัตถุประสงค์ของการประมวลผล" required>
             <textarea rows={2} value={sub.purpose} onChange={e => set('purpose', e.target.value)}
               className={txa} />
           </Field>
 
-          <Field label="α╕éα╕¡α╕Üα╣Çα╕éα╕òα╕üα╕▓α╕úα╣âα╕èα╣ëα╕çα╕▓α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
+          <Field label="ขอบเขตการใช้งานข้อมูล" required>
             <textarea
               rows={3}
               value={sub.scope}
               onChange={e => set('scope', e.target.value)}
-              placeholder="α╣Çα╕èα╣êα╕Ö α╣âα╕èα╣ëα╣Çα╕ëα╕₧α╕▓α╕░α╕èα╕╖α╣êα╕¡-α╕Öα╕▓α╕íα╕¬α╕üα╕╕α╕Ñα╣üα╕Ñα╕░α╕¡α╕╡α╣Çα╕íα╕Ñ α╣Çα╕₧α╕╖α╣êα╕¡α╕öα╕│α╣Çα╕Öα╕┤α╕Öα╕üα╕▓α╕úα╕òα╕▓α╕íα╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕ùα╕╡α╣êα╕úα╕░α╕Üα╕╕"
+              placeholder="เช่น ใช้เฉพาะชื่อ-นามสกุลและอีเมล เพื่อดำเนินการตามวัตถุประสงค์ที่ระบุ"
               className={txa}
             />
           </Field>
 
-          {/* 2. α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕╡α╣êα╕êα╕▒α╕öα╣Çα╕üα╣çα╕Ü */}
-          <Field label="α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñα╕ùα╕╡α╣êα╕êα╕▒α╕öα╣Çα╕üα╣çα╕Ü" required >
+          {/* 2. ข้อมูลที่จัดเก็บ */}
+          <Field label="ข้อมูลส่วนบุคคลที่จัดเก็บ" required >
             <MultiCheck options={PERSONAL_DATA_EXAMPLES} selected={sub.personalDataItems} onChange={v => set('personalDataItems', v)} cols={3} />
           </Field>
 
-          {/* 3-4. α╕½α╕íα╕ºα╕öα╕½α╕íα╕╣α╣ê + α╕¢α╕úα╕░α╣Çα╕áα╕ù */}
+          {/* 3-4. หมวดหมู่ + ประเภท */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="α╕½α╕íα╕ºα╕öα╕½α╕íα╕╣α╣êα╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
+            <Field label="หมวดหมู่ของข้อมูล" required>
               <MultiCheck options={DATA_CATEGORIES} selected={sub.dataCategory} onChange={v => set('dataCategory', v)} />
             </Field>
-            <Field label="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
+            <Field label="ประเภทของข้อมูล" required>
               <MultiCheck options={DATA_TYPES} selected={sub.dataType} onChange={v => set('dataType', v)} />
             </Field>
           </div>
 
-          {/* 5. α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣äα╕öα╣ëα╕íα╕▓ */}
-          <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣äα╕öα╣ëα╕íα╕▓α╕ïα╕╢α╣êα╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
+          {/* 5. วิธีการได้มา */}
+          <Field label="วิธีการได้มาซึ่งข้อมูล" required>
             <MultiCheck options={COLLECTION_METHODS} selected={sub.collectionMethod} onChange={v => set('collectionMethod', v)} />
           </Field>
 
-          {/* 6. α╣üα╕½α╕Ñα╣êα╕çα╕ùα╕╡α╣êα╕íα╕▓ */}
-          <Field label="α╣üα╕½α╕Ñα╣êα╕çα╕ùα╕╡α╣êα╣äα╕öα╣ëα╕íα╕▓α╕ïα╕╢α╣êα╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
+          {/* 6. แหล่งที่มา */}
+          <Field label="แหล่งที่ได้มาซึ่งข้อมูล" required>
             <div className="flex gap-3">
-              {['α╕êα╕▓α╕üα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣éα╕öα╕óα╕òα╕úα╕ç', 'α╕êα╕▓α╕üα╣üα╕½α╕Ñα╣êα╕çα╕¡α╕╖α╣êα╕Ö'].map(v => (
+              {['จากเจ้าของข้อมูลโดยตรง', 'จากแหล่งอื่น'].map(v => (
                 <button
                   key={v}
                   type="button"
@@ -274,25 +315,37 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             </div>
           </Field>
 
-          {/* 7. α╕Éα╕▓α╕Öα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ */}
-          <Field label="α╕Éα╕▓α╕Öα╣âα╕Öα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ" required>
+          {sub.sourceFromOwner === 'จากแหล่งอื่น' && (
+            <Field label="ระบุแหล่งที่มาอื่น" required>
+              <input
+                type="text"
+                value={sub.sourceFromOther}
+                onChange={e => set('sourceFromOther', e.target.value)}
+                className={inp}
+                placeholder="เช่น หน่วยงานภายนอก / API / คู่ค้า"
+              />
+            </Field>
+          )}
+
+          {/* 7. ฐานการประมวลผล */}
+          <Field label="ฐานในการประมวลผล" required>
             <MultiCheck options={LEGAL_BASES_TH} selected={sub.legalBasis} onChange={v => set('legalBasis', v)} />
           </Field>
 
-          {/* 8. α╕£α╕╣α╣ëα╣Çα╕óα╕▓α╕ºα╣î (Controller α╣Çα╕ùα╣êα╕▓α╕Öα╕▒α╣ëα╕Ö) */}
+          {/* 8. ผู้เยาว์ (Controller เท่านั้น) */}
           {isCtrl && (
             <div className="p-4 rounded-xl border border-amber-200 bg-50 space-y-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-800">α╕üα╕▓α╕úα╕éα╕¡α╕äα╕ºα╕▓α╕íα╕óα╕┤α╕Öα╕óα╕¡α╕íα╕éα╕¡α╕çα╕£α╕╣α╣ëα╣Çα╕óα╕▓α╕ºα╣î</span>
-                {/* <span className="text-xs text-amber-500">(α╣Çα╕ëα╕₧α╕▓α╕░ Data Controller)</span> */}
+                <span className="text-sm font-semibold text-800">การขอความยินยอมของผู้เยาว์</span>
+                {/* <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span> */}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="α╕¡α╕▓α╕óα╕╕α╣äα╕íα╣êα╣Çα╕üα╕┤α╕Ö 10 α╕¢α╕╡" >
+                <Field label="อายุไม่เกิน 10 ปี" required>
                   <textarea rows={2} value={sub.minorConsentUnder10}
                     onChange={e => set('minorConsentUnder10', e.target.value)}
                     className={txa} />
                 </Field>
-                <Field label="α╕¡α╕▓α╕óα╕╕ 10ΓÇô20 α╕¢α╕╡" >
+                <Field label="อายุ 10–20 ปี" required>
                   <textarea rows={2} value={sub.minorConsentAge10to20}
                     onChange={e => set('minorConsentAge10to20', e.target.value)}
                     className={txa} />
@@ -301,48 +354,48 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             </div>
           )}
 
-          {/* 9. α╕üα╕▓α╕úα╣éα╕¡α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕òα╣êα╕▓α╕çα╕¢α╕úα╕░α╣Çα╕ùα╕¿ */}
+          {/* 9. การโอนข้อมูลต่างประเทศ */}
           <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-4">
             <div className="flex items-center gap-2">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
                 <circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" />
                 <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
               </svg>
-              <span className="text-sm font-semibold text-slate-700">α╕üα╕▓α╕úα╕¬α╣êα╕çα╕½α╕úα╕╖α╕¡α╣éα╕¡α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣äα╕¢α╕óα╕▒α╕çα╕òα╣êα╕▓α╕çα╕¢α╕úα╕░α╣Çα╕ùα╕¿</span>
+              <span className="text-sm font-semibold text-slate-700">การส่งหรือโอนข้อมูลไปยังต่างประเทศ</span>
             </div>
-            <Field label="α╕íα╕╡α╕üα╕▓α╕úα╕¬α╣êα╕çα╕½α╕úα╕╖α╕¡α╣éα╕¡α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣äα╕¢α╕òα╣êα╕▓α╕çα╕¢α╕úα╕░α╣Çα╕ùα╕¿α╕½α╕úα╕╖α╕¡α╣äα╕íα╣ê">
+            <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่" required>
               <YesNo value={sub.transferAbroad} onChange={v => set('transferAbroad', v)} />
             </Field>
 
-            {sub.transferAbroad === 'α╕íα╕╡' && (
+            {sub.transferAbroad === 'มี' && (
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="α╕¢α╕úα╕░α╣Çα╕ùα╕¿α╕¢α╕Ñα╕▓α╕óα╕ùα╕▓α╕ç" required>
+                  <Field label="ประเทศปลายทาง" required>
                     <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)}
                       className={inp} />
                   </Field>
-                  <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣éα╕¡α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ">
+                  <Field label="วิธีการโอนข้อมูล" required>
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)}
                       className={inp} />
                   </Field>
                 </div>
-                <Field label="α╣Çα╕¢α╣çα╕Öα╕üα╕▓α╕úα╕¬α╣êα╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣âα╕Öα╕üα╕Ñα╕╕α╣êα╕íα╕Üα╕úα╕┤α╕⌐α╕▒α╕ùα╣âα╕Öα╣Çα╕äα╕úα╕╖α╕¡α╕½α╕úα╕╖α╕¡α╣äα╕íα╣ê">
-                  <YesNo value={sub.transferAffiliate} onChange={v => set('transferAffiliate', v)} options={['α╣âα╕èα╣ê', 'α╣äα╕íα╣êα╣âα╕èα╣ê']} />
+                <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่" required>
+                  <YesNo value={sub.transferAffiliate} onChange={v => set('transferAffiliate', v)} options={['ใช่', 'ไม่ใช่']} />
                 </Field>
-                {sub.transferAffiliate === 'α╣âα╕èα╣ê' && (
-                  <Field label="α╕èα╕╖α╣êα╕¡α╕Üα╕úα╕┤α╕⌐α╕▒α╕ùα╣âα╕Öα╣Çα╕äα╕úα╕╖α╕¡">
+                {sub.transferAffiliate === 'ใช่' && (
+                  <Field label="ชื่อบริษัทในเครือ" required>
                     <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)}
                       className={inp} />
                   </Field>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="α╕íα╕▓α╕òα╕úα╕Éα╕▓α╕Öα╕üα╕▓α╕úα╕äα╕╕α╣ëα╕íα╕äα╕úα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕éα╕¡α╕çα╕¢α╕úα╕░α╣Çα╕ùα╕¿α╕¢α╕Ñα╕▓α╕óα╕ùα╕▓α╕ç">
+                  <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง" required>
                     <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)}
                       className={inp} />
                   </Field>
-                  <Field label="α╕éα╣ëα╕¡α╕óα╕üα╣Çα╕ºα╣ëα╕Öα╕òα╕▓α╕íα╕íα╕▓α╕òα╕úα╕▓ 28">
+                  <Field label="ข้อยกเว้นตามมาตรา 28" required>
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
-                      <option value="">α╣Çα╕Ñα╕╖α╕¡α╕üα╕éα╣ëα╕¡α╕óα╕üα╣Çα╕ºα╣ëα╕Ö</option>
+                      <option value="">เลือกข้อยกเว้น</option>
                       {TRANSFER_EXCEPTIONS.map(x => <option key={x}>{x}</option>)}
                     </select>
                   </Field>
@@ -351,33 +404,68 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             )}
           </div>
 
-          {/* 10. α╕Öα╣éα╕óα╕Üα╕▓α╕óα╕üα╕▓α╕úα╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓ */}
+          {/* 10. นโยบายการเก็บรักษา */}
           <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-4">
             <div className="flex items-center gap-2">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2">
                 <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
               </svg>
-              <span className="text-sm font-semibold text-slate-700">α╕Öα╣éα╕óα╕Üα╕▓α╕óα╕üα╕▓α╕úα╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñ</span>
+              <span className="text-sm font-semibold text-slate-700">นโยบายการเก็บรักษาข้อมูลส่วนบุคคล</span>
             </div>
-            <Field label="α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕╡α╣êα╕êα╕▒α╕öα╣Çα╕üα╣çα╕Ü">
+            <Field label="ประเภทของข้อมูลที่จัดเก็บ" required>
               <MultiCheck options={STORAGE_TYPES} selected={sub.storageType} onChange={v => set('storageType', v)} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓α╕éα╣ëα╕¡α╕íα╕╣α╕Ñ">
+              <Field label="วิธีการเก็บรักษาข้อมูล" required>
                 <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)}
                   className={txa} />
               </Field>
-              <Field label="α╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓α╕üα╕▓α╕úα╣Çα╕üα╣çα╕Üα╕úα╕▒α╕üα╕⌐α╕▓α╕éα╣ëα╕¡α╕íα╕╣α╕Ñ" required>
-                <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)}
-                  className={inp} />
+              <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={31}
+                      value={retentionParts.days}
+                      onChange={e => setRetentionPart('days', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">วัน</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={12}
+                      value={retentionParts.months}
+                      onChange={e => setRetentionPart('months', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">เดือน</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={9999}
+                      value={retentionParts.years}
+                      onChange={e => setRetentionPart('years', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">ปี</span>
+                  </div>
+                </div>
               </Field>
             </div>
-            <Field label="α╕¬α╕┤α╕ùα╕ÿα╕┤α╣üα╕Ñα╕░α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╣Çα╕éα╣ëα╕▓α╕ûα╕╢α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñ"
-            >
+            <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล" required>
               <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="α╕ºα╕┤α╕ÿα╕╡α╕üα╕▓α╕úα╕Ñα╕Üα╕½α╕úα╕╖α╕¡α╕ùα╕│α╕Ñα╕▓α╕óα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕íα╕╖α╣êα╕¡α╕¬α╕┤α╣ëα╕Öα╕¬α╕╕α╕öα╕úα╕░α╕óα╕░α╣Çα╕ºα╕Ñα╕▓">
+            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา" required>
               <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)}
                 className={txa} />
             </Field>
@@ -387,15 +475,13 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
           {isCtrl && (
             <div className="space-y-4">
               <div className="border-t border-dashed border-slate-200 pt-4">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">α╣Çα╕ëα╕₧α╕▓α╕░ Data Controller</span>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">เฉพาะ Data Controller</span>
               </div>
-              <Field label="α╕üα╕▓α╕úα╣âα╕èα╣ëα╕½α╕úα╕╖α╕¡α╣Çα╕¢α╕┤α╕öα╣Çα╕£α╕óα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕ùα╕╡α╣êα╣äα╕öα╣ëα╕úα╕▒α╕Üα╕óα╕üα╣Çα╕ºα╣ëα╕Öα╣äα╕íα╣êα╕òα╣ëα╕¡α╕çα╕éα╕¡α╕äα╕ºα╕▓α╕íα╕óα╕┤α╕Öα╕óα╕¡α╕í"
-              >
+              <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม" required>
                 <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)}
                   className={txa} />
               </Field>
-              <Field label="α╕üα╕▓α╕úα╕¢α╕Åα╕┤α╣Çα╕¬α╕ÿα╕äα╕│α╕éα╕¡α╕½α╕úα╕╖α╕¡α╕äα╕│α╕äα╕▒α╕öα╕äα╣ëα╕▓α╕Öα╕üα╕▓α╕úα╣âα╕èα╣ëα╕¬α╕┤α╕ùα╕ÿα╕┤α╕éα╕¡α╕çα╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ"
-              >
+              <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล" required>
                 <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)}
                   className={txa} />
               </Field>
@@ -407,7 +493,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
   );
 }
 
-// ΓöÇΓöÇΓöÇ Main export ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+// ─── Main export ───────────────────────────────────────────────────────────────
 
 interface RopaFormProps {
   activityId?: string
@@ -479,7 +565,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
           const detail = Array.isArray(response.detail)
             ? response.detail.join('\n')
             : response.detail;
-          notifyError(detail || response.error || 'α╣éα╕½α╕Ñα╕ö DP Form α╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+          notifyError(detail || response.error || 'โหลด DP Form ไม่สำเร็จ');
           return;
         }
 
@@ -507,7 +593,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
         setSecAudit(draftPayload?.secAudit || '');
       } catch (error) {
         console.error(error);
-        notifyError('α╣éα╕½α╕Ñα╕ö DP Form α╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+        notifyError('โหลด DP Form ไม่สำเร็จ');
       }
     };
 
@@ -539,9 +625,34 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
           s.dataType.length > 0 &&
           s.collectionMethod.length > 0 &&
           s.sourceFromOwner.trim() !== '' &&
+          (s.sourceFromOwner !== 'จากแหล่งอื่น' || s.sourceFromOther.trim() !== '') &&
           s.legalBasis.length > 0 &&
+          s.transferAbroad.trim() !== '' &&
+          (s.transferAbroad !== 'มี' || (
+            s.transferCountry.trim() !== '' &&
+            s.transferMethod.trim() !== '' &&
+            s.transferAffiliate.trim() !== '' &&
+            (s.transferAffiliate !== 'ใช่' || s.transferAffiliateCompany.trim() !== '') &&
+            s.transferStandard.trim() !== '' &&
+            s.transferException28.trim() !== ''
+          )) &&
+          s.storageType.length > 0 &&
+          s.storageMethod.trim() !== '' &&
           s.retentionPeriod.trim() !== ''
+          && s.accessRights.trim() !== ''
+          && s.deletionMethod.trim() !== ''
         )
+      );
+    }
+
+    if (step === 3) {
+      return (
+        secOrg.trim() !== '' &&
+        secTech.trim() !== '' &&
+        secPhysical.trim() !== '' &&
+        secAccess.trim() !== '' &&
+        secUser.trim() !== '' &&
+        secAudit.trim() !== ''
       );
     }
 
@@ -555,12 +666,12 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
   const handleSaveDraft = async () => {
     try {
       if (!user?.id) {
-        notifyError('α╕üα╕úα╕╕α╕ôα╕▓α╣Çα╕éα╣ëα╕▓α╕¬α╕╣α╣êα╕úα╕░α╕Üα╕Üα╣âα╕½α╕íα╣êα╕üα╣êα╕¡α╕Öα╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕ç');
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนบันทึกแบบร่าง');
         return;
       }
 
       if (!activityId) {
-        notifyError('α╣äα╕íα╣êα╕₧α╕Ü ROPA α╕ùα╕╡α╣êα╕òα╣ëα╕¡α╕çα╕üα╕▓α╕úα╕éα╕¡α╣âα╕èα╣ëα╕çα╕▓α╕Ö');
+        notifyError('ไม่พบ ROPA ที่ต้องการขอใช้งาน');
         return;
       }
 
@@ -603,7 +714,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
           ? data.detail.join('\n')
           : data.detail;
 
-        notifyError(detail || data.error || 'α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+        notifyError(detail || data.error || 'บันทึกแบบร่างไม่สำเร็จ');
         return;
       }
 
@@ -621,31 +732,31 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
       router.push('/dc/my-ropa?notice=draft-saved&form=dp');
     } catch (error) {
       console.error(error);
-      notifyError('α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+      notifyError('บันทึกแบบร่างไม่สำเร็จ');
     }
   };
 
   const handleSubmit = async () => {
     try {
       if (!user?.id) {
-        notifyError('α╕üα╕úα╕╕α╕ôα╕▓α╣Çα╕éα╣ëα╕▓α╕¬α╕╣α╣êα╕úα╕░α╕Üα╕Üα╣âα╕½α╕íα╣êα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕çα╕ƒα╕¡α╕úα╣îα╕í');
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนส่งฟอร์ม');
         return;
       }
 
       if (!activityId) {
-        notifyError('α╣äα╕íα╣êα╕₧α╕Ü ROPA α╕ùα╕╡α╣êα╕òα╣ëα╕¡α╕çα╕üα╕▓α╕úα╕éα╕¡α╣âα╕èα╣ëα╕çα╕▓α╕Ö');
+        notifyError('ไม่พบ ROPA ที่ต้องการขอใช้งาน');
         return;
       }
 
       const firstSub = subs[0];
 
       if (!firstSub?.purpose?.trim()) {
-        notifyError('α╕üα╕úα╕╕α╕ôα╕▓α╕üα╕úα╕¡α╕üα╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î');
+        notifyError('กรุณากรอกวัตถุประสงค์');
         return;
       }
 
       if (!firstSub?.scope?.trim()) {
-        notifyError('α╕üα╕úα╕╕α╕ôα╕▓α╕üα╕úα╕¡α╕üα╕éα╕¡α╕Üα╣Çα╕éα╕òα╕üα╕▓α╕úα╣âα╕èα╣ëα╕çα╕▓α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ');
+        notifyError('กรุณากรอกขอบเขตการใช้งานข้อมูล');
         return;
       }
 
@@ -674,7 +785,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
           ? data.detail.join('\n')
           : data.detail;
 
-        notifyError(detail || data.error || 'α╕¬α╣êα╕ç DP Form α╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+        notifyError(detail || data.error || 'ส่ง DP Form ไม่สำเร็จ');
         return;
       }
 
@@ -689,7 +800,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
       setSubmitted(true);
     } catch (error) {
       console.error(error);
-      notifyError('α╕¬α╣êα╕ç DP Form α╣äα╕íα╣êα╕¬α╕│α╣Çα╕úα╣çα╕ê');
+      notifyError('ส่ง DP Form ไม่สำเร็จ');
     }
   };
 
@@ -702,19 +813,23 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
             <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-slate-800 mb-2">α╕¬α╣êα╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╣Çα╕úα╕╡α╕óα╕Üα╕úα╣ëα╕¡α╕óα╣üα╕Ñα╣ëα╕º</h3>
-        <p className="text-sm text-slate-500 mb-3">α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñα╕ûα╕╣α╕üα╕¬α╣êα╕çα╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕êα╕▓α╕ü DPO</p>
+        <h3 className="text-xl font-bold text-slate-800 mb-2">ส่งข้อมูลเรียบร้อยแล้ว</h3>
+        <p className="text-sm text-slate-500 mb-3">กิจกรรมการประมวลผลถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full text-sm text-blue-700 font-medium mb-6">
-          {isCtrl ? 'Data Controller' : 'Data Processor'} ┬╖ {mainActivity}
+          {isCtrl ? 'Data Controller' : 'Data Processor'} · {mainActivity}
         </div>
         <br />
+        <button onClick={() => router.push('/dc/my-ropa')}
+          className="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors mr-3">
+          ไปหน้า My Activity
+        </button>
         <button onClick={() => {
           setStep(1); setSubmitted(false);
           setRec({ name: '', address: '', email: '', phone: '' });
           setMainActivity(''); setSubs([newSub(0)]);
           setOwnerName(''); setProcessorName(''); setCtrlAddress('');
         }} className="px-6 py-2.5 bg-blue-600 text-slate-700 text-sm font-semibold rounded-lg hover:bg-blue-700 transition-colors">
-          α╕¬α╕úα╣ëα╕▓α╕çα╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╣âα╕½α╕íα╣ê
+          สร้างกิจกรรมใหม่
         </button>
       </div>
     );
@@ -747,7 +862,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
         <div className="mt-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-slate-800">{STEPS[step - 1].label}</h2>
-            <p className="text-xs text-slate-400">α╕¬α╣êα╕ºα╕Öα╕ùα╕╡α╣ê {step} / {STEPS.length}</p>
+            <p className="text-xs text-slate-400">ส่วนที่ {step} / {STEPS.length}</p>
           </div>
           {formType && (
             <span className={`flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border ${isCtrl ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
@@ -757,38 +872,38 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
         </div>
       </div>
 
-      {/* ΓöÇ Step 2: α╕£α╕╣α╣ëα╕Ñα╕çα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü ΓöÇ */}
+      {/* ─ Step 2: ผู้ลงบันทึก ─ */}
       {step === 1 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
             <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">1</div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">α╕¬α╣êα╕ºα╕Öα╕ùα╕╡α╣ê 1: α╕úα╕▓α╕óα╕Ñα╕░α╣Çα╕¡α╕╡α╕óα╕öα╕éα╕¡α╕çα╕£α╕╣α╣ëα╕Ñα╕çα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü ROPA</p>
-              <p className="text-xs text-slate-400">α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕£α╕╣α╣ëα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╕üα╕▓α╕úα╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕Öα╕╡α╣ë</p>
+              <p className="text-sm font-semibold text-slate-800">ส่วนที่ 1: รายละเอียดของผู้ลงบันทึก ROPA</p>
+              <p className="text-xs text-slate-400">ข้อมูลผู้รับผิดชอบการบันทึกกิจกรรมนี้</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="α╕èα╕╖α╣êα╕¡-α╕Öα╕▓α╕íα╕¬α╕üα╕╕α╕Ñ / α╕èα╕╖α╣êα╕¡α╕¡α╕çα╕äα╣îα╕üα╕ú" required>
+            <Field label="ชื่อ-นามสกุล / ชื่อองค์กร" required>
               <input type="text" value={rec.name} onChange={e => setRec(r => ({ ...r, name: e.target.value }))}
                 className={inp} />
             </Field>
-            <Field label="α╣Çα╕Üα╕¡α╕úα╣îα╣éα╕ùα╕úα╕¿α╕▒α╕₧α╕ùα╣î" required>
+            <Field label="เบอร์โทรศัพท์" required>
               <input type="tel" value={rec.phone} onChange={e => setRec(r => ({ ...r, phone: e.target.value }))}
                 className={inp} />
             </Field>
           </div>
-          <Field label="α╕ùα╕╡α╣êα╕¡α╕óα╕╣α╣ê" required >
+          <Field label="ที่อยู่" required >
             <textarea rows={2} value={rec.address} onChange={e => setRec(r => ({ ...r, address: e.target.value }))}
               className={txa} />
           </Field>
-          <Field label="α╕¡α╕╡α╣Çα╕íα╕Ñ" required>
+          <Field label="อีเมล" required>
             <input type="email" value={rec.email} onChange={e => setRec(r => ({ ...r, email: e.target.value }))}
               className={inp} />
           </Field>
         </div>
       )}
 
-      {/* ΓöÇ Step 3: α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ ΓöÇ */}
+      {/* ─ Step 3: กิจกรรมการประมวลผล ─ */}
       {step === 2 && (
         <div className="space-y-4">
           {/* Header card */}
@@ -796,30 +911,30 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
             <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
               <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">2</div>
               <div>
-                <p className="text-sm font-semibold text-slate-800">α╕¬α╣êα╕ºα╕Öα╕ùα╕╡α╣ê 2: α╕òα╕▓α╕úα╕▓α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ</p>
-                <p className="text-xs text-slate-400">α╕úα╕░α╕Üα╕╕α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕½α╕Ñα╕▒α╕üα╣üα╕Ñα╕░α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕óα╣êα╕¡α╕óα╕ùα╕▒α╣ëα╕çα╕½α╕íα╕ö</p>
+                <p className="text-sm font-semibold text-slate-800">ส่วนที่ 2: ตารางข้อมูลกิจกรรมการประมวลผล</p>
+                <p className="text-xs text-slate-400">ระบุกิจกรรมหลักและวัตถุประสงค์ย่อยทั้งหมด</p>
               </div>
             </div>
 
             {isCtrl ? (
-              <Field label="α╕èα╕╖α╣êα╕¡α╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñ" required >
+              <Field label="ชื่อเจ้าของข้อมูลส่วนบุคคล" required >
                 <input type="text" value={ownerName} onChange={e => setOwnerName(e.target.value)}
                   className={inp} />
               </Field>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <Field label="α╕èα╕╖α╣êα╕¡α╕£α╕╣α╣ëα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñ" required >
+                <Field label="ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" required >
                   <input type="text" value={processorName} onChange={e => setProcessorName(e.target.value)}
                     className={inp} />
                 </Field>
-                <Field label="α╕ùα╕╡α╣êα╕¡α╕óα╕╣α╣êα╕£α╕╣α╣ëα╕äα╕ºα╕Üα╕äα╕╕α╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕¬α╣êα╕ºα╕Öα╕Üα╕╕α╕äα╕äα╕Ñ (α╕£α╕╣α╣ëα╕ºα╣êα╕▓α╕êα╣ëα╕▓α╕ç)" required >
+                <Field label="ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" required >
                   <input type="text" value={ctrlAddress} onChange={e => setCtrlAddress(e.target.value)}
                     className={inp} />
                 </Field>
               </div>
             )}
 
-            <Field label="α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñα╕½α╕Ñα╕▒α╕ü" required >
+            <Field label="กิจกรรมการประมวลผลหลัก" required >
               <input type="text" value={mainActivity} onChange={e => setMainActivity(e.target.value)}
                 className={inp} />
             </Field>
@@ -831,51 +946,42 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
             <SubCard key={s.id} sub={s} idx={i} isCtrl={isCtrl}
               onChange={updated => setSubs(prev => prev.map((x, xi) => xi === i ? updated : x))}
               onRemove={() => setSubs(prev => prev.filter((_, xi) => xi !== i))}
-              canRemove={subs.length > 1} />
+              canRemove={false} />
           ))}
-
-          {/* Add button */}
-          <button type="button" onClick={() => setSubs(prev => [...prev, newSub(prev.length)])}
-            className="w-full flex items-center justify-center gap-2.5 py-4 border-2 border-dashed border-blue-300 rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            α╣Çα╕₧α╕┤α╣êα╕íα╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕óα╣êα╕¡α╕ó
-          </button>
         </div>
       )}
 
-      {/* ΓöÇ Step 4: α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕úα╕▒α╕üα╕⌐α╕▓α╕äα╕ºα╕▓α╕íα╕¢α╕Ñα╕¡α╕öα╕áα╕▒α╕ó ΓöÇ */}
+      {/* ─ Step 4: มาตรการรักษาความปลอดภัย ─ */}
       {step === 3 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">
           <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
             <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center text-sm font-bold text-blue-600">3</div>
             <div>
-              <p className="text-sm font-semibold text-slate-800">α╕¬α╣êα╕ºα╕Öα╕ùα╕╡α╣ê 3: α╕äα╕│α╕¡α╕ÿα╕┤α╕Üα╕▓α╕óα╣Çα╕üα╕╡α╣êα╕óα╕ºα╕üα╕▒α╕Üα╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕úα╕▒α╕üα╕⌐α╕▓α╕äα╕ºα╕▓α╕íα╕íα╕▒α╣êα╕Öα╕äα╕çα╕¢α╕Ñα╕¡α╕öα╕áα╕▒α╕ó</p>
+              <p className="text-sm font-semibold text-slate-800">ส่วนที่ 3: คำอธิบายเกี่ยวกับมาตรการรักษาความมั่นคงปลอดภัย</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╣Çα╕èα╕┤α╕çα╕¡α╕çα╕äα╣îα╕üα╕ú (Organizational)" >
+            <Field label="มาตรการเชิงองค์กร (Organizational)" required>
               <textarea rows={4} value={secOrg} onChange={e => setSecOrg(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╣Çα╕èα╕┤α╕çα╣Çα╕ùα╕äα╕Öα╕┤α╕ä (Technical)" >
+            <Field label="มาตรการเชิงเทคนิค (Technical)" required>
               <textarea rows={4} value={secTech} onChange={e => setSecTech(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕ùα╕▓α╕çα╕üα╕▓α╕óα╕áα╕▓α╕₧ (Physical)" >
+            <Field label="มาตรการทางกายภาพ (Physical)" required>
               <textarea rows={4} value={secPhysical} onChange={e => setSecPhysical(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="α╕üα╕▓α╕úα╕äα╕ºα╕Üα╕äα╕╕α╕íα╕üα╕▓α╕úα╣Çα╕éα╣ëα╕▓α╕ûα╕╢α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ (Access Control)" >
+            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" required>
               <textarea rows={4} value={secAccess} onChange={e => setSecAccess(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="α╕üα╕▓α╕úα╕üα╕│α╕½α╕Öα╕öα╕½α╕Öα╣ëα╕▓α╕ùα╕╡α╣êα╕äα╕ºα╕▓α╕íα╕úα╕▒α╕Üα╕£α╕┤α╕öα╕èα╕¡α╕Üα╕éα╕¡α╕çα╕£α╕╣α╣ëα╣âα╕èα╣ëα╕çα╕▓α╕Ö" >
+            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" required>
               <textarea rows={4} value={secUser} onChange={e => setSecUser(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="α╕íα╕▓α╕òα╕úα╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕óα╣ëα╕¡α╕Öα╕½α╕Ñα╕▒α╕ç (Audit Trail)" >
+            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" required>
               <textarea rows={4} value={secAudit} onChange={e => setSecAudit(e.target.value)}
                 className={txa} />
             </Field>
@@ -883,39 +989,39 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
         </div>
       )}
 
-      {/* ΓöÇ Step 5: α╕¬α╕úα╕╕α╕¢ ΓöÇ */}
+      {/* ─ Step 5: สรุป ─ */}
       {step === 4 && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 bg-slate-50 border-b border-slate-100">
-            <p className="text-sm font-semibold text-slate-800">α╕¬α╕úα╕╕α╕¢α╕éα╣ëα╕¡α╕íα╕╣α╕Ñα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕ç</p>
-            <p className="text-xs text-slate-400 mt-0.5">α╕üα╕úα╕╕α╕ôα╕▓α╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╕äα╕ºα╕▓α╕íα╕ûα╕╣α╕üα╕òα╣ëα╕¡α╕çα╕üα╣êα╕¡α╕Öα╕¬α╣êα╕ç DPO α╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕¡α╕Öα╕╕α╕íα╕▒α╕òα╕┤</p>
+            <p className="text-sm font-semibold text-slate-800">สรุปข้อมูลก่อนส่ง</p>
+            <p className="text-xs text-slate-400 mt-0.5">กรุณาตรวจสอบความถูกต้องก่อนส่ง DPO เพื่อรออนุมัติ</p>
           </div>
           <div className="p-6 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="text-xs text-slate-400 mb-1">α╕¢α╕úα╕░α╣Çα╕áα╕ùα╕ƒα╕¡α╕úα╣îα╕í</p>
+                <p className="text-xs text-slate-400 mb-1">ประเภทฟอร์ม</p>
                 <span className={`text-sm font-bold ${isCtrl ? 'text-blue-700' : 'text-emerald-700'}`}>
-                  {isCtrl ? 'Data Controller (α╕£α╕╣α╣ëα╕äα╕ºα╕Üα╕äα╕╕α╕íα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ)' : 'Data Processor (α╕£α╕╣α╣ëα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ)'}
+                  {isCtrl ? 'Data Controller (ผู้ควบคุมข้อมูล)' : 'Data Processor (ผู้ประมวลผลข้อมูล)'}
                 </span>
               </div>
               <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <p className="text-xs text-slate-400 mb-1">α╕£α╕╣α╣ëα╕Ñα╕çα╕Üα╕▒α╕Öα╕ùα╕╢α╕ü</p>
-                <p className="text-sm font-semibold text-slate-800">{rec.name || 'ΓÇö'}</p>
-                <p className="text-xs text-slate-500">{rec.email} ┬╖ {rec.phone}</p>
+                <p className="text-xs text-slate-400 mb-1">ผู้ลงบันทึก</p>
+                <p className="text-sm font-semibold text-slate-800">{rec.name || '—'}</p>
+                <p className="text-xs text-slate-500">{rec.email} · {rec.phone}</p>
               </div>
             </div>
 
             <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-              <p className="text-xs text-blue-500 mb-1 font-medium">α╕üα╕┤α╕êα╕üα╕úα╕úα╕íα╕üα╕▓α╕úα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñα╕½α╕Ñα╕▒α╕ü</p>
-              <p className="text-base font-bold text-blue-800">{mainActivity || 'ΓÇö'}</p>
+              <p className="text-xs text-blue-500 mb-1 font-medium">กิจกรรมการประมวลผลหลัก</p>
+              <p className="text-base font-bold text-blue-800">{mainActivity || '—'}</p>
               <p className="text-xs text-blue-600 mt-1">
-                {isCtrl ? `α╣Çα╕êα╣ëα╕▓α╕éα╕¡α╕çα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ: ${ownerName || 'ΓÇö'}` : `α╕£α╕╣α╣ëα╕¢α╕úα╕░α╕íα╕ºα╕Ñα╕£α╕Ñ: ${processorName || 'ΓÇö'} ┬╖ α╕£α╕╣α╣ëα╕ºα╣êα╕▓α╕êα╣ëα╕▓α╕ç: ${ctrlAddress || 'ΓÇö'}`}
+                {isCtrl ? `เจ้าของข้อมูล: ${ownerName || '—'}` : `ผู้ประมวลผล: ${processorName || '—'} · ผู้ว่าจ้าง: ${ctrlAddress || '—'}`}
               </p>
             </div>
 
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">
-                α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣îα╕óα╣êα╕¡α╕ó ({subs.length} α╕úα╕▓α╕óα╕üα╕▓α╕ú)
+                วัตถุประสงค์ย่อย ({subs.length} รายการ)
               </p>
               <div className="space-y-2">
                 {subs.map((s, i) => (
@@ -924,7 +1030,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
                       {i + 1}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-slate-800">{s.purpose || '(α╕óα╕▒α╕çα╣äα╕íα╣êα╕úα╕░α╕Üα╕╕α╕ºα╕▒α╕òα╕ûα╕╕α╕¢α╕úα╕░α╕¬α╕çα╕äα╣î)'}</p>
+                      <p className="text-sm font-medium text-slate-800">{s.purpose || '(ยังไม่ระบุวัตถุประสงค์)'}</p>
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {s.legalBasis.map(l => (
                           <span key={l} className="text-xs px-2 py-0.5 bg-white border border-slate-200 rounded-full text-slate-600">{l}</span>
@@ -935,8 +1041,8 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
                             {s.retentionPeriod}
                           </span>
                         )}
-                        <span className={`text-xs px-2 py-0.5 rounded-full border ${s.transferAbroad === 'α╕íα╕╡' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
-                          {s.transferAbroad === 'α╕íα╕╡' ? `≡ƒîÉ α╣éα╕¡α╕Öα╕éα╣ëα╕¡α╕íα╕╣α╕Ñ ΓåÆ ${s.transferCountry}` : 'Γ£ô α╣äα╕íα╣êα╣éα╕¡α╕Öα╕òα╣êα╕▓α╕çα╕¢α╕úα╕░α╣Çα╕ùα╕¿'}
+                        <span className={`text-xs px-2 py-0.5 rounded-full border ${s.transferAbroad === 'มี' ? 'bg-orange-50 border-orange-200 text-orange-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'}`}>
+                          {s.transferAbroad === 'มี' ? `🌐 โอนข้อมูล → ${s.transferCountry}` : '✓ ไม่โอนต่างประเทศ'}
                         </span>
                       </div>
                     </div>
@@ -948,27 +1054,27 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
               <span className="font-semibold flex items-center gap-1">
                 <SearchAlert className="w-4 h-4 text-amber-600" />
-                α╕½α╕íα╕▓α╕óα╣Çα╕½α╕òα╕╕:
-              </span> α╣Çα╕íα╕╖α╣êα╕¡α╕¬α╣êα╕çα╣üα╕Ñα╣ëα╕º α╕¬α╕ûα╕▓α╕Öα╕░α╕êα╕░α╣Çα╕¢α╕Ñα╕╡α╣êα╕óα╕Öα╣Çα╕¢α╣çα╕Ö &ldquo;α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Ü (REVIEW)&rdquo;
-              α╣üα╕Ñα╕░ DPO α╕êα╕░α╕òα╣ëα╕¡α╕çα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Üα╣üα╕Ñα╕░α╕¡α╕Öα╕╕α╕íα╕▒α╕òα╕┤α╕üα╣êα╕¡α╕Öα╕êα╕╢α╕çα╕êα╕░α╕íα╕╡α╕¬α╕ûα╕▓α╕Öα╕░ ACTIVE
+                หมายเหตุ:
+              </span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
+              และ DPO จะต้องตรวจสอบและอนุมัติก่อนจึงจะมีสถานะ ACTIVE
             </div>
           </div>
         </div>
       )}
 
-      {/* ΓöÇ Footer ΓöÇ */}
+      {/* ─ Footer ─ */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <button type="button" onClick={handleSaveDraft}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
           {draftSaved
-            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕çα╣üα╕Ñα╣ëα╕º</span></>
-            : 'α╕Üα╕▒α╕Öα╕ùα╕╢α╕üα╣üα╕Üα╕Üα╕úα╣êα╕▓α╕ç'}
+            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกแบบร่างแล้ว</span></>
+            : 'บันทึกแบบร่าง'}
         </button>
         <div className="flex items-center gap-2">
           {step > 1 && (
             <button type="button" onClick={prev}
               className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-              ΓåÉ α╕óα╣ëα╕¡α╕Öα╕üα╕Ñα╕▒α╕Ü
+              ← ย้อนกลับ
             </button>
           )}
           {step < STEPS.length ? (
@@ -978,7 +1084,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
               disabled={!canNext()}
               className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
-              α╕ûα╕▒α╕öα╣äα╕¢ ΓåÆ
+              ถัดไป →
             </button>
           ) : (
             <button
@@ -989,7 +1095,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <polyline points="20 6 9 17 4 12" />
               </svg>
-              α╕¬α╣êα╕çα╣Çα╕₧α╕╖α╣êα╕¡α╕úα╕¡α╕üα╕▓α╕úα╕òα╕úα╕ºα╕êα╕¬α╕¡α╕Ü
+              ส่งเพื่อรอการตรวจสอบ
             </button>
           )}
         </div>
