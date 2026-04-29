@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Info } from 'lucide-react';
 import { notifyError } from '@/lib/notify';
+import { useSearchParams } from 'next/navigation';
+import { useRopa } from '@/lib/ropaContext';
+import { Clock8, SearchAlert } from 'lucide-react';
+import { Activity } from '@/types';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -412,7 +416,13 @@ function SubCard({ sub, idx, onChange, onRemove, canRemove }: {
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="ประเทศปลายทาง" required>
-                    <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)} className={inp} placeholder="เช่น Singapore / Japan" />
+                    <input
+                      type="text"
+                      value={sub.transferCountry}
+                      onChange={e => set('transferCountry', e.target.value)}
+                      className={inp}
+                      placeholder="เช่น Singapore / Japan"
+                    />
                   </Field>
                   <Field label="วิธีการโอนข้อมูล" required>
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)} className={inp} placeholder="เช่น API / Secure File Transfer" />
@@ -1039,7 +1049,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
             </button>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
