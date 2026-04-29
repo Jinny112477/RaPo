@@ -194,7 +194,7 @@ export const deleteUser = async (req, res) => {
   }
 };
 
-// CHECK IF FIRST TIME LzOGIN
+// CHECK IF FIRST TIME LOGIN
 const checkFirstLogin = async () => {
   const {
     data: { user },
@@ -223,7 +223,7 @@ const checkFirstLogin = async () => {
 // PUT: change password
 export const changePassword = async (req, res) => {
   try {
-    const user = req.user; // ต้องมาจาก middleware
+    const user = req.user;
 
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -237,7 +237,6 @@ export const changePassword = async (req, res) => {
         .json({ error: "Password must be at least 6 characters" });
     }
 
-    // ✅ STEP 1: update auth
     const { error: authError } = await supabase.auth.admin.updateUserById(
       user.id,
       {
@@ -250,12 +249,15 @@ export const changePassword = async (req, res) => {
       return res.status(500).json({ error: authError.message });
     }
 
-    // ✅ STEP 2: update DB
     const { data, error: profileError } = await supabase
       .from("profiles")
       .update({ password_change: true })
       .eq("user_id", user.id)
       .select();
+
+    if (!data || data.length === 0) {
+      console.error("❌ No profile updated. user_id mismatch:", user.id);
+    }
 
     console.log("UPDATED PROFILE:", data);
 
@@ -267,6 +269,32 @@ export const changePassword = async (req, res) => {
     return res.status(200).json({ success: true });
   } catch (err) {
     console.error("CHANGE PASSWORD ERROR:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// GET: Profiles
+export const getMe = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, email, password_change, name")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.json({
+      user,
+      mustChangePassword: !data.password_change,
+      profile: data,
+    });
+
+  } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 };

@@ -12,27 +12,28 @@ export default function ChangePasswordPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    // GET: Profiles
     useEffect(() => {
         const check = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                router.replace("/login");
-                return;
-            }
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("password_change")
-                .eq("user_id", user.id)
-                .single();
+            const res = await fetch("http://localhost:5001/api/me", {
+                headers: {
+                    Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+                }
+            });
 
-            // Already changed password → go to dashboard
-            if (profile?.password_change === true) {
+            const data = await res.json();
+
+            if (data.mustChangePassword) {
+                router.replace("/change-password");
+            } else {
                 router.replace("/dashboard");
             }
         };
+
         check();
     }, []);
 
+    // PUT: handle change password
     const handleChangePassword = async () => {
         setError("");
 
@@ -48,7 +49,6 @@ export default function ChangePasswordPage() {
         setLoading(true);
 
         try {
-            // ✅ get session (IMPORTANT for token)
             const {
                 data: { session },
             } = await supabase.auth.getSession();
@@ -57,25 +57,18 @@ export default function ChangePasswordPage() {
                 throw new Error("Session not found. Please login again.");
             }
 
-            // ✅ call backend API
-            const res = await fetch("http://localhost:5001/api/change-password", {
+            await fetch("http://localhost:5001/api/change-password", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${session.access_token}`, // 🔥 REQUIRED
+                    Authorization: `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({ password }),
             });
 
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.error || "Failed to change password");
-            }
-
-            // ✅ success flow
-            sessionStorage.setItem("passwordJustChanged", "true");
-            router.replace("/dashboard");
+            // Event Force to signout then login again
+            await supabase.auth.signOut();
+            router.replace("/login");
 
         } catch (err: any) {
             console.error("CHANGE PASSWORD ERROR:", err);
