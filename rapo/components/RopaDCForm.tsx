@@ -1,8 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { useSearchParams } from 'next/navigation';
+import { useRopa } from '@/lib/ropaContext';
 import { Clock8, SearchAlert } from 'lucide-react';
+import { Activity } from '@/types';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -65,10 +68,10 @@ const TRANSFER_EXCEPTIONS = [
 ];
 
 const STEPS = [
-  { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้ลงบันทึก', sub: 'รายละเอียดผู้รับผิดชอบการบันทึก' },
-  { id: 2, label: 'กิจกรรม', short: 'กิจกรรม', sub: 'กิจกรรมประมวลผลและวัตถุประสงค์ย่อย' },
-  { id: 3, label: 'มาตรการ', short: 'มาตรการ', sub: 'มาตรการรักษาความมั่นคงปลอดภัย' },
-  { id: 4, label: 'สรุป', short: 'สรุป', sub: 'ตรวจสอบและส่ง' },
+  { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
+  { id: 2, label: 'กิจกรรมการประมวลผล', short: 'กิจกรรม' },
+  { id: 3, label: 'มาตรการรักษาความปลอดภัย', short: 'ความปลอดภัย' },
+  { id: 4, label: 'สรุปและส่ง', short: 'สรุป' },
 ];
 
 // ─── Small helper components ───────────────────────────────────────────────────
@@ -144,17 +147,6 @@ function newSub(i: number): SubActivity {
 }
 
 // ─── Sub-activity accordion ────────────────────────────────────────────────────
-function SectionBox({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
-  return (
-    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/60 space-y-4">
-      <div className="flex items-center gap-2">
-        {icon}
-        <span className="text-sm font-semibold text-slate-700">{title}</span>
-      </div>
-      {children}
-    </div>
-  );
-}
 
 function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
   sub: SubActivity; idx: number; isCtrl: boolean;
@@ -204,8 +196,6 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
         </div>
       </div>
 
-      // ภายในฟังก์ชัน SubCard (ส่วนที่ open && ...)
-
       {open && (
         <div className="p-5 space-y-5 bg-white">
 
@@ -240,11 +230,8 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             <MultiCheck options={COLLECTION_METHODS} selected={sub.collectionMethod} onChange={v => set('collectionMethod', v)} />
           </Field>
 
-          {/* 6. แหล่งที่มา - ใช้ SectionBox เพื่อความสวยงามเหมือนฝั่งขวา */}
-          <SectionBox
-            title="แหล่งที่ได้มาซึ่งข้อมูล"
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>}
-          >
+          {/* 6. แหล่งที่มา */}
+          <Field label="แหล่งที่ได้มาซึ่งข้อมูล" required>
             <div className="flex gap-3">
               {['จากเจ้าของข้อมูลโดยตรง', 'จากแหล่งอื่น'].map(v => (
                 <button
@@ -252,41 +239,53 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                   type="button"
                   onClick={() => set('sourceFromOwner', v)}
                   className={`flex-1 py-2.5 rounded-lg border-2 text-sm font-medium transition-all
-              ${sub.sourceFromOwner === v ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'}`}
+        ${sub.sourceFromOwner === v
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-slate-200 text-slate-500 hover:border-slate-300 bg-white'
+                    }`}
                 >
                   {v}
                 </button>
               ))}
             </div>
-          </SectionBox>
+          </Field>
 
           {/* 7. ฐานการประมวลผล */}
           <Field label="ฐานในการประมวลผล" required>
             <MultiCheck options={LEGAL_BASES_TH} selected={sub.legalBasis} onChange={v => set('legalBasis', v)} />
           </Field>
 
-          {/* 8. ผู้เยาว์ (คงไว้เฉพาะ DC) */}
+          {/* 8. ผู้เยาว์ */}
           {isCtrl && (
-            <div className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 space-y-4">
+            <div className="p-4 rounded-xl border border-amber-200 bg-50 space-y-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-amber-800 text-800">การขอความยินยอมของผู้เยาว์</span>
+                <span className="text-sm font-semibold text-800">การขอความยินยอมของผู้เยาว์</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="อายุไม่เกิน 10 ปี" >
-                  <textarea rows={2} value={sub.minorConsentUnder10} onChange={e => set('minorConsentUnder10', e.target.value)} className={txa} placeholder="เช่น ต้องได้รับความยินยอมจากผู้ปกครอง" />
+                  <textarea
+                    rows={2}
+                    value={sub.minorConsentUnder10}
+                    onChange={e => set('minorConsentUnder10', e.target.value)}
+                    className={txa}
+                    placeholder="เช่น ต้องได้รับความยินยอมจากผู้ปกครอง"
+                  />
                 </Field>
                 <Field label="อายุ 10–20 ปี" >
-                  <textarea rows={2} value={sub.minorConsentAge10to20} onChange={e => set('minorConsentAge10to20', e.target.value)} className={txa} placeholder="เช่น ขอ consent จากเจ้าของข้อมูลและผู้ปกครองร่วม" />
+                  <textarea
+                    rows={2}
+                    value={sub.minorConsentAge10to20}
+                    onChange={e => set('minorConsentAge10to20', e.target.value)}
+                    className={txa}
+                    placeholder="เช่น ขอ consent จากเจ้าของข้อมูลและผู้ปกครองร่วม"
+                  />
                 </Field>
               </div>
             </div>
           )}
 
-          {/* 9. การโอนข้อมูลต่างประเทศ - ใช้ SectionBox */}
-          <SectionBox
-            title="การส่งหรือโอนข้อมูลไปยังต่างประเทศ"
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>}
-          >
+          {/* 9. การโอนข้อมูลต่างประเทศ */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-4">
             <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่">
               <YesNo value={sub.transferAbroad} onChange={v => set('transferAbroad', v)} />
             </Field>
@@ -295,24 +294,52 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               <div className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="ประเทศปลายทาง" required>
-                    <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)} className={inp} placeholder="เช่น Singapore / Japan" />
+                    <input
+                      type="text"
+                      value={sub.transferCountry}
+                      onChange={e => set('transferCountry', e.target.value)}
+                      className={inp}
+                      placeholder="เช่น Singapore / Japan"
+                    />
                   </Field>
                   <Field label="วิธีการโอนข้อมูล">
-                    <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)} className={inp} placeholder="เช่น API / Secure File Transfer" />
+                    <input
+                      type="text"
+                      value={sub.transferMethod}
+                      onChange={e => set('transferMethod', e.target.value)}
+                      className={inp}
+                      placeholder="เช่น API / Secure File Transfer"
+                    />
                   </Field>
                 </div>
+
                 <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่">
                   <YesNo value={sub.transferAffiliate} onChange={v => set('transferAffiliate', v)} options={['ใช่', 'ไม่ใช่']} />
                 </Field>
+
                 {sub.transferAffiliate === 'ใช่' && (
                   <Field label="ชื่อบริษัทในเครือ">
-                    <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)} className={inp} placeholder="เช่น ABC Global Co., Ltd." />
+                    <input
+                      type="text"
+                      value={sub.transferAffiliateCompany}
+                      onChange={e => set('transferAffiliateCompany', e.target.value)}
+                      className={inp}
+                      placeholder="เช่น ABC Global Co., Ltd."
+                    />
                   </Field>
                 )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง">
-                    <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)} className={inp} placeholder="เช่น GDPR / SCC" />
+                    <input
+                      type="text"
+                      value={sub.transferStandard}
+                      onChange={e => set('transferStandard', e.target.value)}
+                      className={inp}
+                      placeholder="เช่น GDPR / SCC"
+                    />
                   </Field>
+
                   <Field label="ข้อยกเว้นตามมาตรา 28">
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
                       <option value="">เลือกข้อยกเว้น...</option>
@@ -322,37 +349,72 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 </div>
               </div>
             )}
-          </SectionBox>
+          </div>
 
-          {/* 10. นโยบายการเก็บรักษา - ใช้ SectionBox */}
-          <SectionBox
-            title="นโยบายการเก็บรักษาข้อมูลส่วนบุคคล"
-            icon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" strokeWidth="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>}
-          >
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="วิธีการเก็บรักษาข้อมูล">
-                <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)} className={txa} placeholder="เช่น จัดเก็บใน Cloud" />
-              </Field>
-              <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
-                <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)} className={inp} placeholder="เช่น 5 ปี" />
-              </Field>
-            </div>
+          {/* 10. นโยบายการเก็บรักษา */}
+          <div className="p-4 rounded-xl border border-slate-200 bg-slate-50/70 space-y-4">
+            <Field label="วิธีการเก็บรักษาข้อมูล">
+              <textarea
+                rows={2}
+                value={sub.storageMethod}
+                onChange={e => set('storageMethod', e.target.value)}
+                className={txa}
+                placeholder="เช่น จัดเก็บใน Cloud และระบบภายในองค์กร"
+              />
+            </Field>
+
+            <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
+              <input
+                type="text"
+                value={sub.retentionPeriod}
+                onChange={e => set('retentionPeriod', e.target.value)}
+                className={inp}
+                placeholder="เช่น 5 ปี หลังสิ้นสุดสัญญา"
+              />
+            </Field>
+
             <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล">
-              <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)} className={txa} placeholder="เช่น จำกัดเฉพาะพนักงานที่ได้รับอนุญาต" />
+              <textarea
+                rows={2}
+                value={sub.accessRights}
+                onChange={e => set('accessRights', e.target.value)}
+                className={txa}
+                placeholder="เช่น จำกัดเฉพาะพนักงานที่ได้รับอนุญาต"
+              />
             </Field>
-            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
-              <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)} className={txa} placeholder="เช่น ลบจากระบบ" />
-            </Field>
-          </SectionBox>
 
-          {/* 11-12. ส่วนเฉพาะของ DC (ถ้ามี) */}
+            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
+              <textarea
+                rows={2}
+                value={sub.deletionMethod}
+                onChange={e => set('deletionMethod', e.target.value)}
+                className={txa}
+                placeholder="เช่น ลบจากระบบและทำลายเอกสาร"
+              />
+            </Field>
+          </div>
+
+          {/* 11-12 */}
           {isCtrl && (
             <div className="space-y-4">
               <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม">
-                <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)} className={txa} placeholder="เช่น ใช้เพื่อปฏิบัติตามกฎหมาย" />
+                <textarea
+                  rows={2}
+                  value={sub.exemptDisclosure}
+                  onChange={e => set('exemptDisclosure', e.target.value)}
+                  className={txa}
+                  placeholder="เช่น ใช้เพื่อปฏิบัติตามกฎหมาย"
+                />
               </Field>
+
               <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล">
-                <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)} className={txa} placeholder="เช่น ปฏิเสธเนื่องจากกระทบสิทธิผู้อื่น" />
+                <textarea
+                  rows={2}
+                  value={sub.rightsDenial}
+                  onChange={e => set('rightsDenial', e.target.value)}
+                  className={txa}
+                  placeholder="เช่น ปฏิเสธเนื่องจากกระทบสิทธิผู้อื่น"
+                />
               </Field>
             </div>
           )}
@@ -367,34 +429,36 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 interface RopaFormProps {
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
+  initialData?: Activity;
+  readOnly?: boolean;
 }
 
-export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
+export default function RopaDCForm({ onSubmit, onSaveDraft, initialData, readOnly = false }: RopaFormProps) {
   const [step, setStep] = useState(1);
   const [formType] = useState<FormType>('controller');
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
-  const TOTAL = STEPS.length;
 
-  // Part 1
-  const [rec, setRec] = useState<RecorderInfo>({ name: '', address: '', email: '', phone: '' });
+  const searchParams = useSearchParams();
+  const { activities } = useRopa();
+  const activityId = searchParams.get('activityId');
 
-  // Part 2 - controller
-  const [ownerName, setOwnerName] = useState('');
-  // Part 2 - processor
-  const [processorName, setProcessorName] = useState('');
-  const [ctrlAddress, setCtrlAddress] = useState('');
-  // Shared
-  const [mainActivity, setMainActivity] = useState('');
-  const [subs, setSubs] = useState<SubActivity[]>([newSub(0)]);
-
-  // Security
-  const [secOrg, setSecOrg] = useState('');
-  const [secTech, setSecTech] = useState('');
-  const [secPhysical, setSecPhysical] = useState('');
-  const [secAccess, setSecAccess] = useState('');
-  const [secUser, setSecUser] = useState('');
-  const [secAudit, setSecAudit] = useState('');
+  const [rec, setRec] = useState<RecorderInfo>(
+    initialData?.recorder ?? { name: '', address: '', email: '', phone: '' }
+  );
+  const [ownerName, setOwnerName] = useState(initialData?.dataOwnerName ?? '');
+  const [processorName, setProcessorName] = useState(initialData?.processorName ?? '');
+  const [ctrlAddress, setCtrlAddress] = useState(initialData?.controllerAddress ?? '');
+  const [mainActivity, setMainActivity] = useState(initialData?.activityName ?? '');
+  const [subs, setSubs] = useState<SubActivity[]>(
+    initialData?.subActivities?.length ? initialData.subActivities : [newSub(0)]
+  );
+  const [secOrg, setSecOrg] = useState(initialData?.securityMeasures?.organizational ?? '');
+  const [secTech, setSecTech] = useState(initialData?.securityMeasures?.technical ?? '');
+  const [secPhysical, setSecPhysical] = useState(initialData?.securityMeasures?.physical ?? '');
+  const [secAccess, setSecAccess] = useState(initialData?.securityMeasures?.accessControl ?? '');
+  const [secUser, setSecUser] = useState(initialData?.securityMeasures?.userResponsibility ?? '');
+  const [secAudit, setSecAudit] = useState(initialData?.securityMeasures?.auditTrail ?? '');
 
   const isCtrl = formType === 'controller';
   const { user } = useAuth();
@@ -490,34 +554,27 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         <div className="flex items-center justify-between relative">
           <div className="absolute left-0 right-0 top-4 h-px bg-slate-200 z-0" />
           <div className="absolute left-0 top-4 h-px bg-blue-500 z-0 transition-all duration-500"
-            style={{ width: `${((step - 1) / (TOTAL - 1)) * 100}%` }} />
-          {/* แก้ไขส่วน Progress ใน Return ของ RopaDCForm */}
+            style={{ width: `${((step - 1) / 4) * 100}%` }} />
           {STEPS.map(s => (
-            <div key={s.id} className="flex flex-col items-center gap-2 z-10"> {/* ปรับ gap เป็น 2 */}
-              <button
-                onClick={() => s.id < step && setStep(s.id)}
+            <div key={s.id} className="flex flex-col items-center gap-1.5 z-10">
+              <button onClick={() => s.id < step && setStep(s.id)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-200 ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer' :
-                    s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
-                      'bg-white border-slate-200 text-slate-400 cursor-default'
-                  }`}
-              >
+                  s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md' :
+                    'bg-white border-slate-200 text-slate-400 cursor-default'}`}>
                 {s.id < step
                   ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5"><polyline points="20 6 9 17 4 12" /></svg>
                   : s.id}
               </button>
-
-              {/* ส่วนข้อความใต้ตัวเลข */}
-              <span className={`text-[11px] font-medium text-center whitespace-nowrap transition-colors duration-200 ${s.id === step ? 'text-blue-600' : s.id < step ? 'text-slate-500' : 'text-slate-400'
-                }`}>
+              <span className={`text-xs font-medium hidden md:block whitespace-nowrap ${s.id === step ? 'text-blue-600' : s.id < step ? 'text-slate-500' : 'text-slate-400'}`}>
                 {s.short}
-              </span >
+              </span>
             </div>
           ))}
         </div>
         <div className="mt-4 flex items-start justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-slate-800">{STEPS[step - 1].label}</h2>
-            <p className="text-xs text-slate-400">ส่วนที่ {step} / {TOTAL} · {STEPS[step - 1].sub}</p>
+            <p className="text-xs text-slate-400">ส่วนที่ {step} / {STEPS.length}</p>
           </div>
           {formType && (
             <span className={`flex-shrink-0 text-xs font-semibold px-3 py-1 rounded-full border ${isCtrl ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
@@ -726,35 +783,38 @@ export default function RopaDCForm({ onSubmit, onSaveDraft }: RopaFormProps) {
         </div>
       )}
 
-      {/* ─ Footer ─ */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <button type="button" onClick={handleSaveDraft}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-          {draftSaved
-            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกร่างแล้ว!</span></>
-            : 'save draft'}
-        </button>
-        <div className="flex items-center gap-2">
-          {step > 1 && (
-            <button type="button" onClick={prev}
-              className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-              ← ย้อนกลับ
-            </button>
-          )}
-          {step < 4 ? (
-            <button type="button" onClick={next} disabled={!canNext()}
-              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-              ถัดไป →
-            </button>
-          ) : (
-            <button type="button" onClick={handleSubmit}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-              ส่งเพื่อรอการตรวจสอบ
-            </button>
-          )}
+     {/* ─ Footer ─ */}
+      {!readOnly && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm px-5 py-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <button type="button" onClick={handleSaveDraft}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+            {draftSaved
+              ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกร่างแล้ว!</span></>
+              : 'save draft'}
+          </button>
+          
+          <div className="flex items-center gap-2">
+            {step > 1 && (
+              <button type="button" onClick={prev}
+                className="px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                ← ย้อนกลับ
+              </button>
+            )}
+            {step < 4 ? (
+              <button type="button" onClick={next} disabled={!canNext()}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+                ถัดไป →
+              </button>
+            ) : (
+              <button type="button" onClick={handleSubmit}
+                className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                ส่งเพื่อรอการตรวจสอบ
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
