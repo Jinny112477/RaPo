@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
@@ -22,14 +22,6 @@ const EyeIcon = ({ open }: { open: boolean }) =>
     </svg>
   );
 
-const demoAccounts = [
-  { email: 'jikko@company.com', role: 'Admin', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { email: 'meimei@company.com', role: 'Data Owner', color: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
-  { email: 'jin.vasquez@company.com', role: 'DPO', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-  { email: 'kk@company.com', role: 'Auditor', color: 'bg-slate-100 text-slate-700 border-slate-200' },
-  { email: 'somshy@company.com', role: 'Executive', color: 'bg-amber-100 text-amber-700 border-amber-200' },
-];
-
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
@@ -38,16 +30,40 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
-  // LOGIN : handler
+  useEffect(() => {
+    if (sessionStorage.getItem('passwordJustChanged') === 'true') {
+      setPasswordChanged(true);
+      sessionStorage.removeItem('passwordJustChanged');
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
-    const ok = await login(email, password || 'Temp1234');
-    setLoading(false);
-    if (ok) router.push('/dashboard');
-    else setError('Account not found. Use a demo email below.');
+
+    try {
+      const result = await login(email, password);
+
+      if (!result.ok) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      if (result.mustChangePassword) {
+        router.replace("/change-password");
+      } else {
+        router.replace("/dashboard");
+      }
+
+    } catch (err: any) {
+      console.error("LOGIN ERROR:", err);
+      setError(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -64,7 +80,6 @@ export default function LoginPage() {
               <p className="text-slate-400 text-xs">Management System</p>
             </div>
           </div>
-
           <div className="space-y-8">
             <div>
               <h2 className="text-white text-3xl font-bold leading-tight mb-3">
@@ -74,7 +89,6 @@ export default function LoginPage() {
                 Manage your Record of Processing Activities in one secure, organized platform built for modern enterprises.
               </p>
             </div>
-
             <div className="space-y-4">
               {[
                 { icon: '🔒', label: 'GDPR Compliant Workflows' },
@@ -90,18 +104,14 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-
         <div className="border-t border-white/10 pt-6">
-          <p className="text-xs text-slate-500">
-            © 2024 ROPA Management System. Enterprise Edition v2.4
-          </p>
+          <p className="text-xs text-slate-500">© 2024 ROPA Management System. Enterprise Edition v2.4</p>
         </div>
       </div>
 
       {/* Right panel - login form */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-[400px]">
-          {/* Mobile logo */}
           <div className="flex items-center gap-2.5 mb-8 lg:hidden">
             <div className="w-9 h-9 bg-blue-500 rounded-lg flex items-center justify-center">
               <ShieldIcon />
@@ -116,6 +126,15 @@ export default function LoginPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="px-8 py-6 space-y-4">
+
+              {/* ✅ FIX 3: Success banner after password change */}
+              {passwordChanged && (
+                <div className="flex items-center gap-2.5 p-3.5 bg-green-50 border border-green-200 rounded-lg">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                  <p className="text-sm text-green-700">Password changed! Please sign in with your new password.</p>
+                </div>
+              )}
+
               {error && (
                 <div className="flex items-center gap-2.5 p-3.5 bg-red-50 border border-red-200 rounded-lg">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
@@ -142,7 +161,7 @@ export default function LoginPage() {
                     type={showPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter password (Temp1234 for DEMO)"
+                    placeholder="Enter your password"
                     className="w-full px-4 py-2.5 pr-10 border border-slate-200 rounded-lg text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 transition-all"
                   />
                   <button

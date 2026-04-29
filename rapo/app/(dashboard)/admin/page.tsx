@@ -53,13 +53,13 @@ export default function UsersPage() {
           const membership = user.user_membership ?? {};
           const dept = membership.departments ?? {};
           return {
-            user_id:         user.user_id,
-            name:            user.name,
-            email:           user.email,
-            phone:           user.phone,
-            department_id:   dept.department_id ?? "",
+            user_id: user.user_id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            department_id: dept.department_id ?? "",
             department_name: dept.department_name ?? "",
-            role:            membership.role ?? "",
+            role: membership.role ?? "",
           };
         });
 
@@ -90,12 +90,15 @@ export default function UsersPage() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create user");
+      if (!res.ok) {
+        console.error("SERVER ERROR:", data);
+        throw new Error(data.error || JSON.stringify(data));
+      }
 
       setUsers((prev) => [...prev, { ...newUser, user_id: data.user_id }]);
       setOpen(false);
       setNewUser({ name: "", email: "", phone: "", department_id: "", department_name: "", role: "" });
-      alert(`User created!\n\nEmail: ${newUser.email}\nPassword: Temp1234\n\nShare this with the user.`);
+      alert("User created!");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -112,11 +115,11 @@ export default function UsersPage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name:          selectedUser.name,
-          email:         selectedUser.email,
-          phone:         selectedUser.phone,
+          name: selectedUser.name,
+          email: selectedUser.email,
+          phone: selectedUser.phone,
           department_id: selectedUser.department_id,
-          role:          selectedUser.role,
+          role: selectedUser.role,
         }),
       });
       const data = await res.json();
