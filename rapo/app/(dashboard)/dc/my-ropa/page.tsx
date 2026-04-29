@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 // 1. ตรวจสอบให้แน่ใจว่า import useRopa มาแล้ว
@@ -81,6 +81,23 @@ export default function MyRopaPage() {
     setStatusFilter('ALL');
     setSearch('');
   };
+
+  const [openMenu, setOpenMenu] = useState(false);
+  const [openImport, setOpenImport] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+
+  const menuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setOpenMenu(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-100 p-6">
@@ -331,7 +348,7 @@ export default function MyRopaPage() {
       </div>
 
       {/* FLOATING BUTTON */}
-      <div className="fixed bottom-6 right-6 z-50 group">
+      {/* <div className="fixed bottom-6 right-6 z-50 group">
         <button onClick={() => router.push('/ropa/create')}
           className="bg-[#203690] text-white w-14 h-14 flex items-center justify-center
             rounded-xl shadow-lg hover:bg-[#182a73] hover:shadow-xl transition duration-200">
@@ -343,10 +360,104 @@ export default function MyRopaPage() {
         <div className="absolute right-16 top-1/2 -translate-y-1/2 bg-black text-white
           text-sm px-3 py-1 rounded-md opacity-0 group-hover:opacity-100
           transition whitespace-nowrap pointer-events-none">
-          Create DC Form
+          Create Activity
         </div>
-      </div>
+      </div> */}
+      <div className="fixed bottom-6 right-6 z-50 group">
+        <button
+          onClick={() => setOpenMenu(!openMenu)}
+          className="bg-[#203690] text-white w-14 h-14 flex items-center justify-center
+  rounded-xl shadow-lg hover:bg-[#182a73] transition text-2xl"
+        >
+          +
+        </button>
+        <div className="absolute right-16 top-1/2 -translate-y-1/2
+  bg-black text-white text-sm px-3 py-1 rounded-md
+  opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+          Create Menu
+        </div>
 
+
+        {openMenu && (
+          <div
+            ref={menuRef}
+            className="absolute bottom-16 right-0 bg-white border rounded-xl shadow-lg w-48 overflow-hidden"
+          >
+
+            <button
+              onClick={() => router.push('/ropa/create')}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100"
+            >
+              Create Activity
+            </button>
+
+            <button
+              onClick={() => {
+                setOpenImport(true);
+                setOpenMenu(false);
+              }}
+              className="w-full text-left px-4 py-3 text-sm hover:bg-gray-100"
+            >
+              Import CSV
+            </button>
+          </div>
+
+        )}
+        {openImport && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+
+            {/* backdrop */}
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setOpenImport(false)}
+            />
+
+            {/* modal */}
+            <div className="relative bg-white w-[400px] rounded-xl shadow-lg p-6 z-10">
+
+              <h2 className="text-lg font-semibold mb-4">
+                Import CSV / Excel
+              </h2>
+
+              <input
+                type="file"
+                accept=".csv,.xlsx"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="w-full border p-2 rounded text-sm"
+              />
+
+              {file && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Selected: {file.name}
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2 mt-5">
+
+                <button
+                  onClick={() => setOpenImport(false)}
+                  className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => {
+                    console.log("upload file:", file);
+                    // TODO: parse CSV later
+                    setOpenImport(false);
+                  }}
+                  className="px-3 py-1.5 text-sm bg-[#203690] text-white rounded hover:bg-[#182a73]"
+                >
+                  Upload
+                </button>
+
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
+
   );
 }
