@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Clock8, AlertCircle } from 'lucide-react';
 import { useRopa } from '@/lib/ropaContext';
 
@@ -352,6 +353,11 @@ interface RopaFormProps {
 }
 
 export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFormProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { addActivity, activities } = useRopa();
+  const queryActivityId = searchParams.get('activityId');
+  
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
@@ -374,6 +380,27 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
   const [secUser, setSecUser] = useState('');
   const [secAudit, setSecAudit] = useState('');
 
+  // Auto-fill from query params
+  useEffect(() => {
+    const id = activityId || queryActivityId;
+    if (id) {
+      const selectedActivity = activities.find(a => a.id === id);
+      if (selectedActivity) {
+        setMainActivity(selectedActivity.activityName || '');
+        setProcessorName(selectedActivity.processorName || selectedActivity.owner || '');
+        setCtrlAddress(selectedActivity.department || '');
+        if (selectedActivity.purpose) {
+          setSubs(prev => [
+            {
+              ...prev[0],
+              purpose: selectedActivity.purpose
+            }
+          ]);
+        }
+      }
+    }
+  }, [activityId, queryActivityId, activities]);
+
   const canNext = () => {
     if (step === 1) return rec.name.trim() !== '' && rec.email.trim() !== '';
     if (step === 2) return processorName.trim() !== '' && mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
@@ -385,8 +412,6 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
     setDraftSaved(true);
     setTimeout(() => setDraftSaved(false), 2500);
   };
-
-  const { addActivity } = useRopa();
 
   const handleSubmit = () => {
     addActivity({
@@ -418,7 +443,7 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
       updatedAt: new Date().toISOString(),
     } as any);
     onSubmit?.({ processorName, mainActivity, subs });
-    setSubmitted(true);
+    router.push('/ropa');
   };
 
   // ── Success screen ──
@@ -431,19 +456,7 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
           </svg>
         </div>
         <h3 className="text-lg font-bold text-slate-800 mb-1">ส่งข้อมูลเรียบร้อยแล้ว</h3>
-        <p className="text-sm text-slate-500 mb-2">กิจกรรมถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 rounded-full text-sm text-emerald-700 font-medium mb-6">
-          Data Processor Form · {mainActivity}
-        </div>
-        <br />
-        <button onClick={() => {
-          setStep(1); setSubmitted(false);
-          setRec({ name: '', address: '', email: '', phone: '' });
-          setMainActivity(''); setSubs([newSub(0)]);
-          setProcessorName(''); setCtrlAddress('');
-        }} className="px-5 py-2 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 transition-colors">
-          สร้างกิจกรรมใหม่
-        </button>
+        <p className="text-sm text-slate-500">กิจกรรมถูกส่งเพื่อรอการตรวจสอบจาก DPO</p>
       </div>
     );
   }

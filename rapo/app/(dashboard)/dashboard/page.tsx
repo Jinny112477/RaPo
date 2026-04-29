@@ -7,6 +7,59 @@ import { useAuth } from '@/context/AuthContext';
 import { useRopa } from '@/lib/ropaContext';
 import { Plus } from "lucide-react";
 
+const Field = ({ label, value }: { label: string; value: any }) => (
+  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+    <p className="text-xs text-gray-400 mb-2">{label}</p>
+    <p className="text-sm text-gray-700">{value || '-'}</p>
+  </div>
+);
+
+const ActivityModal = ({ data, onClose }: { data: any; onClose: () => void }) => {
+  const router = useRouter();
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
+        {/* Header */}
+        <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">{data.activityName}</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 transition"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 p-6 space-y-4 overflow-y-auto">
+          <Field label="Personal Data Collected" value={Array.isArray(data.personalData) ? data.personalData.join(', ') : data.personalData} />
+          <Field label="Purpose" value={data.purpose} />
+          <Field label="Data Controller" value={data.owner} />
+          <Field label="Retention Period" value={data.retentionPeriod} />
+          <Field label="Access Rights" value={data.accessRights} />
+          <Field label="Data Disclosure" value={data.disclosure} />
+          <Field label="Objection / Refusal" value={data.objection} />
+          <Field label="Security Measures" value={data.securityMeasure} />
+        </div>
+
+        {/* Footer */}
+        <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex gap-3 justify-end">
+          
+          <button
+            onClick={() => router.push(`/dp-form?activityId=${data.id}`)}
+            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            Request DP Form
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function DashboardPage() {
   const { deleteActivity } = useRopa()
   const { activities } = useRopa();
@@ -15,6 +68,7 @@ export default function DashboardPage() {
 
   const [search, setSearch] = useState('');
   const [deptFilter, setDeptFilter] = useState('ALL');
+  const [selectedActivity, setSelectedActivity] = useState<any>(null);
 
   const filtered = activities
     .filter(a => a.status === 'ACTIVE')
@@ -111,7 +165,7 @@ export default function DashboardPage() {
               filtered.map((a) => (
                 <tr
                   key={a.id}
-                  onClick={() => router.push(`/ropa/${a.id}`)}
+                  onClick={() => setSelectedActivity(a)}
                   className="border-t hover:bg-gray-100 transition cursor-pointer"
                 >
                   <td className="px-4 py-3 font-medium text-gray-900">{a.activityName}</td>
@@ -122,7 +176,19 @@ export default function DashboardPage() {
                       {a.riskLevel}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs">{a.updatedAt}</td>
+                  <td className="px-4 py-3 text-gray-400 text-xs flex items-center justify-between">
+                    <span>{a.updatedAt}</span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push(`/dp-form?activityId=${a.id}`);
+                      }}
+                      className="ml-2 px-2 py-1 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 rounded transition"
+                      title="Request DP Form"
+                    >
+                      Request DP
+                    </button>
+                  </td>
                 </tr>
               ))
             ) : (
@@ -164,6 +230,14 @@ export default function DashboardPage() {
             Create DC Form
           </div>
         </div>
+      )}
+
+      {/* Activity Modal */}
+      {selectedActivity && (
+        <ActivityModal
+          data={selectedActivity}
+          onClose={() => setSelectedActivity(null)}
+        />
       )}
 
     </div>
