@@ -70,7 +70,7 @@ export default function ChangePasswordPage() {
                 throw new Error("Session not found. Please login again.");
             }
 
-            await fetch("http://localhost:5001/api/change-password", {
+            const res = await fetch("http://localhost:5001/api/change-password", {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
@@ -79,7 +79,13 @@ export default function ChangePasswordPage() {
                 body: JSON.stringify({ password }),
             });
 
-            // Event Force to signout then login again
+            const data = await res.json();
+
+            if (!res.ok) {
+                throw new Error(data.error || "Failed to change password");
+            }
+
+            // ✅ success
             await supabase.auth.signOut();
             router.replace("/login");
 
