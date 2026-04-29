@@ -325,7 +325,7 @@ export default function RopaDetailPage() {
           <div className="flex items-center gap-2">
 
             {/* Create DP Form */}
-            {activity.status === 'ACTIVE' && (
+            {/* {activity.status === 'ACTIVE' && (
               <button
                 onClick={() => router.push(`/dc/create-dp/${activity.id}`)}
                 className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600
@@ -333,7 +333,7 @@ export default function RopaDetailPage() {
               >
                 + Create DP Form
               </button>
-            )}
+            )} */}
 
             {/* Prev */}
             {step > 1 && (
