@@ -74,7 +74,17 @@ export default function MyRopaDetailPage() {
       {/* STEP 3 */}
       <div className="bg-white border rounded-xl p-6 space-y-4">
         <h2 className="font-semibold text-lg">Step 3: มาตรการความปลอดภัย</h2>
-        <ReadField label="มาตรการ" value={activity.securityMeasures} />
+        <ReadField
+          label="มาตรการ"
+          value={
+            activity.securityMeasures
+              ? Object.entries(activity.securityMeasures)
+                .filter(([_, v]) => v)
+                .map(([k]) => k)
+                .join(", ")
+              : "-"
+          }
+        />
       </div>
 
       {/* FOOTER */}
