@@ -5,10 +5,15 @@ import { Role, User } from '@/types';
 import { supabase } from '../lib/supabaseClient';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+type LoginResult = {
+  ok: boolean;
+  mustChangePassword: boolean;
+};
+
 interface AuthContextType {
   user: User | null;
   role: Role | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -16,7 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
-  login: async () => false,
+  login: async () => ({ ok: false, mustChangePassword: false }),
   logout: async () => { },
   isLoading: true,
 });
@@ -29,27 +34,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const mapUser = async (supabaseUser: SupabaseUser): Promise<User> => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, user_membership(role, departments(department_name))')
+      .select('name, status, created_at, user_membership(role, departments(department_name))')
       .eq('user_id', supabaseUser.id)
       .single();
 
-    // user_membership อาจเป็น array หรือ object ขึ้นอยู่กับ relation
-    const membershipRaw = profile?.user_membership;
-    const membership = Array.isArray(membershipRaw)
-      ? membershipRaw[0]
-      : membershipRaw ?? {};
+    type Membership = {
+      role?: Role;
+      departments?: {
+        department_name?: string;
+      }[];
+    };
 
-    const role = membership?.role ?? 'user';
-    const department = membership?.departments?.department_name ?? '';
+    const membershipRaw = profile?.user_membership;
+
+    const membership: Membership | null = Array.isArray(membershipRaw)
+      ? membershipRaw[0]
+      : membershipRaw ?? null;
+
+    const role: Role = membership?.role ?? 'dataOwner';
+
+    const department =
+      membership?.departments?.[0]?.department_name ?? '';
+
     const name = profile?.name ?? '';
 
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      role: role as Role,
+      role,
       name,
       department,
-      avatarInitials: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
+      status: profile?.status ?? 'active',
+      createdAt: profile?.created_at ?? '',
+      avatarInitials: name
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2),
     };
   };
 
@@ -82,13 +104,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // LOGIN: handler
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error || !data.user) return { ok: false };
+    if (error || !data.user) {
+      return { ok: false, mustChangePassword: false };
+    }
 
     const { data: profile } = await supabase
       .from("profiles")

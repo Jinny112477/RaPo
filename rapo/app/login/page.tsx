@@ -48,7 +48,7 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
 
-      if (!result) {
+      if (!result.ok) {
         setError("Invalid email or password");
         return;
       }
