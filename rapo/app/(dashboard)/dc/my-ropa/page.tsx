@@ -10,7 +10,7 @@ import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { MessageSquareWarning } from 'lucide-react';
 import { notifyError } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cn334-team07-ropa-2026.onrender.com';
 
 type ApiAccessRequest = {
   request_id: string;
@@ -108,7 +108,7 @@ export default function MyRopaPage() {
 
       setLoadingDC(true);
 
-      const res = await fetch(`${API_URL}/api/form?user_id=${user.id}`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form?user_id=${user.id}`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -129,7 +129,7 @@ export default function MyRopaPage() {
 
   const deleteActivity = async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/form/${id}`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${id}`, {
         method: 'DELETE',
       });
 
@@ -155,7 +155,7 @@ export default function MyRopaPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/departments`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`);
         const data = await res.json();
 
         if (!res.ok) return;
@@ -184,7 +184,7 @@ export default function MyRopaPage() {
 
       setDpLoading(true);
 
-      const res = await fetch(`${API_URL}/api/access/my-requests?user_id=${user.id}`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/my-requests?user_id=${user.id}`);
       const data = await res.json();
 
       console.log('MY DP RESPONSE:', data);
@@ -540,7 +540,7 @@ export default function MyRopaPage() {
                               if (!confirm(`ลบ DP Form ของ "${d.processorName}" ใช่ไหม?`)) return;
 
                               try {
-                                const res = await fetch(`${API_URL}/api/access/${d.id}`, {
+                                const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/${d.id}`, {
                                   method: 'DELETE',
                                 });
 

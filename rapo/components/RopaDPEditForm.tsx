@@ -8,7 +8,7 @@ import { useRopa } from '@/lib/ropaContext';
 import { useAuth } from '@/context/AuthContext';
 import { notifyError } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cn334-team07-ropa-2026.onrender.com';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -520,7 +520,7 @@ export default function RopaDPEditForm({ activity, requestId, onSubmit, onCancel
         return;
       }
 
-      const res = await fetch(`${API_URL}/api/access/${requestId}`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/${requestId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -23,7 +23,7 @@ const ROLES = [
   { value: "Executive", label: "Executive" },
 ];
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://cn334-team07-ropa-2026.onrender.com";
 
 export default function UsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -46,7 +46,7 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/users`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users`);
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to fetch users");
 
@@ -81,7 +81,7 @@ export default function UsersPage() {
     }
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/api/users`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -112,7 +112,7 @@ export default function UsersPage() {
     if (!selectedUser) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/api/users/${selectedUser.user_id}`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users/${selectedUser.user_id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -144,7 +144,7 @@ export default function UsersPage() {
     if (!selectedUser) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_URL}/api/users/${selectedUser.user_id}`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users/${selectedUser.user_id}`, {
         method: "DELETE",
       });
       const data = await res.json();

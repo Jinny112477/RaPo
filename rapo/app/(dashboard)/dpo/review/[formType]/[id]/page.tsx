@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { useAuth } from '@/context/AuthContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cn334-team07-ropa-2026.onrender.com';
 
 type FormType = 'dc' | 'dp';
 
@@ -181,7 +181,7 @@ export default function DPOReviewDetailPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/departments`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`);
         const data = await res.json();
         if (!res.ok) return;
         setDepartments(data.data || []);
@@ -203,7 +203,7 @@ export default function DPOReviewDetailPage() {
 
       try {
         setLoading(true);
-        const endpoint = formType === 'dc' ? `${API_URL}/api/dpo/ropa/${id}` : `${API_URL}/api/access/${id}`;
+        const endpoint = formType === 'dc' ? `https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/${id}` : `https://cn334-team07-ropa-2026.onrender.com/api/access/${id}`;
         const res = await fetch(endpoint);
         const data = await res.json();
 
@@ -235,8 +235,8 @@ export default function DPOReviewDetailPage() {
     try {
       setSaving(true);
       const endpoint = formType === 'dc'
-        ? `${API_URL}/api/dpo/ropa/${id}/approve`
-        : `${API_URL}/api/access/${id}/approve`;
+        ? `https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/${id}/approve`
+        : `https://cn334-team07-ropa-2026.onrender.com/api/access/${id}/approve`;
 
       const res = await fetch(endpoint, {
         method: 'PATCH',
@@ -269,8 +269,8 @@ export default function DPOReviewDetailPage() {
     try {
       setSaving(true);
       const endpoint = formType === 'dc'
-        ? `${API_URL}/api/dpo/ropa/${id}/reject`
-        : `${API_URL}/api/access/${id}/reject`;
+        ? `https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/${id}/reject`
+        : `https://cn334-team07-ropa-2026.onrender.com/api/access/${id}/reject`;
 
       const res = await fetch(endpoint, {
         method: 'PATCH',

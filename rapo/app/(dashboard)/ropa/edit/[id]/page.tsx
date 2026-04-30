@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import RopaDCForm from '@/components/RopaDCForm';
 import { notifyError, notifySuccess } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cn334-team07-ropa-2026.onrender.com';
 
 export default function EditRopaPage() {
   const { id } = useParams<{ id: string }>();
@@ -22,7 +22,7 @@ export default function EditRopaPage() {
     const load = async () => {
       try {
         // Load activity basic info
-        const res = await fetch(`${API_URL}/api/form/${id}`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${id}`);
         const json = await res.json();
         if (res.ok && json.data) {
           setActivityName(json.data.activity_name || '');
@@ -30,7 +30,7 @@ export default function EditRopaPage() {
         }
 
         // Load DPO comment
-        const dpoRes = await fetch(`${API_URL}/api/dpo/ropa/${id}`);
+        const dpoRes = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/${id}`);
         const dpoJson = await dpoRes.json();
         if (dpoRes.ok && dpoJson.data?.dpo_review?.comment) {
           setDpoComment(dpoJson.data.dpo_review.comment);

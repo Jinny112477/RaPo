@@ -7,7 +7,7 @@ import { StatusBadge, RiskBadge } from '@/components/StatusBadge';
 import { Activity, DpRecord } from '@/types';
 import { notifyError } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cn334-team07-ropa-2026.onrender.com';
 
 const CheckIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -435,7 +435,7 @@ export default function DPOReviewPage() {
     try {
       setDcLoading(true);
 
-      const res = await fetch(`${API_URL}/api/dpo/ropa/pending`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/pending`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -461,7 +461,7 @@ export default function DPOReviewPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/departments`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -480,7 +480,7 @@ export default function DPOReviewPage() {
 
   const fetchAllRopa = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/dpo/ropa`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -502,7 +502,7 @@ export default function DPOReviewPage() {
     try {
       setDpLoading(true);
 
-      const res = await fetch(`${API_URL}/api/access/pending`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/pending`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -527,7 +527,7 @@ export default function DPOReviewPage() {
 
   const fetchAllDPForms = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/access`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -561,7 +561,7 @@ export default function DPOReviewPage() {
 
   const handleDCApprove = async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/approve`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/${id}/approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -589,7 +589,7 @@ export default function DPOReviewPage() {
 
   const handleDCReject = async (id: string, reason: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/dpo/ropa/${id}/reject`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/dpo/ropa/${id}/reject`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -617,7 +617,7 @@ export default function DPOReviewPage() {
 
   const handleDPApprove = async (id: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/access/${id}/approve`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/${id}/approve`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -645,7 +645,7 @@ export default function DPOReviewPage() {
 
   const handleDPReject = async (id: string, reason: string) => {
     try {
-      const res = await fetch(`${API_URL}/api/access/${id}/reject`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/${id}/reject`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

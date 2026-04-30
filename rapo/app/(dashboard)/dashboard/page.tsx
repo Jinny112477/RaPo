@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { notifyError } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cn334-team07-ropa-2026.onrender.com';
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type DepartmentOption = {
@@ -31,7 +31,7 @@ const ActivityModal = ({ activityId, activityName, onClose }: { activityId: stri
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/form/${activityId}`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${activityId}`);
         const json = await res.json();
         if (res.ok && json.data) {
           const raw = json.data;
@@ -49,8 +49,8 @@ const ActivityModal = ({ activityId, activityName, onClose }: { activityId: stri
 
             if (shouldResolve) {
               const [usersRes, departmentsRes] = await Promise.all([
-                fetch(`${API_URL}/api/users`),
-                fetch(`${API_URL}/api/departments`),
+                fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users`),
+                fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`),
               ]);
 
               const usersJson = usersRes.ok ? await usersRes.json() : [];
@@ -170,7 +170,7 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_URL}/api/form`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -193,7 +193,7 @@ export default function DashboardPage() {
     if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
 
     try {
-      const res = await fetch(`${API_URL}/api/form/${id}`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${id}`, {
         method: 'DELETE',
       });
 
@@ -219,7 +219,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/departments`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`);
         const data = await res.json();
 
         if (!res.ok) return;
