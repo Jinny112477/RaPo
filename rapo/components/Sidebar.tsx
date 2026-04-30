@@ -113,14 +113,14 @@ const ChevronLeftIcon = () => (
 
 // ลิ้งหน้า
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['Admin', 'Data Controller', 'DPO', 'Auditor', 'Executive'] },
-  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['Admin'] },
-  { label: 'My Activity', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['Data Controller', 'Admin'] },
-  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['Admin', 'Data Controller'] },
-  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['Admin'] },
-  { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['DPO'] },
-  { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['Auditor'] },
-  { label: 'Risk Dashboard', href: '/executive/analytics', icon: <AlertTriangleIcon />, roles: ['Executive'] },
+  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
+  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
+  { label: 'My Activity', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner', 'admin'] },
+  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
+  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
+  { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },
+  { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
+  { label: 'Risk Dashboard', href: '/executive/analytics', icon: <AlertTriangleIcon />, roles: ['executive'] },
 ];
 
 const roleLabelMap: Record<Role, string> = {

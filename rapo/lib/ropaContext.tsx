@@ -41,21 +41,41 @@ export function RopaProvider({ children }: { children: React.ReactNode }) {
   //   fetchActivities()
   // }, [])
 
-  // ---------- Activity ----------
-  const addActivity = async (data: Activity) => {
-    const { data: inserted, error } = await supabase
-      .from('activities')
-      .insert([{
-        activity_name: data.activityName,
-        user_id: data.userId,
-        approval_status: data.status
-      }])
-      .select()
+  type CreateActivityInput = {
+  activityName: string;
+  status: string;
+};
 
-    if (!error && inserted) {
-      setActivities(prev => [...prev, ...inserted])
-    }
+  // ---------- Activity ----------
+  const addActivity = async (data: CreateActivityInput) => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    console.error("No user");
+    return;
   }
+
+  const { data: inserted, error } = await supabase
+    .from('activities')
+    .insert({
+      activity_name: data.activityName,
+      user_id: user.id, // ✅ correct source
+      approval_status: data.status,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error(error.message);
+    return;
+  }
+
+  if (inserted) {
+    setActivities((prev) => [...prev, inserted]);
+  }
+};
 
   const updateActivity = async (id: string, data: Partial<Activity>) => {
     await supabase
