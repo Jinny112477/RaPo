@@ -56,6 +56,7 @@ interface DepartmentOption {
 
 type ApiFormResponse = {
   activity_id: string;
+  user_id?: string;
   activity_name?: string;
   activity_subject?: string;
   purpose?: string;
@@ -64,10 +65,25 @@ type ApiFormResponse = {
   source?: { name?: string };
   legal_basis?: { name?: string };
   obtaining_data?: { name?: string };
+  obtaining_method_detail?: { name?: string };
+  minor_consent?: {
+    more_than_10_year?: string;
+    between_10_to_20?: string;
+  };
+  international_transfers?: Array<{
+    is_transfer?: boolean;
+    destination?: string;
+    affiliate_name?: string;
+    transfer_method?: string;
+    destination_data_policies?: string;
+    exceptions?: string;
+  }>;
   policy?: {
     retention_period?: string;
     deletion_method?: string;
     data_type?: string;
+    storage_method?: string;
+    access_method?: string;
   };
   security_measurement?: {
     organizational_measures?: string;
@@ -108,6 +124,7 @@ const TRANSFER_EXCEPTIONS = [
   'ปฏิบัติตามกฎหมาย', 'ความยินยอม', 'ปฏิบัติตามสัญญา',
   'ประโยชน์สาธารณะ', 'ประโยชน์สำคัญต่อชีวิต', 'ข้อยกเว้นอื่นๆ',
 ];
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const STEPS = [
   { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
@@ -159,7 +176,11 @@ const splitCsv = (value?: string | null) =>
 const parseDraftPayload = (value?: string | null) => {
   if (!value) return null;
   try {
-    return JSON.parse(value);
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -547,6 +568,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
 
   const formType: FormType = 'controller';
   const firstSub = subs[0] || newSub(0);
+  const isEditingMode = Boolean(editingActivityId || editActivityId);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -580,25 +602,72 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         const data = response.data as ApiFormResponse;
         const draftPayload = parseDraftPayload(data.consentless_data);
         const draftSub = draftPayload?.subs?.[0];
+        const transfer = Array.isArray(data.international_transfers)
+          ? data.international_transfers[0]
+          : undefined;
+        const consentlessText =
+          typeof data.consentless_data === 'string' && !data.consentless_data.trim().startsWith('{')
+            ? data.consentless_data
+            : '';
 
         setEditingActivityId(data.activity_id);
         setDepartment(draftPayload?.department || data.activity_subject || '');
         setRec(draftPayload?.rec || {
-          name: draftPayload?.companyName || data.source?.name || '',
-          address: draftPayload?.recorderAddress || '',
-          email: draftPayload?.recorderEmail || '',
-          phone: draftPayload?.recorderPhone || '',
+          name: draftPayload?.rec?.name || draftPayload?.companyName || '',
+          address: draftPayload?.rec?.address || draftPayload?.recorderAddress || '',
+          email: draftPayload?.rec?.email || draftPayload?.recorderEmail || '',
+          phone: draftPayload?.rec?.phone || draftPayload?.recorderPhone || '',
         });
-        setOwnerName(draftPayload?.ownerName || draftPayload?.dataOwner || '');
+        const rawOwner = String(draftPayload?.ownerName || draftPayload?.dataOwner || '').trim();
+        let resolvedOwner = rawOwner;
+
+        if (rawOwner && UUID_REGEX.test(rawOwner)) {
+          try {
+            const usersRes = await fetch(`${API_URL}/api/users`);
+            if (usersRes.ok) {
+              const usersJson = await usersRes.json();
+              const users = Array.isArray(usersJson) ? usersJson : usersJson?.data || [];
+              const ownerUser = users.find((u: any) => u?.user_id === rawOwner);
+              resolvedOwner = ownerUser?.name || '';
+
+              if (!resolvedOwner && data.user_id) {
+                const creatorUser = users.find((u: any) => u?.user_id === data.user_id);
+                resolvedOwner = creatorUser?.name || '';
+              }
+            }
+          } catch (resolveErr) {
+            console.error(resolveErr);
+          }
+        }
+
+        setOwnerName(resolvedOwner);
         setMainActivity(draftPayload?.mainActivity || draftPayload?.activityName || data.activity_name || '');
         setSubs(draftPayload?.subs?.length ? draftPayload.subs : [{
           ...newSub(0),
           purpose: draftSub?.purpose || draftPayload?.purpose || data.purpose || '',
           legalBasis: draftSub?.legalBasis || draftPayload?.legalBasis || splitCsv(data.legal_basis?.name),
           personalDataItems: draftSub?.personalDataItems || draftPayload?.personalDataItems || splitCsv(data.policy?.data_type),
-          collectionMethod: draftSub?.collectionMethod || draftPayload?.collectionMethod || splitCsv(data.obtaining_data?.name),
+          dataCategory: draftSub?.dataCategory || draftPayload?.dataSubjects || [],
+          dataType: draftSub?.dataType || [],
+          collectionMethod: draftSub?.collectionMethod || draftPayload?.collectionMethod || splitCsv(data.obtaining_method_detail?.name || data.obtaining_data?.name),
+          sourceFromOwner: draftSub?.sourceFromOwner || data.source?.name || 'จากเจ้าของข้อมูลโดยตรง',
+          sourceFromOther: draftSub?.sourceFromOther || draftPayload?.otherDataNote || '',
+          minorConsentUnder10: draftSub?.minorConsentUnder10 || data.minor_consent?.more_than_10_year || '',
+          minorConsentAge10to20: draftSub?.minorConsentAge10to20 || data.minor_consent?.between_10_to_20 || '',
+          transferAbroad: draftSub?.transferAbroad || (transfer?.is_transfer ? 'มี' : 'ไม่มี'),
+          transferCountry: draftSub?.transferCountry || transfer?.destination || '',
+          transferAffiliate: draftSub?.transferAffiliate || (transfer?.affiliate_name ? 'ใช่' : 'ไม่ใช่'),
+          transferAffiliateCompany: draftSub?.transferAffiliateCompany || transfer?.affiliate_name || '',
+          transferMethod: draftSub?.transferMethod || transfer?.transfer_method || '',
+          transferStandard: draftSub?.transferStandard || transfer?.destination_data_policies || '',
+          transferException28: draftSub?.transferException28 || transfer?.exceptions || '',
+          storageType: draftSub?.storageType || splitCsv(data.policy?.data_type),
+          storageMethod: draftSub?.storageMethod || data.policy?.storage_method || '',
           retentionPeriod: draftSub?.retentionPeriod || draftPayload?.retentionPeriod || data.policy?.retention_period || '',
+          accessRights: draftSub?.accessRights || data.policy?.access_method || '',
           deletionMethod: draftSub?.deletionMethod || data.policy?.deletion_method || '',
+          exemptDisclosure: draftSub?.exemptDisclosure || consentlessText || '',
+          rightsDenial: draftSub?.rightsDenial || (data.denial_details === '__DRAFT__' ? '' : (data.denial_details || '')),
         }]);
         setSecOrg(draftPayload?.secOrg || data.security_measurement?.organizational_measures || '');
         setSecTech(draftPayload?.secTech || data.security_measurement?.technical_measures || '');
@@ -671,10 +740,20 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
 
   const canNext = () => {
     if (step === 1) {
+      if (isEditingMode) {
+        return rec.name.trim() && department.trim();
+      }
       return rec.name.trim() && department.trim() && rec.email.trim() && rec.phone.trim() && rec.address.trim();
     }
 
     if (step === 2) {
+      if (isEditingMode) {
+        return (
+          mainActivity.trim() &&
+          ownerName.trim() &&
+          subs.every(s => s.purpose.trim())
+        );
+      }
       return (
         mainActivity.trim() &&
         ownerName.trim() &&
@@ -710,6 +789,9 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
     }
 
     if (step === 3) {
+      if (isEditingMode) {
+        return true;
+      }
       return (
         secOrg.trim() &&
         secTech.trim() &&
@@ -777,7 +859,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       const res = await fetch(endpoint, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPayload()),
+        body: JSON.stringify(buildPayload({ approval_status: 'pending' })),
       });
 
       const data = await res.json();

@@ -8,6 +8,7 @@ import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { notifyError } from '@/lib/notify';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type DepartmentOption = {
   department_id: string;
@@ -15,21 +16,97 @@ type DepartmentOption = {
 };
 import { useRopa } from '@/lib/ropaContext';
 
-const Field = ({ label, value }: { label: string; value: any }) => (
+const Field = ({ label, value }: { label: string; value?: string | null }) => (
   <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
     <p className="text-xs text-gray-400 mb-2">{label}</p>
     <p className="text-sm text-gray-700">{value || '-'}</p>
   </div>
 );
 
-const ActivityModal = ({ data, onClose, isDataOwner }: { data: any; onClose: () => void; isDataOwner: boolean }) => {
+const ActivityModal = ({ activityId, activityName, onClose }: { activityId: string; activityName: string; onClose: () => void }) => {
   const router = useRouter();
+  const [detail, setDetail] = useState<any>(null);
+  const [loadingDetail, setLoadingDetail] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/form/${activityId}`);
+        const json = await res.json();
+        if (res.ok && json.data) {
+          const raw = json.data;
+          let parsed: any = {};
+          try { parsed = JSON.parse(raw.consentless_data || '{}'); } catch { parsed = {}; }
+          const sub = parsed.subs?.[0] || {};
+          const ownerCandidate = String(parsed.ownerName || parsed.dataOwner || '').trim();
+          let ownerDisplay = ownerCandidate;
+
+          try {
+            const shouldResolve =
+              !ownerDisplay ||
+              UUID_REGEX.test(ownerDisplay) ||
+              ownerDisplay === String(raw.activity_subject || '').trim();
+
+            if (shouldResolve) {
+              const [usersRes, departmentsRes] = await Promise.all([
+                fetch(`${API_URL}/api/users`),
+                fetch(`${API_URL}/api/departments`),
+              ]);
+
+              const usersJson = usersRes.ok ? await usersRes.json() : [];
+              const departmentsJson = departmentsRes.ok ? await departmentsRes.json() : [];
+              const users = Array.isArray(usersJson) ? usersJson : usersJson?.data || [];
+              const departments = Array.isArray(departmentsJson) ? departmentsJson : departmentsJson?.data || [];
+
+              if (ownerDisplay && UUID_REGEX.test(ownerDisplay)) {
+                const ownerUser = users.find((u: any) => u?.user_id === ownerDisplay);
+                ownerDisplay = ownerUser?.name || '';
+              }
+
+              const looksLikeDepartment = departments.some(
+                (d: any) => d?.department_id === ownerDisplay || d?.department_name === ownerDisplay,
+              );
+
+              if (!ownerDisplay || looksLikeDepartment) {
+                const creator = users.find((u: any) => u?.user_id === raw.user_id);
+                ownerDisplay = creator?.name || '';
+              }
+            }
+          } catch (resolveErr) {
+            console.error(resolveErr);
+          }
+
+          ownerDisplay = ownerDisplay || '-';
+
+          setDetail({
+            personalDataItems: Array.isArray(sub.personalDataItems) ? sub.personalDataItems.join(', ') : (raw.policy?.data_type || raw.obtaining_data?.name || '-'),
+            purpose: sub.purpose || raw.purpose || parsed.purpose || '-',
+            dataOwner: ownerDisplay,
+            retentionPeriod: sub.retentionPeriod || raw.policy?.retention_period || '-',
+            accessRights: sub.accessRights || '-',
+            exemptDisclosure: sub.exemptDisclosure || '-',
+            rightsDenial: sub.rightsDenial || '-',
+            secMeasures: [
+              parsed.secOrg || raw.security_measurement?.organizational_measures,
+              parsed.secTech || raw.security_measurement?.technical_measures,
+              parsed.secPhysical || raw.security_measurement?.physical_measures,
+            ].filter(Boolean).join(', ') || '-',
+          });
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoadingDetail(false);
+      }
+    };
+    load();
+  }, [activityId]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto flex flex-col">
         <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">{data.activityName}</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{activityName}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -38,25 +115,31 @@ const ActivityModal = ({ data, onClose, isDataOwner }: { data: any; onClose: () 
         </div>
 
         <div className="flex-1 p-6 space-y-4 overflow-y-auto">
-          <Field label="Personal Data Collected" value={Array.isArray(data.personalData) ? data.personalData.join(', ') : data.personalData} />
-          <Field label="Purpose" value={data.purpose} />
-          <Field label="Data Controller" value={data.owner} />
-          <Field label="Retention Period" value={data.retentionPeriod} />
-          <Field label="Access Rights" value={data.accessRights} />
-          <Field label="Data Disclosure" value={data.disclosure} />
-          <Field label="Objection / Refusal" value={data.objection} />
-          <Field label="Security Measures" value={data.securityMeasure} />
+          {loadingDetail ? (
+            <p className="text-sm text-gray-400 text-center py-10">กำลังโหลด...</p>
+          ) : detail ? (
+            <>
+              <Field label="ข้อมูลส่วนบุคคลที่เก็บรวบรวม" value={detail.personalDataItems} />
+              <Field label="วัตถุประสงค์" value={detail.purpose} />
+              <Field label="เจ้าของข้อมูล (Data Owner)" value={detail.dataOwner} />
+              <Field label="ระยะเวลาการเก็บรักษา" value={detail.retentionPeriod} />
+              <Field label="สิทธิ์การเข้าถึงข้อมูล" value={detail.accessRights} />
+              <Field label="การยกเว้นการเปิดเผยข้อมูล" value={detail.exemptDisclosure} />
+              <Field label="เหตุผลการปฏิเสธสิทธิ์" value={detail.rightsDenial} />
+              <Field label="มาตรการความปลอดภัย" value={detail.secMeasures} />
+            </>
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-10">ไม่พบข้อมูล</p>
+          )}
         </div>
 
         <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex gap-3 justify-end">
-          {isDataOwner && (
-            <button
-              onClick={() => router.push(`/dp-form?activityId=${data.id}`)}
-              className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
-            >
-              Request DP Form
-            </button>
-          )}
+          <button
+            onClick={() => router.push(`/dc/create-dp/${activityId}`)}
+            className="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium"
+          >
+            ขอใช้งานข้อมูล (DP Form)
+          </button>
         </div>
       </div>
     </div>
@@ -294,9 +377,9 @@ export default function DashboardPage() {
 
       {selectedActivity && (
         <ActivityModal
-          data={selectedActivity}
+          activityId={selectedActivity.id}
+          activityName={selectedActivity.activityName}
           onClose={() => setSelectedActivity(null)}
-          isDataOwner={isDataOwner}
         />
       )}
 
