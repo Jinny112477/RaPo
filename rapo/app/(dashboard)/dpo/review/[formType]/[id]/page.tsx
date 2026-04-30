@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { notifyError, notifySuccess } from '@/lib/notify';
 import { useAuth } from '@/context/AuthContext';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 type FormType = 'dc' | 'dp';
 

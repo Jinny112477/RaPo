@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import RopaDCForm from '@/components/RopaDCForm';
 import { notifyError, notifySuccess } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 export default function EditRopaPage() {
   const { id } = useParams<{ id: string }>();

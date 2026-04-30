@@ -338,7 +338,7 @@ function SubCard({ sub, idx, onChange, onRemove, canRemove }: {
           </span>
           <div>
             <p className={`text-sm font-semibold ${open ? 'text-white' : 'text-slate-700'}`}>
-                วัตถุประสงค์
+              วัตถุประสงค์
             </p>
             {sub.purpose && (
               <p className={`text-xs mt-0.5 ${open ? 'text-blue-200' : 'text-slate-400'}`}>
@@ -546,7 +546,7 @@ function SubCard({ sub, idx, onChange, onRemove, canRemove }: {
 export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: RopaFormProps) {
   const router = useRouter();
   const { user } = useAuth();
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 
   const [step, setStep] = useState(1);
   const [submitted, setSubmitted] = useState(false);
