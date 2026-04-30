@@ -135,5 +135,6 @@ export default function LoginPage() {
           </form>
         </div>
       </div>
+    </div>
   );
 }
