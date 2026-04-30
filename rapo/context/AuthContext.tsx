@@ -33,9 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', supabaseUser.id)
       .single();
 
-    const membership = (profile?.user_membership as any) ?? {};
-    const role = membership.role ?? 'user';
-    const department = membership.departments?.department_name ?? '';
+    // user_membership อาจเป็น array หรือ object ขึ้นอยู่กับ relation
+    const membershipRaw = profile?.user_membership;
+    const membership = Array.isArray(membershipRaw)
+      ? membershipRaw[0]
+      : membershipRaw ?? {};
+
+    const role = membership?.role ?? 'user';
+    const department = membership?.departments?.department_name ?? '';
     const name = profile?.name ?? '';
 
     return {

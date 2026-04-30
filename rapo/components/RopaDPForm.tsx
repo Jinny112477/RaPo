@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock8, AlertCircle, SearchAlert } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -69,6 +69,23 @@ const TRANSFER_EXCEPTIONS = [
   'ปฏิบัติตามกฎหมาย', 'ความยินยอม', 'ปฏิบัติตามสัญญา',
   'ประโยชน์สาธารณะ', 'ประโยชน์สำคัญต่อชีวิต', 'ข้อยกเว้นอื่นๆ',
 ];
+
+const parseRetentionDurationParts = (value?: string) => {
+  const raw = String(value || '');
+  const days = (raw.match(/(\d+)\s*วัน/)?.[1] || '').trim();
+  const months = (raw.match(/(\d+)\s*เดือน/)?.[1] || '').trim();
+  const years = (raw.match(/(\d+)\s*ปี/)?.[1] || '').trim();
+  return { days, months, years };
+};
+
+const buildRetentionDuration = (days: string, months: string, years: string) => {
+  const parts = [
+    days ? `${days} วัน` : '',
+    months ? `${months} เดือน` : '',
+    years ? `${years} ปี` : '',
+  ].filter(Boolean);
+  return parts.join(' ');
+};
 
 const STEPS = [
   { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
@@ -174,6 +191,30 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 }) {
   const [open, setOpen] = useState(true);
   const set = <K extends keyof SubActivity>(k: K, v: SubActivity[K]) => onChange({ ...sub, [k]: v });
+  const retentionParts = useMemo(
+    () => parseRetentionDurationParts(sub.retentionPeriod),
+    [sub.retentionPeriod],
+  );
+
+  const setRetentionPart = (part: 'days' | 'months' | 'years', value: string) => {
+    const sanitized = value.replace(/\D/g, '');
+    const current = {
+      days: retentionParts.days,
+      months: retentionParts.months,
+      years: retentionParts.years,
+    };
+
+    if (!sanitized) {
+      current[part] = '';
+    } else {
+      const numeric = Number(sanitized);
+      if (part === 'days') current.days = String(Math.min(numeric, 31));
+      if (part === 'months') current.months = String(Math.min(numeric, 12));
+      if (part === 'years') current.years = String(Math.min(numeric, 9999));
+    }
+
+    set('retentionPeriod', buildRetentionDuration(current.days, current.months, current.years));
+  };
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -274,6 +315,18 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             </div>
           </Field>
 
+          {sub.sourceFromOwner === 'จากแหล่งอื่น' && (
+            <Field label="ระบุแหล่งที่มาอื่น" required>
+              <input
+                type="text"
+                value={sub.sourceFromOther}
+                onChange={e => set('sourceFromOther', e.target.value)}
+                className={inp}
+                placeholder="เช่น หน่วยงานภายนอก / API / คู่ค้า"
+              />
+            </Field>
+          )}
+
           {/* 7. ฐานการประมวลผล */}
           <Field label="ฐานในการประมวลผล" required>
             <MultiCheck options={LEGAL_BASES_TH} selected={sub.legalBasis} onChange={v => set('legalBasis', v)} />
@@ -287,12 +340,12 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 {/* <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span> */}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="อายุไม่เกิน 10 ปี" >
+                <Field label="อายุไม่เกิน 10 ปี" required>
                   <textarea rows={2} value={sub.minorConsentUnder10}
                     onChange={e => set('minorConsentUnder10', e.target.value)}
                     className={txa} />
                 </Field>
-                <Field label="อายุ 10–20 ปี" >
+                <Field label="อายุ 10–20 ปี" required>
                   <textarea rows={2} value={sub.minorConsentAge10to20}
                     onChange={e => set('minorConsentAge10to20', e.target.value)}
                     className={txa} />
@@ -310,7 +363,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               </svg>
               <span className="text-sm font-semibold text-slate-700">การส่งหรือโอนข้อมูลไปยังต่างประเทศ</span>
             </div>
-            <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่">
+            <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่" required>
               <YesNo value={sub.transferAbroad} onChange={v => set('transferAbroad', v)} />
             </Field>
 
@@ -321,26 +374,26 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                     <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)}
                       className={inp} />
                   </Field>
-                  <Field label="วิธีการโอนข้อมูล">
+                  <Field label="วิธีการโอนข้อมูล" required>
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)}
                       className={inp} />
                   </Field>
                 </div>
-                <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่">
+                <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่" required>
                   <YesNo value={sub.transferAffiliate} onChange={v => set('transferAffiliate', v)} options={['ใช่', 'ไม่ใช่']} />
                 </Field>
                 {sub.transferAffiliate === 'ใช่' && (
-                  <Field label="ชื่อบริษัทในเครือ">
+                  <Field label="ชื่อบริษัทในเครือ" required>
                     <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)}
                       className={inp} />
                   </Field>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง">
+                  <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง" required>
                     <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)}
                       className={inp} />
                   </Field>
-                  <Field label="ข้อยกเว้นตามมาตรา 28">
+                  <Field label="ข้อยกเว้นตามมาตรา 28" required>
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
                       <option value="">เลือกข้อยกเว้น</option>
                       {TRANSFER_EXCEPTIONS.map(x => <option key={x}>{x}</option>)}
@@ -359,25 +412,60 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               </svg>
               <span className="text-sm font-semibold text-slate-700">นโยบายการเก็บรักษาข้อมูลส่วนบุคคล</span>
             </div>
-            <Field label="ประเภทของข้อมูลที่จัดเก็บ">
+            <Field label="ประเภทของข้อมูลที่จัดเก็บ" required>
               <MultiCheck options={STORAGE_TYPES} selected={sub.storageType} onChange={v => set('storageType', v)} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="วิธีการเก็บรักษาข้อมูล">
+              <Field label="วิธีการเก็บรักษาข้อมูล" required>
                 <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)}
                   className={txa} />
               </Field>
               <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
-                <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)}
-                  className={inp} />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={31}
+                      value={retentionParts.days}
+                      onChange={e => setRetentionPart('days', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">วัน</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={12}
+                      value={retentionParts.months}
+                      onChange={e => setRetentionPart('months', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">เดือน</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={9999}
+                      value={retentionParts.years}
+                      onChange={e => setRetentionPart('years', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">ปี</span>
+                  </div>
+                </div>
               </Field>
             </div>
-            <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล"
-            >
+            <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล" required>
               <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
+            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา" required>
               <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)}
                 className={txa} />
             </Field>
@@ -389,13 +477,11 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               <div className="border-t border-dashed border-slate-200 pt-4">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">เฉพาะ Data Controller</span>
               </div>
-              <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม"
-              >
+              <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม" required>
                 <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)}
                   className={txa} />
               </Field>
-              <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล"
-              >
+              <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล" required>
                 <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)}
                   className={txa} />
               </Field>
@@ -539,9 +625,34 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
           s.dataType.length > 0 &&
           s.collectionMethod.length > 0 &&
           s.sourceFromOwner.trim() !== '' &&
+          (s.sourceFromOwner !== 'จากแหล่งอื่น' || s.sourceFromOther.trim() !== '') &&
           s.legalBasis.length > 0 &&
+          s.transferAbroad.trim() !== '' &&
+          (s.transferAbroad !== 'มี' || (
+            s.transferCountry.trim() !== '' &&
+            s.transferMethod.trim() !== '' &&
+            s.transferAffiliate.trim() !== '' &&
+            (s.transferAffiliate !== 'ใช่' || s.transferAffiliateCompany.trim() !== '') &&
+            s.transferStandard.trim() !== '' &&
+            s.transferException28.trim() !== ''
+          )) &&
+          s.storageType.length > 0 &&
+          s.storageMethod.trim() !== '' &&
           s.retentionPeriod.trim() !== ''
+          && s.accessRights.trim() !== ''
+          && s.deletionMethod.trim() !== ''
         )
+      );
+    }
+
+    if (step === 3) {
+      return (
+        secOrg.trim() !== '' &&
+        secTech.trim() !== '' &&
+        secPhysical.trim() !== '' &&
+        secAccess.trim() !== '' &&
+        secUser.trim() !== '' &&
+        secAudit.trim() !== ''
       );
     }
 
@@ -708,6 +819,10 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
           {isCtrl ? 'Data Controller' : 'Data Processor'} · {mainActivity}
         </div>
         <br />
+        <button onClick={() => router.push('/dc/my-ropa')}
+          className="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors mr-3">
+          ไปหน้า My Activity
+        </button>
         <button onClick={() => {
           setStep(1); setSubmitted(false);
           setRec({ name: '', address: '', email: '', phone: '' });
@@ -831,17 +946,8 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
             <SubCard key={s.id} sub={s} idx={i} isCtrl={isCtrl}
               onChange={updated => setSubs(prev => prev.map((x, xi) => xi === i ? updated : x))}
               onRemove={() => setSubs(prev => prev.filter((_, xi) => xi !== i))}
-              canRemove={subs.length > 1} />
+              canRemove={false} />
           ))}
-
-          {/* Add button */}
-          <button type="button" onClick={() => setSubs(prev => [...prev, newSub(prev.length)])}
-            className="w-full flex items-center justify-center gap-2.5 py-4 border-2 border-dashed border-blue-300 rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            เพิ่มวัตถุประสงค์ย่อย
-          </button>
         </div>
       )}
 
@@ -855,27 +961,27 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="มาตรการเชิงองค์กร (Organizational)" >
+            <Field label="มาตรการเชิงองค์กร (Organizational)" required>
               <textarea rows={4} value={secOrg} onChange={e => setSecOrg(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="มาตรการเชิงเทคนิค (Technical)" >
+            <Field label="มาตรการเชิงเทคนิค (Technical)" required>
               <textarea rows={4} value={secTech} onChange={e => setSecTech(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="มาตรการทางกายภาพ (Physical)" >
+            <Field label="มาตรการทางกายภาพ (Physical)" required>
               <textarea rows={4} value={secPhysical} onChange={e => setSecPhysical(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" >
+            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" required>
               <textarea rows={4} value={secAccess} onChange={e => setSecAccess(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" >
+            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" required>
               <textarea rows={4} value={secUser} onChange={e => setSecUser(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" >
+            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" required>
               <textarea rows={4} value={secAudit} onChange={e => setSecAudit(e.target.value)}
                 className={txa} />
             </Field>
