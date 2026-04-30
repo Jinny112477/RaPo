@@ -1,26 +1,26 @@
-import express from "express"
-import cors from "cors"
+import express from "express";
+import cors from "cors";
 
-import usersRoutes from './routes/users.routes.js';
-import formRoutes from './routes/form.routes.js';
+import usersRoutes from "./routes/users.routes.js";
+import formRoutes from "./routes/form.routes.js";
 import dpoRoutes from "./routes/dpo.routes.js";
 import accessRoutes from "./routes/access.routes.js";
 import departmentsRoutes from "./routes/departments.routes.js";
 
-const app = express()
+const app = express();
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      "https://cn-334-team07-ro-pa-2026-dluo-njio69d3w-jin8.vercel.app"
+      /^https:\/\/cn-334-team07-ro-pa-2026.*\.vercel\.app$/,
     ],
     credentials: true,
-  })
-)
+  }),
+);
 
 // API Routes
 app.use("/api", usersRoutes);
@@ -29,4 +29,4 @@ app.use("/api/dpo", dpoRoutes);
 app.use("/api/access", accessRoutes);
 app.use("/api/departments", departmentsRoutes);
 
-export default app
+export default app;
