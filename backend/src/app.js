@@ -16,11 +16,11 @@ app.use(
   cors({
     origin: [
       "http://localhost:3000",
-      /^https:\/\/cn-334-team07-ro-pa-2026.*\.vercel\.app$/,
+      /^https:\/\/.*\.vercel\.app$/,
     ],
     credentials: true,
-  }),
-);
+  })
+)
 
 // API Routes
 app.use("/api", usersRoutes);
