@@ -30,52 +30,41 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Map Supabase user → fetch role from profiles table
   const mapUser = async (supabaseUser: SupabaseUser): Promise<User> => {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('name, status, created_at, user_membership(role, departments(department_name))')
+      .select('name, user_membership(role, departments(department_name))')
       .eq('user_id', supabaseUser.id)
       .single();
 
     type Membership = {
-      role?: Role;
+      role?: string;
       departments?: {
         department_name?: string;
-      }[];
+      };
     };
 
     const membershipRaw = profile?.user_membership;
 
-    const membership: Membership | null = Array.isArray(membershipRaw)
-      ? membershipRaw[0]
-      : membershipRaw ?? null;
+    // ✅ Single declaration with correct type cast
+    const membership = (
+      Array.isArray(membershipRaw) ? membershipRaw[0] : membershipRaw
+    ) as Membership | undefined;
 
-    const role: Role = membership?.role ?? 'dataOwner';
-
-    const department =
-      membership?.departments?.[0]?.department_name ?? '';
-
+    const role = membership?.role ?? 'user';
+    const department = membership?.departments?.department_name ?? '';
     const name = profile?.name ?? '';
 
     return {
       id: supabaseUser.id,
       email: supabaseUser.email || '',
-      role,
+      role: role as Role,
       name,
       department,
-      status: profile?.status ?? 'active',
-      createdAt: profile?.created_at ?? '',
-      avatarInitials: name
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2),
+      avatarInitials: name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2),
     };
   };
 
-  // GET: fetch session
   useEffect(() => {
     const getSession = async () => {
       setIsLoading(true);
@@ -103,16 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // LOGIN: handler
   const login = async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error || !data.user) {
-      return { ok: false, mustChangePassword: false };
-    }
+    // ✅ mustChangePassword included in the failure case
+    if (error || !data.user) return { ok: false, mustChangePassword: false };
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -126,7 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  // LOGOUT: handler
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);

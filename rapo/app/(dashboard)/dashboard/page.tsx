@@ -7,7 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { mapApiRopaToActivity } from '@/lib/mapRopa';
 import { notifyError } from '@/lib/notify';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_URL = process.env.NEXT_PUBLIC_API_URL!;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type DepartmentOption = {
@@ -31,7 +31,7 @@ const ActivityModal = ({ activityId, activityName, onClose }: { activityId: stri
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/form/${activityId}`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${activityId}`);
         const json = await res.json();
         if (res.ok && json.data) {
           const raw = json.data;
@@ -49,8 +49,8 @@ const ActivityModal = ({ activityId, activityName, onClose }: { activityId: stri
 
             if (shouldResolve) {
               const [usersRes, departmentsRes] = await Promise.all([
-                fetch(`${API_URL}/api/users`),
-                fetch(`${API_URL}/api/departments`),
+                fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users`),
+                fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`),
               ]);
 
               const usersJson = usersRes.ok ? await usersRes.json() : [];
@@ -148,7 +148,7 @@ const ActivityModal = ({ activityId, activityName, onClose }: { activityId: stri
 
 export default function DashboardPage() {
   const { } = useRopa();
-  const { user, role, isLoading } = useAuth();
+  const { role, isLoading } = useAuth();
   const router = useRouter();
 
   const [activities, setActivities] = useState<any[]>([]);
@@ -158,7 +158,7 @@ export default function DashboardPage() {
   const [departments, setDepartments] = useState<DepartmentOption[]>([]);
   const [selectedActivity, setSelectedActivity] = useState<any>(null);
 
-  const isDataOwner = !isLoading && role === 'dataOwner';
+  const isDataOwner = !isLoading && role;
 
   const getDepartmentName = (departmentIdOrName?: string) => {
     if (!departmentIdOrName) return '-';
@@ -170,7 +170,7 @@ export default function DashboardPage() {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_URL}/api/form`);
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form`);
       const data = await res.json();
 
       if (!res.ok) {
@@ -189,28 +189,28 @@ export default function DashboardPage() {
     }
   };
 
-  const deleteActivity = async (id: string) => {
-    if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
+  // const deleteActivity = async (id: string) => {
+  //   if (!confirm('ต้องการลบรายการนี้ใช่ไหม?')) return;
 
-    try {
-      const res = await fetch(`${API_URL}/api/form/${id}`, {
-        method: 'DELETE',
-      });
+  //   try {
+  //     const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${id}`, {
+  //       method: 'DELETE',
+  //     });
 
-      const data = await res.json();
+  //     const data = await res.json();
 
-      if (!res.ok) {
-        console.log('DELETE FORM ERROR:', data);
-        notifyError(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
-        return;
-      }
+  //     if (!res.ok) {
+  //       console.log('DELETE FORM ERROR:', data);
+  //       notifyError(data.detail || data.error || 'ลบข้อมูลไม่สำเร็จ');
+  //       return;
+  //     }
 
-      setActivities(prev => prev.filter(a => a.id !== id));
-    } catch (error) {
-      console.error(error);
-      notifyError('ลบข้อมูลไม่สำเร็จ');
-    }
-  };
+  //     setActivities(prev => prev.filter(a => a.id !== id));
+  //   } catch (error) {
+  //     console.error(error);
+  //     notifyError('ลบข้อมูลไม่สำเร็จ');
+  //   }
+  // };
 
   useEffect(() => {
     fetchActivities();
@@ -219,7 +219,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/departments`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`);
         const data = await res.json();
 
         if (!res.ok) return;
@@ -248,16 +248,16 @@ export default function DashboardPage() {
 
         return matchSearch && matchDept;
       });
-  }, [activities, search, deptFilter]);
+  }, [activities, search, deptFilter, getDepartmentName]);
 
-  const statusBadge = (status: string) => {
-    if (status === 'ACTIVE') return 'bg-green-100 text-green-700';
-    if (status === 'REVIEW') return 'bg-yellow-100 text-yellow-700';
-    if (status === 'DRAFT') return 'bg-gray-100 text-gray-600';
-    if (status === 'REJECTED') return 'bg-red-100 text-red-700';
-    if (status === 'ARCHIVED') return 'bg-slate-100 text-slate-500';
-    return 'bg-gray-100 text-gray-600';
-  };
+  // const statusBadge = (status: string) => {
+  //   if (status === 'ACTIVE') return 'bg-green-100 text-green-700';
+  //   if (status === 'REVIEW') return 'bg-yellow-100 text-yellow-700';
+  //   if (status === 'DRAFT') return 'bg-gray-100 text-gray-600';
+  //   if (status === 'REJECTED') return 'bg-red-100 text-red-700';
+  //   if (status === 'ARCHIVED') return 'bg-slate-100 text-slate-500';
+  //   return 'bg-gray-100 text-gray-600';
+  // };
 
   const riskBadge = (risk: string) => {
     if (risk === 'LOW') return 'bg-green-50 text-green-700';
@@ -359,7 +359,7 @@ export default function DashboardPage() {
         </table >
       </div >
 
-      {(role === 'admin' || isDataOwner) && (
+      {(role === 'Admin' || isDataOwner) && (
         <div className="fixed bottom-6 right-6 z-50 group">
           <button
             onClick={() => router.push('/ropa/create')}

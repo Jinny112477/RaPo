@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'dataOwner' | 'customerService' | 'dpo' | 'auditor' | 'executive';
+export type Role = 'Admin' | 'Data Controller' | 'customerService' | 'DPO' | 'Auditor' | 'Executive';
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 
@@ -11,16 +11,16 @@ export type ActivityStatus =
 
 export type LegalBasis = string;
 
-export interface User {
+export type User = {
   id: string;
-  name: string;
   email: string;
   role: Role;
-  department?: string;
+  name: string;
+  department: string;
   avatarInitials: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
-}
+  status?: 'active' | 'inactive';
+  createdAt?: string;
+};
 
 // ข้อมูลผู้ลงบันทึก ROPA
 export interface RecorderInfo {

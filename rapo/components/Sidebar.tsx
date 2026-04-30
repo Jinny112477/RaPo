@@ -13,11 +13,11 @@ interface NavItem {
   roles: Role[];
 }
 
-const ShieldIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-);
+// const ShieldIcon = () => (
+//   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+//   </svg>
+// );
 
 const DashboardIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -113,23 +113,23 @@ const ChevronLeftIcon = () => (
 
 // ลิ้งหน้า
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['admin', 'dataOwner', 'dpo', 'auditor', 'executive'] },
-  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['admin'] },
-  { label: 'My Activity', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['dataOwner', 'admin'] },
-  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['admin', 'dataOwner'] },
-  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['admin'] },
-  { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['dpo'] },
-  { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['auditor'] },
-  { label: 'Risk Dashboard', href: '/executive/analytics', icon: <AlertTriangleIcon />, roles: ['executive'] },
+  { label: 'Dashboard', href: '/dashboard', icon: <DashboardIcon />, roles: ['Admin', 'Data Controller', 'DPO', 'Auditor', 'Executive'] },
+  { label: 'User Management', href: '/admin', icon: <UsersIcon />, roles: ['Admin'] },
+  { label: 'My Activity', href: '/dc/my-ropa', icon: <ListIcon />, roles: ['Data Controller', 'Admin'] },
+  { label: 'Create Activity', href: '/ropa/create', icon: <PlusCircleIcon />, roles: ['Admin', 'Data Controller'] },
+  { label: 'Reports', href: '/admin/reports', icon: <FileTextIcon />, roles: ['Admin'] },
+  { label: 'Review Queue', href: '/dpo/review', icon: <ClipboardIcon />, roles: ['DPO'] },
+  { label: 'Audit Logs', href: '/auditor/logs', icon: <LogIcon />, roles: ['Auditor'] },
+  { label: 'Risk Dashboard', href: '/executive/analytics', icon: <AlertTriangleIcon />, roles: ['Executive'] },
 ];
 
 const roleLabelMap: Record<Role, string> = {
-  admin: 'Administrator',
-  dataOwner: 'Data Owner',
-  customerService: 'Customer Service',
-  dpo: 'Data Protection Officer',
-  auditor: 'Auditor',
-  executive: 'Executive',
+  'Admin': 'Administrator',
+  'Data Controller': 'Data Owner',
+  'customerService': 'Customer Service',
+  'DPO': 'Data Protection Officer',
+  'Auditor': 'Auditor',
+  'Executive': 'Executive',
 };
 
 export function Sidebar() {
