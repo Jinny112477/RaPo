@@ -13,11 +13,11 @@ interface NavItem {
   roles: Role[];
 }
 
-const ShieldIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-);
+// const ShieldIcon = () => (
+//   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+//   </svg>
+// );
 
 const DashboardIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
@@ -124,12 +124,12 @@ const navItems: NavItem[] = [
 ];
 
 const roleLabelMap: Record<Role, string> = {
-  admin: 'Administrator',
-  dataOwner: 'Data Owner',
-  customerService: 'Customer Service',
-  dpo: 'Data Protection Officer',
-  auditor: 'Auditor',
-  executive: 'Executive',
+  'Admin': 'Administrator',
+  'Data Controller': 'Data Owner',
+  'customerService': 'Customer Service',
+  'DPO': 'Data Protection Officer',
+  'Auditor': 'Auditor',
+  'Executive': 'Executive',
 };
 
 export function Sidebar() {

@@ -5,10 +5,15 @@ import { Role, User } from '@/types';
 import { supabase } from '../lib/supabaseClient';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 
+type LoginResult = {
+  ok: boolean;
+  mustChangePassword: boolean;
+};
+
 interface AuthContextType {
   user: User | null;
   role: Role | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -16,7 +21,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   role: null,
-  login: async () => false,
+  login: async () => ({ ok: false, mustChangePassword: false }),
   logout: async () => { },
   isLoading: true,
 });
@@ -25,7 +30,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Map Supabase user → fetch role from profiles table
   const mapUser = async (supabaseUser: SupabaseUser): Promise<User> => {
     const { data: profile } = await supabase
       .from('profiles')
@@ -33,11 +37,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', supabaseUser.id)
       .single();
 
-    // user_membership อาจเป็น array หรือ object ขึ้นอยู่กับ relation
+    type Membership = {
+      role?: string;
+      departments?: {
+        department_name?: string;
+      };
+    };
+
     const membershipRaw = profile?.user_membership;
-    const membership = Array.isArray(membershipRaw)
-      ? membershipRaw[0]
-      : membershipRaw ?? {};
+
+    // ✅ Single declaration with correct type cast
+    const membership = (
+      Array.isArray(membershipRaw) ? membershipRaw[0] : membershipRaw
+    ) as Membership | undefined;
 
     const role = membership?.role ?? 'user';
     const department = membership?.departments?.department_name ?? '';
@@ -53,7 +65,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  // GET: fetch session
   useEffect(() => {
     const getSession = async () => {
       setIsLoading(true);
@@ -81,14 +92,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // LOGIN: handler
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error || !data.user) return { ok: false };
+    // ✅ mustChangePassword included in the failure case
+    if (error || !data.user) return { ok: false, mustChangePassword: false };
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -102,7 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   };
 
-  // LOGOUT: handler
   const logout = async () => {
     await supabase.auth.signOut();
     setUser(null);

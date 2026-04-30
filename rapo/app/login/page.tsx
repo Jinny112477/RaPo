@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 
-const ShieldIcon = () => (
-  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </svg>
-);
+// const ShieldIcon = () => (
+//   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+//     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+//   </svg>
+// );
 
 const EyeIcon = ({ open }: { open: boolean }) =>
   open ? (
@@ -48,7 +48,7 @@ export default function LoginPage() {
     try {
       const result = await login(email, password);
 
-      if (!result.ok) {
+      if (!result) {
         setError("Invalid email or password");
         return;
       }
