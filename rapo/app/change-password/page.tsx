@@ -25,10 +25,12 @@ export default function ChangePasswordPage() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
     // GET: Profiles
     useEffect(() => {
         const check = async () => {
-            const res = await fetch("http://localhost:5001/api/me", {
+            const res = await fetch(`${API_URL}/api/me`, {
                 headers: {
                     Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
                 }
@@ -70,7 +72,7 @@ export default function ChangePasswordPage() {
                 throw new Error("Session not found. Please login again.");
             }
 
-            const res = await fetch("http://localhost:5001/api/change-password", {
+            const res = await fetch(`${API_URL}/api/change-password`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
