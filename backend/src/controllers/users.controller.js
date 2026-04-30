@@ -1,41 +1,104 @@
 import { supabase } from "../lib/supabaseClient.js";
+import crypto from "crypto";
+import { sendEmail } from "../utils/sendEmail.js";
 
+// Password generator
+const generateTempPassword = () => {
+  return crypto.randomBytes(6).toString("base64"); // ~8-10 chars
+};
+
+// POST: create user
 export const createUsers = async (req, res) => {
   try {
     const { email, name, phone, department_id, role } = req.body;
 
-    const DEFAULT_PASSWORD = "Temp1234"; //Temporary Password (HARDCODE) for DEMO purposes only
+    if (!email || !name || !department_id || !role) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
 
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password: DEFAULT_PASSWORD,
-      email_confirm: true,
-      user_metadata: { name, phone },
-    });
+    const { data: existingUser } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("email", email)
+      .maybeSingle();
 
-    if (authError) return res.status(400).json({ error: authError.message });
+    if (existingUser) {
+      return res.status(400).json({ error: "Email already exists" });
+    }
+
+    const tempPassword = generateTempPassword();
+
+    const { data: authData, error: authError } =
+      await supabase.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { name, phone },
+      });
+
+    if (authError) {
+      return res.status(400).json({ error: authError.message });
+    }
 
     const user_id = authData.user.id;
 
+    const { error: profileError } = await supabase.from("profiles").upsert({
+      user_id,
+      email,
+      name,
+      phone,
+      password_change: false,
+      login_attempts: 0,
+    });
+
+    if (profileError) {
+      await supabase.auth.admin.deleteUser(user_id);
+      return res.status(400).json({ error: profileError.message });
+    }
+
     const { error: memberError } = await supabase
       .from("user_membership")
-      .insert({ user_id, department_id, role });
+      .upsert({ user_id, department_id, role });
 
-    if (memberError) return res.status(400).json({ error: memberError.message });
+    if (memberError) {
+      await supabase.auth.admin.deleteUser(user_id);
+      return res.status(400).json({ error: memberError.message });
+    }
 
-    res.status(201).json({ message: "User created", user_id, tempPassword: DEFAULT_PASSWORD });
+    try {
+      await sendEmail({
+        to: email,
+        subject: "Your Account Created",
+        //เดะมาแก้เนื้อหาใน email อีกที🔴
+        text: `
+            Hello ${name},
 
+            Your account has been created.
+
+            Email: ${email}
+            Temporary Password: ${tempPassword}
+
+            Please login and change your password immediately.
+        `,
+      });
+    } catch (emailError) {
+      console.error("EMAIL ERROR:", emailError);
+    }
+
+    return res.status(201).json({
+      message: "User created successfully",
+      user_id,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("CREATE USER ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
 };
 
 // GET: fetch user to ADMIN_DASHBOARD
 export const getUsers = async (req, res) => {
   try {
-    const { data, error } = await supabase
-        .from("profiles")
-        .select(`
+    const { data, error } = await supabase.from("profiles").select(`
             user_id,
             email,
             phone,
@@ -65,28 +128,46 @@ export const updateUser = async (req, res) => {
     const { name, email, phone, department_id, role } = req.body;
 
     if (!user_id) {
-      return res.status(400).json({ error: 'user_id is required' });
+      return res.status(400).json({ error: "user_id is required" });
     }
 
-    // Update profiles table
+    const { error: authError } = await supabase.auth.admin.updateUserById(
+      user_id,
+      { email },
+    );
+
+    if (authError) {
+      return res.status(500).json({ error: authError.message });
+    }
+
     const { error: profileError } = await supabase
-      .from('profiles')
+      .from("profiles")
       .update({ name, email, phone })
-      .eq('user_id', user_id);
+      .eq("user_id", user_id);
 
-    if (profileError) return res.status(500).json({ error: profileError.message });
+    if (profileError) {
+      return res.status(500).json({ error: profileError.message });
+    }
 
-    // Update user_membership table (role + department)
     const { error: memberError } = await supabase
-      .from('user_membership')
-      .update({ role, department_id, updated_at: new Date().toISOString() })
-      .eq('user_id', user_id);
+      .from("user_membership")
+      .upsert({
+        user_id,
+        department_id,
+        role,
+        updated_at: new Date().toISOString(),
+      });
 
-    if (memberError) return res.status(500).json({ error: memberError.message });
+    if (memberError) {
+      return res.status(500).json({ error: memberError.message });
+    }
 
-    return res.status(200).json({ success: true, message: 'User updated successfully' });
-
+    return res.status(200).json({
+      success: true,
+      message: "User updated successfully",
+    });
   } catch (err) {
+    console.error("UPDATE USER ERROR:", err);
     return res.status(500).json({ error: err.message });
   }
 };
@@ -97,7 +178,7 @@ export const deleteUser = async (req, res) => {
     const { user_id } = req.params;
 
     if (!user_id) {
-      return res.status(400).json({ error: 'user_id is required' });
+      return res.status(400).json({ error: "user_id is required" });
     }
 
     // Delete from Supabase Auth (cascades to profiles if FK is set)
@@ -105,7 +186,113 @@ export const deleteUser = async (req, res) => {
 
     if (authError) return res.status(500).json({ error: authError.message });
 
-    return res.status(200).json({ success: true, message: 'User deleted successfully' });
+    return res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// CHECK IF FIRST TIME LOGIN
+const checkFirstLogin = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("password_change")
+    .eq("user_id", user.id)
+    .single();
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  if (!profile.password_change) {
+    router.push("/change-password");
+  } else {
+    router.push("/dashboard");
+  }
+};
+
+// PUT: change password
+export const changePassword = async (req, res) => {
+  try {
+    const user = req.user;
+
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res
+        .status(400)
+        .json({ error: "Password must be at least 6 characters" });
+    }
+
+    const { error: authError } = await supabase.auth.admin.updateUserById(
+      user.id,
+      {
+        password,
+      },
+    );
+
+    if (authError) {
+      console.error("AUTH ERROR:", authError);
+      return res.status(500).json({ error: authError.message });
+    }
+
+    const { data, error: profileError } = await supabase
+      .from("profiles")
+      .update({ password_change: true })
+      .eq("user_id", user.id)
+      .select();
+
+    if (!data || data.length === 0) {
+      console.error("❌ No profile updated. user_id mismatch:", user.id);
+    }
+
+    console.log("UPDATED PROFILE:", data);
+
+    if (profileError) {
+      console.error("PROFILE ERROR:", profileError);
+      return res.status(500).json({ error: profileError.message });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (err) {
+    console.error("CHANGE PASSWORD ERROR:", err);
+    return res.status(500).json({ error: err.message });
+  }
+};
+
+// GET: Profiles
+export const getMe = async (req, res) => {
+  try {
+    const user = req.user;
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("user_id, email, password_change, name")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    return res.json({
+      user,
+      mustChangePassword: !data.password_change,
+      profile: data,
+    });
 
   } catch (err) {
     return res.status(500).json({ error: err.message });

@@ -33,9 +33,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', supabaseUser.id)
       .single();
 
-    const membership = (profile?.user_membership as any) ?? {};
-    const role = membership.role ?? 'user';
-    const department = membership.departments?.department_name ?? '';
+    // user_membership อาจเป็น array หรือ object ขึ้นอยู่กับ relation
+    const membershipRaw = profile?.user_membership;
+    const membership = Array.isArray(membershipRaw)
+      ? membershipRaw[0]
+      : membershipRaw ?? {};
+
+    const role = membership?.role ?? 'user';
+    const department = membership?.departments?.department_name ?? '';
     const name = profile?.name ?? '';
 
     return {
@@ -77,9 +82,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // LOGIN: handler
-  const login = async (email: string, password: string): Promise<boolean> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    return !error;
+  const login = async (email: string, password: string) => {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error || !data.user) return { ok: false };
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("password_change")
+      .eq("user_id", data.user.id)
+      .single();
+
+    return {
+      ok: true,
+      mustChangePassword: !profile?.password_change,
+    };
   };
 
   // LOGOUT: handler

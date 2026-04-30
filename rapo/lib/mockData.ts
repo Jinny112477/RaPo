@@ -17,7 +17,7 @@ export const mockActivities: Activity[] = [
     status: 'ACTIVE',
     createdAt: '2567-01-15',
     updatedAt: '2567-03-10',
-    owner: 'somshy',
+    owner: 'Somying Jaidee',
   },
   {
     id: 'ACT-002',
@@ -34,7 +34,7 @@ export const mockActivities: Activity[] = [
     status: 'REVIEW',
     createdAt: '2567-02-01',
     updatedAt: '2567-03-14',
-    owner: 'meimei',
+    owner: 'Somying Jaidee',
   },
   {
     id: 'ACT-003',
@@ -51,7 +51,7 @@ export const mockActivities: Activity[] = [
     status: 'ACTIVE',
     createdAt: '2567-03-01',
     updatedAt: '2567-03-15',
-    owner: 'meimei',
+    owner: 'Somying Jaidee',
   },
   // สำหรับทดสอบสถานะ REJECTED
   {
@@ -70,7 +70,7 @@ export const mockActivities: Activity[] = [
     rejectionReason: 'ฐานกฎหมายไม่ครบถ้วน กรุณาระบุเพิ่มเติม',
     createdAt: '2567-03-20',
     updatedAt: '2567-03-22',
-    owner: 'meimei',
+    owner: 'Somying Jaidee',
   },
   // สำหรับทดสอบสถานะ DRAFT
   {
@@ -88,7 +88,7 @@ export const mockActivities: Activity[] = [
   status: 'DRAFT',
   createdAt: '2568-03-20',
   updatedAt: '2568-03-20',
-  owner: 'meimei',
+  owner: 'Somying Jaidee',
 },
 ];
 

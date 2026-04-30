@@ -1,9 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { Clock8 } from 'lucide-react';
-import { SearchAlert } from 'lucide-react';
-import { useRopa } from '@/lib/ropaContext';
+import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Clock8, AlertCircle, SearchAlert } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { notifyError } from '@/lib/notify';
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const ACCESS_DRAFT_PREFIX = '__ACCESS_DRAFT__:';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -16,6 +20,7 @@ interface RecorderInfo {
 interface SubActivity {
   id: string;
   purpose: string;
+  scope: string;
   personalDataItems: string[];
   dataCategory: string[];
   dataType: string[];
@@ -64,6 +69,23 @@ const TRANSFER_EXCEPTIONS = [
   'ปฏิบัติตามกฎหมาย', 'ความยินยอม', 'ปฏิบัติตามสัญญา',
   'ประโยชน์สาธารณะ', 'ประโยชน์สำคัญต่อชีวิต', 'ข้อยกเว้นอื่นๆ',
 ];
+
+const parseRetentionDurationParts = (value?: string) => {
+  const raw = String(value || '');
+  const days = (raw.match(/(\d+)\s*วัน/)?.[1] || '').trim();
+  const months = (raw.match(/(\d+)\s*เดือน/)?.[1] || '').trim();
+  const years = (raw.match(/(\d+)\s*ปี/)?.[1] || '').trim();
+  return { days, months, years };
+};
+
+const buildRetentionDuration = (days: string, months: string, years: string) => {
+  const parts = [
+    days ? `${days} วัน` : '',
+    months ? `${months} เดือน` : '',
+    years ? `${years} ปี` : '',
+  ].filter(Boolean);
+  return parts.join(' ');
+};
 
 const STEPS = [
   { id: 1, label: 'ผู้ลงบันทึก', short: 'ผู้บันทึก' },
@@ -133,14 +155,31 @@ function YesNo({ value, onChange, options = ['มี', 'ไม่มี'] }: {
 function newSub(i: number): SubActivity {
   return {
     id: `s${Date.now()}${i}`,
-    purpose: '', personalDataItems: [], dataCategory: [], dataType: [],
-    collectionMethod: [], sourceFromOwner: '', sourceFromOther: '',
-    legalBasis: [], minorConsentUnder10: '', minorConsentAge10to20: '',
-    transferAbroad: 'ไม่มี', transferCountry: '', transferAffiliate: 'ไม่ใช่',
-    transferAffiliateCompany: '', transferMethod: '', transferStandard: '',
-    transferException28: '', storageType: [], storageMethod: '',
-    retentionPeriod: '', accessRights: '', deletionMethod: '',
-    exemptDisclosure: '', rightsDenial: '',
+    purpose: '',
+    scope: '',
+    personalDataItems: [],
+    dataCategory: [],
+    dataType: [],
+    collectionMethod: [],
+    sourceFromOwner: '',
+    sourceFromOther: '',
+    legalBasis: [],
+    minorConsentUnder10: '',
+    minorConsentAge10to20: '',
+    transferAbroad: 'ไม่มี',
+    transferCountry: '',
+    transferAffiliate: 'ไม่ใช่',
+    transferAffiliateCompany: '',
+    transferMethod: '',
+    transferStandard: '',
+    transferException28: '',
+    storageType: [],
+    storageMethod: '',
+    retentionPeriod: '',
+    accessRights: '',
+    deletionMethod: '',
+    exemptDisclosure: '',
+    rightsDenial: '',
   };
 }
 
@@ -152,6 +191,30 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 }) {
   const [open, setOpen] = useState(true);
   const set = <K extends keyof SubActivity>(k: K, v: SubActivity[K]) => onChange({ ...sub, [k]: v });
+  const retentionParts = useMemo(
+    () => parseRetentionDurationParts(sub.retentionPeriod),
+    [sub.retentionPeriod],
+  );
+
+  const setRetentionPart = (part: 'days' | 'months' | 'years', value: string) => {
+    const sanitized = value.replace(/\D/g, '');
+    const current = {
+      days: retentionParts.days,
+      months: retentionParts.months,
+      years: retentionParts.years,
+    };
+
+    if (!sanitized) {
+      current[part] = '';
+    } else {
+      const numeric = Number(sanitized);
+      if (part === 'days') current.days = String(Math.min(numeric, 31));
+      if (part === 'months') current.months = String(Math.min(numeric, 12));
+      if (part === 'years') current.years = String(Math.min(numeric, 9999));
+    }
+
+    set('retentionPeriod', buildRetentionDuration(current.days, current.months, current.years));
+  };
 
   return (
     <div className="border border-slate-200 rounded-xl overflow-hidden shadow-sm">
@@ -202,6 +265,16 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               className={txa} />
           </Field>
 
+          <Field label="ขอบเขตการใช้งานข้อมูล" required>
+            <textarea
+              rows={3}
+              value={sub.scope}
+              onChange={e => set('scope', e.target.value)}
+              placeholder="เช่น ใช้เฉพาะชื่อ-นามสกุลและอีเมล เพื่อดำเนินการตามวัตถุประสงค์ที่ระบุ"
+              className={txa}
+            />
+          </Field>
+
           {/* 2. ข้อมูลที่จัดเก็บ */}
           <Field label="ข้อมูลส่วนบุคคลที่จัดเก็บ" required >
             <MultiCheck options={PERSONAL_DATA_EXAMPLES} selected={sub.personalDataItems} onChange={v => set('personalDataItems', v)} cols={3} />
@@ -242,6 +315,18 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
             </div>
           </Field>
 
+          {sub.sourceFromOwner === 'จากแหล่งอื่น' && (
+            <Field label="ระบุแหล่งที่มาอื่น" required>
+              <input
+                type="text"
+                value={sub.sourceFromOther}
+                onChange={e => set('sourceFromOther', e.target.value)}
+                className={inp}
+                placeholder="เช่น หน่วยงานภายนอก / API / คู่ค้า"
+              />
+            </Field>
+          )}
+
           {/* 7. ฐานการประมวลผล */}
           <Field label="ฐานในการประมวลผล" required>
             <MultiCheck options={LEGAL_BASES_TH} selected={sub.legalBasis} onChange={v => set('legalBasis', v)} />
@@ -255,12 +340,12 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                 {/* <span className="text-xs text-amber-500">(เฉพาะ Data Controller)</span> */}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="อายุไม่เกิน 10 ปี" >
+                <Field label="อายุไม่เกิน 10 ปี" required>
                   <textarea rows={2} value={sub.minorConsentUnder10}
                     onChange={e => set('minorConsentUnder10', e.target.value)}
                     className={txa} />
                 </Field>
-                <Field label="อายุ 10–20 ปี" >
+                <Field label="อายุ 10–20 ปี" required>
                   <textarea rows={2} value={sub.minorConsentAge10to20}
                     onChange={e => set('minorConsentAge10to20', e.target.value)}
                     className={txa} />
@@ -278,7 +363,7 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               </svg>
               <span className="text-sm font-semibold text-slate-700">การส่งหรือโอนข้อมูลไปยังต่างประเทศ</span>
             </div>
-            <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่">
+            <Field label="มีการส่งหรือโอนข้อมูลไปต่างประเทศหรือไม่" required>
               <YesNo value={sub.transferAbroad} onChange={v => set('transferAbroad', v)} />
             </Field>
 
@@ -289,28 +374,28 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
                     <input type="text" value={sub.transferCountry} onChange={e => set('transferCountry', e.target.value)}
                       className={inp} />
                   </Field>
-                  <Field label="วิธีการโอนข้อมูล">
+                  <Field label="วิธีการโอนข้อมูล" required>
                     <input type="text" value={sub.transferMethod} onChange={e => set('transferMethod', e.target.value)}
                       className={inp} />
                   </Field>
                 </div>
-                <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่">
+                <Field label="เป็นการส่งข้อมูลในกลุ่มบริษัทในเครือหรือไม่" required>
                   <YesNo value={sub.transferAffiliate} onChange={v => set('transferAffiliate', v)} options={['ใช่', 'ไม่ใช่']} />
                 </Field>
                 {sub.transferAffiliate === 'ใช่' && (
-                  <Field label="ชื่อบริษัทในเครือ">
+                  <Field label="ชื่อบริษัทในเครือ" required>
                     <input type="text" value={sub.transferAffiliateCompany} onChange={e => set('transferAffiliateCompany', e.target.value)}
                       className={inp} />
                   </Field>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง">
+                  <Field label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง" required>
                     <input type="text" value={sub.transferStandard} onChange={e => set('transferStandard', e.target.value)}
                       className={inp} />
                   </Field>
-                  <Field label="ข้อยกเว้นตามมาตรา 28">
+                  <Field label="ข้อยกเว้นตามมาตรา 28" required>
                     <select value={sub.transferException28} onChange={e => set('transferException28', e.target.value)} className={sel}>
-                      <option value="">เลือกข้อยกเว้น...</option>
+                      <option value="">เลือกข้อยกเว้น</option>
                       {TRANSFER_EXCEPTIONS.map(x => <option key={x}>{x}</option>)}
                     </select>
                   </Field>
@@ -327,25 +412,60 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               </svg>
               <span className="text-sm font-semibold text-slate-700">นโยบายการเก็บรักษาข้อมูลส่วนบุคคล</span>
             </div>
-            <Field label="ประเภทของข้อมูลที่จัดเก็บ">
+            <Field label="ประเภทของข้อมูลที่จัดเก็บ" required>
               <MultiCheck options={STORAGE_TYPES} selected={sub.storageType} onChange={v => set('storageType', v)} />
             </Field>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="วิธีการเก็บรักษาข้อมูล">
+              <Field label="วิธีการเก็บรักษาข้อมูล" required>
                 <textarea rows={2} value={sub.storageMethod} onChange={e => set('storageMethod', e.target.value)}
                   className={txa} />
               </Field>
               <Field label="ระยะเวลาการเก็บรักษาข้อมูล" required>
-                <input type="text" value={sub.retentionPeriod} onChange={e => set('retentionPeriod', e.target.value)}
-                  className={inp} />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={31}
+                      value={retentionParts.days}
+                      onChange={e => setRetentionPart('days', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">วัน</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={12}
+                      value={retentionParts.months}
+                      onChange={e => setRetentionPart('months', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">เดือน</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={0}
+                      max={9999}
+                      value={retentionParts.years}
+                      onChange={e => setRetentionPart('years', e.target.value)}
+                      className={inp}
+                      placeholder="0"
+                    />
+                    <span className="text-sm text-slate-500 whitespace-nowrap">ปี</span>
+                  </div>
+                </div>
               </Field>
             </div>
-            <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล"
-            >
+            <Field label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล" required>
               <textarea rows={2} value={sub.accessRights} onChange={e => set('accessRights', e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา">
+            <Field label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา" required>
               <textarea rows={2} value={sub.deletionMethod} onChange={e => set('deletionMethod', e.target.value)}
                 className={txa} />
             </Field>
@@ -357,13 +477,11 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
               <div className="border-t border-dashed border-slate-200 pt-4">
                 <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">เฉพาะ Data Controller</span>
               </div>
-              <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม"
-              >
+              <Field label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม" required>
                 <textarea rows={2} value={sub.exemptDisclosure} onChange={e => set('exemptDisclosure', e.target.value)}
                   className={txa} />
               </Field>
-              <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล"
-              >
+              <Field label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล" required>
                 <textarea rows={2} value={sub.rightsDenial} onChange={e => set('rightsDenial', e.target.value)}
                   className={txa} />
               </Field>
@@ -379,15 +497,41 @@ function SubCard({ sub, idx, isCtrl, onChange, onRemove, canRemove }: {
 
 interface RopaFormProps {
   activityId?: string
+  editRequestId?: string;
   onSubmit?: (data: Record<string, unknown>) => void;
   onSaveDraft?: (data: Record<string, unknown>) => void;
 }
 
-export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFormProps) {
+type AccessRequestDetail = {
+  request_id: string;
+  purpose?: string | null;
+  scope?: string | null;
+  duration?: string | null;
+  processor_name?: string | null;
+  processor_address?: string | null;
+  activity?: {
+    activity_name?: string | null;
+  };
+};
+
+const parseAccessDraftPayload = (value?: string | null) => {
+  if (!value?.startsWith(ACCESS_DRAFT_PREFIX)) return null;
+
+  try {
+    return JSON.parse(value.slice(ACCESS_DRAFT_PREFIX.length));
+  } catch {
+    return null;
+  }
+};
+
+export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSaveDraft }: RopaFormProps) {
+  const router = useRouter();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [formType] = useState<FormType>('processor');
   const [submitted, setSubmitted] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
+  const [requestId, setRequestId] = useState<string | undefined>(editRequestId);
 
   // Part 1
   const [rec, setRec] = useState<RecorderInfo>({ name: '', address: '', email: '', phone: '' });
@@ -409,57 +553,255 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
   const [secUser, setSecUser] = useState('');
   const [secAudit, setSecAudit] = useState('');
 
+  useEffect(() => {
+    const fetchExistingRequest = async () => {
+      if (!editRequestId) return;
+
+      try {
+        const res = await fetch(`${API_URL}/api/access/${editRequestId}`);
+        const response = await res.json();
+
+        if (!res.ok) {
+          const detail = Array.isArray(response.detail)
+            ? response.detail.join('\n')
+            : response.detail;
+          notifyError(detail || response.error || 'โหลด DP Form ไม่สำเร็จ');
+          return;
+        }
+
+        const request = response.data as AccessRequestDetail;
+        const draftPayload = parseAccessDraftPayload(request.duration);
+        setRequestId(request.request_id);
+        setRec(draftPayload?.rec || { name: '', address: '', email: '', phone: '' });
+        setProcessorName(draftPayload?.processorName || request.processor_name || '');
+        setCtrlAddress(draftPayload?.ctrlAddress || request.processor_address || '');
+        setMainActivity(draftPayload?.mainActivity || request.activity?.activity_name || '');
+        setSubs(draftPayload?.subs || (() => {
+          const current = newSub(0);
+          return [{
+            ...current,
+            purpose: request.purpose || '',
+            scope: request.scope || '',
+            retentionPeriod: request.duration?.startsWith(ACCESS_DRAFT_PREFIX) ? '' : request.duration || '',
+          }];
+        })());
+        setSecOrg(draftPayload?.secOrg || '');
+        setSecTech(draftPayload?.secTech || '');
+        setSecPhysical(draftPayload?.secPhysical || '');
+        setSecAccess(draftPayload?.secAccess || '');
+        setSecUser(draftPayload?.secUser || '');
+        setSecAudit(draftPayload?.secAudit || '');
+      } catch (error) {
+        console.error(error);
+        notifyError('โหลด DP Form ไม่สำเร็จ');
+      }
+    };
+
+    fetchExistingRequest();
+  }, [editRequestId]);
+
   const isCtrl = formType === 'controller';
 
   const canNext = () => {
-    if (step === 1) return rec.name.trim() !== '' && rec.email.trim() !== '';
-    if (step === 2) return mainActivity.trim() !== '' && subs.every(s => s.purpose.trim() !== '');
+    if (step === 1) {
+      return (
+        rec.name.trim() !== '' &&
+        rec.phone.trim() !== '' &&
+        rec.address.trim() !== '' &&
+        rec.email.trim() !== ''
+      );
+    }
+
+    if (step === 2) {
+      return (
+        mainActivity.trim() !== '' &&
+        processorName.trim() !== '' &&
+        ctrlAddress.trim() !== '' &&
+        subs.every(s =>
+          s.purpose.trim() !== '' &&
+          s.scope.trim() !== '' &&
+          s.personalDataItems.length > 0 &&
+          s.dataCategory.length > 0 &&
+          s.dataType.length > 0 &&
+          s.collectionMethod.length > 0 &&
+          s.sourceFromOwner.trim() !== '' &&
+          (s.sourceFromOwner !== 'จากแหล่งอื่น' || s.sourceFromOther.trim() !== '') &&
+          s.legalBasis.length > 0 &&
+          s.transferAbroad.trim() !== '' &&
+          (s.transferAbroad !== 'มี' || (
+            s.transferCountry.trim() !== '' &&
+            s.transferMethod.trim() !== '' &&
+            s.transferAffiliate.trim() !== '' &&
+            (s.transferAffiliate !== 'ใช่' || s.transferAffiliateCompany.trim() !== '') &&
+            s.transferStandard.trim() !== '' &&
+            s.transferException28.trim() !== ''
+          )) &&
+          s.storageType.length > 0 &&
+          s.storageMethod.trim() !== '' &&
+          s.retentionPeriod.trim() !== ''
+          && s.accessRights.trim() !== ''
+          && s.deletionMethod.trim() !== ''
+        )
+      );
+    }
+
+    if (step === 3) {
+      return (
+        secOrg.trim() !== '' &&
+        secTech.trim() !== '' &&
+        secPhysical.trim() !== '' &&
+        secAccess.trim() !== '' &&
+        secUser.trim() !== '' &&
+        secAudit.trim() !== ''
+      );
+    }
+
     return true;
   };
-
-  const next = () => { if (canNext()) setStep(s => Math.min(4, s + 1)); };
+  const next = () => {
+    if (canNext()) setStep(s => Math.min(STEPS.length, s + 1));
+  };
   const prev = () => setStep(s => Math.max(1, s - 1));
 
-  const handleSaveDraft = () => {
-    onSaveDraft?.({ formType, mainActivity });
-    setDraftSaved(true);
-    setTimeout(() => setDraftSaved(false), 2500);
+  const handleSaveDraft = async () => {
+    try {
+      if (!user?.id) {
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนบันทึกแบบร่าง');
+        return;
+      }
+
+      if (!activityId) {
+        notifyError('ไม่พบ ROPA ที่ต้องการขอใช้งาน');
+        return;
+      }
+
+      const firstSub = subs[0] || newSub(0);
+
+      const res = await fetch(`${API_URL}/api/access/draft`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          request_id: requestId,
+          activity_id: activityId,
+          requested_by: user.id,
+          purpose: firstSub.purpose,
+          scope: firstSub.scope,
+          duration: firstSub.retentionPeriod || '',
+          draft_payload: JSON.stringify({
+            rec,
+            processorName,
+            ctrlAddress,
+            mainActivity,
+            subs,
+            secOrg,
+            secTech,
+            secPhysical,
+            secAccess,
+            secUser,
+            secAudit,
+          }),
+          processor_name: processorName,
+          processor_address: ctrlAddress,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.join('\n')
+          : data.detail;
+
+        notifyError(detail || data.error || 'บันทึกแบบร่างไม่สำเร็จ');
+        return;
+      }
+
+      const savedRequestId = data.data?.request_id;
+      if (savedRequestId) {
+        setRequestId(savedRequestId);
+      }
+
+      onSaveDraft?.({
+        request_id: savedRequestId,
+        formType,
+        mainActivity,
+      });
+
+      router.push('/dc/my-ropa?notice=draft-saved&form=dp');
+    } catch (error) {
+      console.error(error);
+      notifyError('บันทึกแบบร่างไม่สำเร็จ');
+    }
   };
 
-  const { addActivity } = useRopa();
+  const handleSubmit = async () => {
+    try {
+      if (!user?.id) {
+        notifyError('กรุณาเข้าสู่ระบบใหม่ก่อนส่งฟอร์ม');
+        return;
+      }
 
-  const handleSubmit = () => {
-    addActivity({
-      id: Date.now().toString(),
-      formType: 'processor',
-      recorder: rec,
-      department: processorName,
-      activityName: mainActivity,
-      processorName: processorName,
-      controllerAddress: ctrlAddress,
-      subActivities: subs,
-      securityMeasures: {
-        organizational: secOrg,
-        technical: secTech,
-        physical: secPhysical,
-        accessControl: secAccess,
-        userResponsibility: secUser,
-        auditTrail: secAudit,
-      },
-      // backward compat
-      purpose: subs[0]?.purpose ?? '',
-      legalBasis: subs[0]?.legalBasis?.join(', ') ?? '',
-      dataSubject: subs[0]?.dataCategory ?? [],
-      personalData: subs[0]?.personalDataItems ?? [],
-      processing: subs[0]?.collectionMethod ?? [],
-      riskLevel: 'LOW',
-      retentionPeriod: subs[0]?.retentionPeriod ?? '',
-      status: 'REVIEW',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    });
-    onSubmit?.({ formType, mainActivity, subs });
-    setSubmitted(true);
+      if (!activityId) {
+        notifyError('ไม่พบ ROPA ที่ต้องการขอใช้งาน');
+        return;
+      }
+
+      const firstSub = subs[0];
+
+      if (!firstSub?.purpose?.trim()) {
+        notifyError('กรุณากรอกวัตถุประสงค์');
+        return;
+      }
+
+      if (!firstSub?.scope?.trim()) {
+        notifyError('กรุณากรอกขอบเขตการใช้งานข้อมูล');
+        return;
+      }
+
+      const res = await fetch(`${API_URL}/api/access/request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          activity_id: activityId,
+          requested_by: user.id,
+          purpose: firstSub.purpose,
+          scope: firstSub.scope,
+          duration: firstSub.retentionPeriod || '',
+          processor_name: processorName,
+          processor_address: ctrlAddress,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.log('CREATE DP FORM ERROR:', data);
+
+        const detail = Array.isArray(data.detail)
+          ? data.detail.join('\n')
+          : data.detail;
+
+        notifyError(detail || data.error || 'ส่ง DP Form ไม่สำเร็จ');
+        return;
+      }
+
+      onSubmit?.({
+        request_id: data.data?.request_id,
+        activity_id: activityId,
+        formType,
+        mainActivity,
+        subs,
+      });
+
+      setSubmitted(true);
+    } catch (error) {
+      console.error(error);
+      notifyError('ส่ง DP Form ไม่สำเร็จ');
+    }
   };
 
   // Success screen
@@ -477,6 +819,10 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
           {isCtrl ? 'Data Controller' : 'Data Processor'} · {mainActivity}
         </div>
         <br />
+        <button onClick={() => router.push('/dc/my-ropa')}
+          className="px-6 py-2.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 transition-colors mr-3">
+          ไปหน้า My Activity
+        </button>
         <button onClick={() => {
           setStep(1); setSubmitted(false);
           setRec({ name: '', address: '', email: '', phone: '' });
@@ -600,17 +946,8 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
             <SubCard key={s.id} sub={s} idx={i} isCtrl={isCtrl}
               onChange={updated => setSubs(prev => prev.map((x, xi) => xi === i ? updated : x))}
               onRemove={() => setSubs(prev => prev.filter((_, xi) => xi !== i))}
-              canRemove={subs.length > 1} />
+              canRemove={false} />
           ))}
-
-          {/* Add button */}
-          <button type="button" onClick={() => setSubs(prev => [...prev, newSub(prev.length)])}
-            className="w-full flex items-center justify-center gap-2.5 py-4 border-2 border-dashed border-blue-300 rounded-xl text-sm font-semibold text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all duration-200">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            เพิ่มวัตถุประสงค์ย่อย
-          </button>
         </div>
       )}
 
@@ -624,27 +961,27 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="มาตรการเชิงองค์กร (Organizational)" >
+            <Field label="มาตรการเชิงองค์กร (Organizational)" required>
               <textarea rows={4} value={secOrg} onChange={e => setSecOrg(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="มาตรการเชิงเทคนิค (Technical)" >
+            <Field label="มาตรการเชิงเทคนิค (Technical)" required>
               <textarea rows={4} value={secTech} onChange={e => setSecTech(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="มาตรการทางกายภาพ (Physical)" >
+            <Field label="มาตรการทางกายภาพ (Physical)" required>
               <textarea rows={4} value={secPhysical} onChange={e => setSecPhysical(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" >
+            <Field label="การควบคุมการเข้าถึงข้อมูล (Access Control)" required>
               <textarea rows={4} value={secAccess} onChange={e => setSecAccess(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" >
+            <Field label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" required>
               <textarea rows={4} value={secUser} onChange={e => setSecUser(e.target.value)}
                 className={txa} />
             </Field>
-            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" >
+            <Field label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" required>
               <textarea rows={4} value={secAudit} onChange={e => setSecAudit(e.target.value)}
                 className={txa} />
             </Field>
@@ -716,9 +1053,9 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
 
             <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700 leading-relaxed">
               <span className="font-semibold flex items-center gap-1">
-  <SearchAlert className="w-4 h-4 text-amber-600" /> 
-  หมายเหตุ:
-</span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
+                <SearchAlert className="w-4 h-4 text-amber-600" />
+                หมายเหตุ:
+              </span> เมื่อส่งแล้ว สถานะจะเปลี่ยนเป็น &ldquo;รอการตรวจสอบ (REVIEW)&rdquo;
               และ DPO จะต้องตรวจสอบและอนุมัติก่อนจึงจะมีสถานะ ACTIVE
             </div>
           </div>
@@ -730,8 +1067,8 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
         <button type="button" onClick={handleSaveDraft}
           className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
           {draftSaved
-            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกร่างแล้ว!</span></>
-            : 'save draft'}
+            ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg><span className="text-emerald-600">บันทึกแบบร่างแล้ว</span></>
+            : 'บันทึกแบบร่าง'}
         </button>
         <div className="flex items-center gap-2">
           {step > 1 && (
@@ -740,15 +1077,24 @@ export default function RopaDPForm({ activityId, onSubmit, onSaveDraft }: RopaFo
               ← ย้อนกลับ
             </button>
           )}
-          {step < 5 ? (
-            <button type="button" onClick={next} disabled={!canNext()}
-              className="px-5 py-2 text-sm font-semibold text-slate-700 bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
+          {step < STEPS.length ? (
+            <button
+              type="button"
+              onClick={next}
+              disabled={!canNext()}
+              className="px-5 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
               ถัดไป →
             </button>
           ) : (
-            <button type="button" onClick={handleSubmit}
-              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-slate-700 bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              className="inline-flex items-center gap-2 px-5 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
               ส่งเพื่อรอการตรวจสอบ
             </button>
           )}

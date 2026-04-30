@@ -57,12 +57,10 @@ const ChevronIcon = ({ dir }: { dir: 'left' | 'right' }) => (
   </svg>
 );
 
-const statusOptions: (ActivityStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'REVIEW', 'DRAFT', 'REJECTED', 'ARCHIVED'];
 const PAGE_SIZE = 5;
 
 export function ActivityTable({ activities, onEdit, onView, onDelete }: ActivityTableProps) {
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ActivityStatus | 'ALL'>('ALL');
   const [sortKey, setSortKey] = useState<SortKey>('updatedAt');
   const [sortDir, setSortDir] = useState<SortDir>('desc');
   const [page, setPage] = useState(1);
@@ -85,14 +83,14 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
           a.id.toLowerCase().includes(q)
       );
     }
-    if (statusFilter !== 'ALL') list = list.filter((a) => a.status === statusFilter);
+
     list.sort((a, b) => {
-      const av = a[sortKey] ?? '';
-      const bv = b[sortKey] ?? '';
+      const av = String((a as any)[sortKey] ?? '');
+      const bv = String((b as any)[sortKey] ?? '');
       return sortDir === 'asc' ? String(av).localeCompare(String(bv)) : String(bv).localeCompare(String(av));
     });
     return list;
-  }, [activities, search, statusFilter, sortKey, sortDir]);
+  }, [activities, search, sortKey, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -131,16 +129,7 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
               className="pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 w-full sm:w-52 transition-all duration-200"
             />
           </div>
-          {/* Status Filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value as ActivityStatus | 'ALL'); setPage(1); }}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 cursor-pointer transition-all duration-200"
-          >
-            {statusOptions.map((s) => (
-              <option key={s} value={s}>{s === 'ALL' ? 'All Status' : s}</option>
-            ))}
-          </select>
+
         </div>
       </div>
 
@@ -152,16 +141,15 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
               <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider w-24">ID</th>
               {colHeader('Activity Name', 'activityName')}
               {colHeader('Department', 'department')}
-              {colHeader('Status', 'status')}
               {colHeader('Risk', 'riskLevel')}
               {colHeader('Updated', 'updatedAt')}
-              <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th>
+              {/* <th className="px-4 py-3 text-right text-xs font-semibold text-slate-500 uppercase tracking-wider">Actions</th> */}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {paginated.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-slate-400 text-sm">
+                <td colSpan={6} className="px-4 py-12 text-center text-slate-400 text-sm">
                   No activities found
                 </td>
               </tr>
@@ -182,9 +170,6 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
                   </td>
                   <td className="px-4 py-3.5">
                     <span className="text-sm text-slate-600">{activity.department}</span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <StatusBadge status={activity.status} />
                   </td>
                   <td className="px-4 py-3.5">
                     <RiskBadge level={activity.riskLevel} />
@@ -261,11 +246,10 @@ export function ActivityTable({ activities, onEdit, onView, onDelete }: Activity
             <button
               key={p}
               onClick={() => setPage(p)}
-              className={`w-7 h-7 text-xs rounded-lg font-medium transition-colors ${
-                p === page
+              className={`w-7 h-7 text-xs rounded-lg font-medium transition-colors ${p === page
                   ? 'bg-blue-600 text-white shadow-sm'
                   : 'text-slate-500 hover:bg-slate-200 hover:text-slate-700'
-              }`}
+                }`}
             >
               {p}
             </button>

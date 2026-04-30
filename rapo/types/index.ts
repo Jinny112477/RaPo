@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'dataOwner' | 'dpo' | 'auditor' | 'executive';
+export type Role = 'admin' | 'dataOwner' | 'customerService' | 'dpo' | 'auditor' | 'executive';
 
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 

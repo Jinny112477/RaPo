@@ -1,255 +1,366 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useRopa } from '@/lib/ropaContext';
-import { SubActivity, SecurityMeasures } from '@/types';
+
+const STEPS = [
+  { id: 1, label: 'ผู้บันทึก' },
+  { id: 2, label: 'กิจกรรม' },
+  { id: 3, label: 'ความปลอดภัย' },
+  { id: 4, label: 'สรุป' },
+];
+
+// Field แสดงผลแบบ read-only ให้หน้าตาเหมือน input
+function ReadField({ label, value }: { label: string; value?: string | string[] }) {
+  const display = Array.isArray(value) ? value.join(', ') : value;
+  return (
+    <div className="flex flex-col gap-1">
+      <label className="text-sm font-medium text-slate-600">{label}</label>
+      <div className="min-h-[40px] px-3 py-2 bg-slate-50 border border-slate-200
+        rounded-lg text-sm text-slate-800 whitespace-pre-wrap">
+        {display || <span className="text-slate-400">-</span>}
+      </div>
+    </div>
+  );
+}
+
+// Badge สถานะ
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, string> = {
+    ACTIVE: 'bg-green-100 text-green-700',
+    REVIEW: 'bg-yellow-100 text-yellow-700',
+    DRAFT: 'bg-gray-100 text-gray-500',
+    REJECTED: 'bg-red-100 text-red-700',
+    ARCHIVED: 'bg-slate-100 text-slate-500',
+  };
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${map[status] ?? 'bg-gray-100 text-gray-500'}`}>
+      {status}
+    </span>
+  );
+}
 
 export default function RopaDetailPage() {
-    const params = useParams();
-    const router = useRouter();
-    const { activities } = useRopa();
-    const activity = activities.find(a => a.id === params.id);
+  const { id } = useParams();
+  const router = useRouter();
+  const { getActivityById } = useRopa();
+  const activity = getActivityById(String(id));
 
-    if (!activity) {
-        return (
-            <div className="min-h-screen bg-gray-100 p-6 flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-gray-500 text-sm">ไม่พบข้อมูลกิจกรรม</p>
-                    <button onClick={() => router.back()} className="mt-3 text-xs text-[#203690] hover:underline">← กลับ</button>
-                </div>
-            </div>
-        );
-    }
+  // step state ไว้ navigate ระหว่าง section
+  const [step, setStep] = useState(1);
+  const TOTAL = STEPS.length;
 
-    const isCtrl = activity.formType === 'controller';
-
-    const statusBadge = (status: string) => {
-        if (status === 'ACTIVE') return 'bg-green-100 text-green-700 border-green-200';
-        if (status === 'REVIEW') return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-        if (status === 'DRAFT') return 'bg-gray-100 text-gray-600 border-gray-200';
-        if (status === 'REJECTED') return 'bg-red-100 text-red-700 border-red-200';
-        if (status === 'ARCHIVED') return 'bg-slate-100 text-slate-500 border-slate-200';
-        return 'bg-gray-100 text-gray-600 border-gray-200';
-    };
-
-    const riskBadge = (risk: string) => {
-        if (risk === 'LOW') return 'bg-green-100 text-green-700 border-green-200';
-        if (risk === 'MEDIUM') return 'bg-yellow-100 text-yellow-700 border-yellow-200';
-        if (risk === 'HIGH') return 'bg-orange-100 text-orange-700 border-orange-200';
-        if (risk === 'CRITICAL') return 'bg-red-100 text-red-700 border-red-200';
-        return '';
-    };
-
-    const InfoRow = ({ label, value }: { label: string; value?: string | string[] | null }) => {
-        if (!value || (Array.isArray(value) && value.length === 0)) return null;
-        return (
-            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                <p className="text-xs text-gray-400 mb-1">{label}</p>
-                {Array.isArray(value) ? (
-                    <div className="flex flex-wrap gap-1.5">
-                        {value.map((v, i) => (
-                            <span key={i} className="px-2 py-0.5 bg-blue-50 text-blue-700 text-xs rounded-full border border-blue-200">{v}</span>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-sm font-medium text-gray-700 whitespace-pre-wrap">{value}</p>
-                )}
-            </div>
-        );
-    };
-
-    const SectionHeader = ({ num, title, color = 'bg-gray-800' }: { num: string; title: string; color?: string }) => (
-        <div className={`${color} text-white px-5 py-3 flex items-center gap-2`}>
-            <span className="w-6 h-6 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center">{num}</span>
-            <p className="text-sm font-semibold">{title}</p>
-        </div>
-    );
-
+  if (!activity) {
     return (
-        <div className="min-h-screen bg-gray-100 p-6">
-            {/* Back nav */}
-            <div className="flex items-center gap-3 mb-5">
-                <button onClick={() => router.back()} className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-1">← กลับ</button>
-                <span className="text-gray-300">/</span>
-                <p className="text-xs text-gray-500">รายละเอียดกิจกรรม</p>
-            </div>
-
-            <div className="max-w-4xl space-y-4">
-
-                {/* Title + Status */}
-                <div className="bg-white border border-black rounded-xl p-5">
-                    <div className="flex items-start justify-between gap-3">
-                        <div>
-                            <p className="text-xs text-gray-400 mb-1">{activity.id}</p>
-                            <h1 className="text-xl font-bold text-gray-800">{activity.activityName}</h1>
-                            <p className="text-sm text-gray-500 mt-1">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border mr-2 ${isCtrl ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                                    {isCtrl ? 'Data Controller' : 'Data Processor'}
-                                </span>
-                                {activity.department}
-                            </p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${statusBadge(activity.status)}`}>{activity.status}</span>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${riskBadge(activity.riskLevel)}`}>Risk: {activity.riskLevel}</span>
-                        </div>
-                    </div>
-                    {activity.status === 'REJECTED' && activity.rejectionReason && (
-                        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-xs font-semibold text-red-700 mb-1">❌ เหตุผลที่ DPO ปฏิเสธ</p>
-                            <p className="text-sm text-red-600">{activity.rejectionReason}</p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Section: ผู้ลงบันทึก ROPA */}
-                {activity.recorder && (
-                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                        <SectionHeader num="0" title="รายละเอียดของผู้ลงบันทึก ROPA" />
-                        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InfoRow label="ชื่อ-นามสกุล / ชื่อองค์กร" value={activity.recorder.name} />
-                            <InfoRow label="เบอร์โทรศัพท์" value={activity.recorder.phone} />
-                            <InfoRow label="อีเมล" value={activity.recorder.email} />
-                            <InfoRow label="ที่อยู่" value={activity.recorder.address} />
-                        </div>
-                    </div>
-                )}
-
-                {/* Section: ข้อมูลกิจกรรมหลัก */}
-                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                    <SectionHeader num="1-2" title="ข้อมูลกิจกรรมการประมวลผล" />
-                    <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {isCtrl ? (
-                            <InfoRow label="1. ชื่อเจ้าของข้อมูลส่วนบุคคล" value={activity.dataOwnerName} />
-                        ) : (
-                            <>
-                                <InfoRow label="1. ชื่อผู้ประมวลผลข้อมูลส่วนบุคคล" value={activity.processorName} />
-                                <InfoRow label="2. ที่อยู่ผู้ควบคุมข้อมูลส่วนบุคคล (ผู้ว่าจ้าง)" value={activity.controllerAddress} />
-                            </>
-                        )}
-                        <InfoRow label={isCtrl ? '2. กิจกรรมการประมวลผล' : '3. กิจกรรมการประมวลผล'} value={activity.activityName} />
-                        <InfoRow label="วันที่สร้าง" value={new Date(activity.createdAt).toLocaleDateString('th-TH')} />
-                        <InfoRow label="อัปเดตล่าสุด" value={new Date(activity.updatedAt).toLocaleDateString('th-TH')} />
-                    </div>
-                </div>
-
-                {/* Sub Activities */}
-                {activity.subActivities && activity.subActivities.length > 0 && (
-                    <div className="space-y-4">
-                        {activity.subActivities.map((sub: SubActivity, idx: number) => (
-                            <div key={sub.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                                <div className="bg-[#1a3a6b] text-white px-5 py-3 flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-white/20 text-xs font-bold flex items-center justify-center">{idx + 1}</span>
-                                    <p className="text-sm font-semibold">วัตถุประสงค์ที่ {idx + 1}: {sub.purpose || '(ไม่ระบุ)'}</p>
-                                </div>
-                                <div className="p-5 space-y-4">
-
-                                    {/* ข้อ 3: วัตถุประสงค์ */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <InfoRow label={`ข้อ ${isCtrl ? 3 : 4}. วัตถุประสงค์ของการประมวลผล`} value={sub.purpose} />
-                                    </div>
-
-                                    {/* ข้อ 4/5: ข้อมูลส่วนบุคคลที่จัดเก็บ */}
-                                    <InfoRow label={`ข้อ ${isCtrl ? 4 : 5}. ข้อมูลส่วนบุคคลที่จัดเก็บ`} value={sub.personalDataItems} />
-
-                                    {/* ข้อ 5/6 และ 6/7 */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <InfoRow label={`ข้อ ${isCtrl ? 5 : 6}. หมวดหมู่ของข้อมูล`} value={sub.dataCategory} />
-                                        <InfoRow label={`ข้อ ${isCtrl ? 6 : 7}. ประเภทของข้อมูล`} value={sub.dataType} />
-                                    </div>
-
-                                    {/* ข้อ 7/8: วิธีการได้มา */}
-                                    <InfoRow label={`ข้อ ${isCtrl ? 7 : 8}. วิธีการได้มาซึ่งข้อมูล`} value={sub.collectionMethod} />
-
-                                    {/* ข้อ 8/9: แหล่งที่มา */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <InfoRow label={`ข้อ ${isCtrl ? 8 : 9}. แหล่งที่ได้มา — จากเจ้าของข้อมูลโดยตรง`} value={sub.sourceFromOwner || undefined} />
-                                        <InfoRow label={`ข้อ ${isCtrl ? 8 : 9}. แหล่งที่ได้มา — จากแหล่งอื่น`} value={sub.sourceFromOther || undefined} />
-                                    </div>
-
-                                    {/* ข้อ 9/10: ฐานการประมวลผล */}
-                                    <InfoRow label={`ข้อ ${isCtrl ? 9 : 10}. ฐานในการประมวลผล`} value={sub.legalBasis} />
-
-                                    {/* ข้อ 10: ผู้เยาว์ (DC เท่านั้น) */}
-                                    {isCtrl && (
-                                        <div className="p-4 rounded-xl border border-amber-200 bg-amber-50 space-y-3">
-                                            <p className="text-xs font-semibold text-amber-700">ข้อ 10. การขอความยินยอมของผู้เยาว์</p>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                                <InfoRow label="อายุไม่เกิน 10 ปี" value={sub.minorConsentUnder10 || undefined} />
-                                                <InfoRow label="อายุ 10–20 ปี" value={sub.minorConsentAge10to20 || undefined} />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* ข้อ 11: การโอนข้อมูลต่างประเทศ */}
-                                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
-                                        <p className="text-xs font-semibold text-slate-600">ข้อ {isCtrl ? 11 : 11}. ส่งหรือโอนข้อมูลส่วนบุคคลไปยังต่างประเทศ</p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <InfoRow label="มีการส่งหรือโอนข้อมูลไปต่างประเทศ" value={sub.transferAbroad} />
-                                            {sub.transferAbroad === 'มี' && <>
-                                                <InfoRow label="ประเทศปลายทาง" value={sub.transferCountry || undefined} />
-                                                <InfoRow label="ส่งในกลุ่มบริษัทในเครือ" value={sub.transferAffiliate || undefined} />
-                                                {sub.transferAffiliate === 'ใช่' && <InfoRow label="ชื่อบริษัทในเครือ" value={sub.transferAffiliateCompany || undefined} />}
-                                                <InfoRow label="วิธีการโอนข้อมูล" value={sub.transferMethod || undefined} />
-                                                <InfoRow label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง" value={sub.transferStandard || undefined} />
-                                                <InfoRow label="ข้อยกเว้นตามมาตรา 28" value={sub.transferException28 || undefined} />
-                                            </>}
-                                        </div>
-                                    </div>
-
-                                    {/* ข้อ 12: นโยบายการเก็บรักษา */}
-                                    <div className="p-4 rounded-xl border border-slate-200 bg-slate-50 space-y-3">
-                                        <p className="text-xs font-semibold text-slate-600">ข้อ {isCtrl ? 12 : 12}. นโยบายการเก็บรักษาข้อมูลส่วนบุคคล</p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                            <InfoRow label="ประเภทของข้อมูลที่จัดเก็บ" value={sub.storageType} />
-                                            <InfoRow label="วิธีการเก็บรักษาข้อมูล" value={sub.storageMethod || undefined} />
-                                            <InfoRow label="ระยะเวลาการเก็บรักษาข้อมูล" value={sub.retentionPeriod || undefined} />
-                                            <InfoRow label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล" value={sub.accessRights || undefined} />
-                                            <InfoRow label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา" value={sub.deletionMethod || undefined} />
-                                        </div>
-                                    </div>
-
-                                    {/* ข้อ 13/14 (DC เท่านั้น) */}
-                                    {isCtrl && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                            <InfoRow label="ข้อ 13. การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม" value={sub.exemptDisclosure || undefined} />
-                                            <InfoRow label="ข้อ 14. การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิ" value={sub.rightsDenial || undefined} />
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* มาตรการรักษาความมั่นคงปลอดภัย (ข้อ 15 DC / 13 DP) */}
-                {activity.securityMeasures && (
-                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                        <SectionHeader num={isCtrl ? '15' : '13'} title="คำอธิบายเกี่ยวกับมาตรการรักษาความมั่นคงปลอดภัย" color="bg-slate-700" />
-                        <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <InfoRow label="มาตรการเชิงองค์กร (Organizational)" value={(activity.securityMeasures as SecurityMeasures).organizational || undefined} />
-                            <InfoRow label="มาตรการเชิงเทคนิค (Technical)" value={(activity.securityMeasures as SecurityMeasures).technical || undefined} />
-                            <InfoRow label="มาตรการทางกายภาพ (Physical)" value={(activity.securityMeasures as SecurityMeasures).physical || undefined} />
-                            <InfoRow label="การควบคุมการเข้าถึงข้อมูล (Access Control)" value={(activity.securityMeasures as SecurityMeasures).accessControl || undefined} />
-                            <InfoRow label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" value={(activity.securityMeasures as SecurityMeasures).userResponsibility || undefined} />
-                            <InfoRow label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" value={(activity.securityMeasures as SecurityMeasures).auditTrail || undefined} />
-                        </div>
-                    </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex justify-end gap-3 pb-6">
-                    <button onClick={() => router.back()} className="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition">กลับ</button>
-                    {(activity.status === 'DRAFT' || activity.status === 'REJECTED') && (
-                        <button
-                            onClick={() => router.push(`/ropa/edit/${activity.id}`)}
-                            className={`px-4 py-2 text-sm font-semibold rounded-lg transition text-white ${activity.status === 'REJECTED' ? 'bg-red-600 hover:bg-red-700' : 'bg-[#203690] hover:bg-[#182a73]'}`}>
-                            {activity.status === 'REJECTED' ? 'แก้ไขและส่งใหม่' : 'แก้ไข'}
-                        </button>
-                    )}
-                </div>
-
-            </div>
-        </div>
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+        <p className="text-gray-500">ไม่พบข้อมูล Activity</p>
+      </div>
     );
+  }
+
+  const sub = activity.subActivities?.[0];
+  const sec = activity.securityMeasures;
+
+  return (
+    <div className="min-h-screen bg-gray-100 py-6">
+      <div className="max-w-2xl mx-auto px-4 space-y-5">
+
+        {/* ── Header card ── */}
+        <div className="bg-white border border-slate-200 rounded-xl px-6 py-4
+          flex items-start justify-between gap-4 shadow-sm">
+          <div>
+            <p className="text-xs text-slate-400 mb-0.5">{activity.id}</p>
+            <h1 className="text-xl font-bold text-slate-800">{activity.activityName}</h1>
+            <p className="text-sm text-slate-500 mt-1">{activity.department}</p>
+          </div>
+          <div className="flex flex-col items-end gap-2 shrink-0">
+            <StatusBadge status={activity.status} />
+            <span className="text-[11px] text-slate-400">Data Controller Form</span>
+          </div>
+        </div>
+
+        {/* ── Progress bar ── */}
+        <div className="bg-white border border-slate-200 rounded-xl px-6 py-4 shadow-sm">
+          <div className="flex items-center justify-between relative">
+            <div className="absolute left-0 right-0 top-4 h-px bg-slate-200 z-0" />
+            <div
+              className="absolute left-0 top-4 h-px bg-blue-500 z-0 transition-all duration-500"
+              style={{ width: `${((step - 1) / (TOTAL - 1)) * 100}%` }}
+            />
+            {STEPS.map(s => (
+              <div key={s.id} className="flex flex-col items-center gap-2 z-10">
+                <button
+                  onClick={() => setStep(s.id)}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center
+                    text-xs font-bold border-2 transition-all duration-200
+                    ${s.id < step ? 'bg-blue-600 border-blue-600 text-white cursor-pointer'
+                      : s.id === step ? 'bg-white border-blue-600 text-blue-600 shadow-md'
+                        : 'bg-white border-slate-300 text-slate-400 cursor-pointer'}`}
+                >
+                  {s.id < step
+                    ? <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                      stroke="currentColor" strokeWidth="3">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    : s.id}
+                </button>
+                <span className={`text-[11px] font-medium ${s.id === step ? 'text-blue-600' : 'text-slate-400'}`}>
+                  {s.label}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-slate-800">
+                {STEPS[step - 1].label}
+              </h2>
+              <p className="text-xs text-slate-500">ส่วนที่ {step} / {TOTAL} · อ่านได้อย่างเดียว</p>
+            </div>
+            <span className="px-3 py-1 bg-slate-100 text-slate-500 text-xs rounded-full font-medium">
+              View Only
+            </span>
+          </div>
+        </div>
+
+        {/* ── STEP 1: ผู้บันทึก ── */}
+        {step === 1 && (
+          <div className="bg-white border border-slate-200 rounded-xl px-6 py-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs
+                flex items-center justify-center font-bold">1</span>
+              <h3 className="font-semibold text-slate-700">รายละเอียดของผู้ลงบันทึก ROPA</h3>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <ReadField label="ชื่อ-นามสกุล / ชื่อองค์กร *" value={activity.recorder?.name ?? activity.owner} />
+              <ReadField label="เบอร์โทรศัพท์ *" value={activity.recorder?.phone} />
+            </div>
+            <ReadField label="ที่อยู่ *" value={activity.recorder?.address} />
+            <ReadField label="อีเมล *" value={activity.recorder?.email} />
+            {activity.dataOwnerName && (
+              <ReadField label="Data Controller Name" value={activity.dataOwnerName} />
+            )}
+            {activity.controllerAddress && (
+              <ReadField label="ที่อยู่ Controller" value={activity.controllerAddress} />
+            )}
+          </div>
+        )}
+
+        {/* ── STEP 2: กิจกรรม ── */}
+        {step === 2 && (
+          <div className="space-y-4">
+
+            {/* Header card */}
+            <div className="bg-white border border-slate-200 rounded-xl px-6 py-5 shadow-sm space-y-4">
+              <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+                <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center
+          text-sm font-bold text-blue-600">2</div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800">
+                    ส่วนที่ 2: ตารางข้อมูลกิจกรรมการประมวลผล
+                  </p>
+                  <p className="text-xs text-slate-400">ระบุกิจกรรมหลักและวัตถุประสงค์ย่อยทั้งหมด</p>
+                </div>
+              </div>
+
+              <ReadField label="ชื่อเจ้าของข้อมูลส่วนบุคคล" value={activity.dataOwnerName} />
+              <ReadField label="กิจกรรมการประมวลผลหลัก" value={activity.activityName} />
+            </div>
+
+            {/* Sub-activity card */}
+            {(activity.subActivities?.length ? activity.subActivities : [null]).map((sub, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+
+                {/* Sub header */}
+                <div className="bg-slate-800 px-5 py-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full bg-white text-slate-800 text-xs
+              font-bold flex items-center justify-center">{i + 1}</span>
+                    <span className="text-sm font-semibold text-white">วัตถุประสงค์ที่ {i + 1}</span>
+                  </div>
+                </div>
+
+                <div className="px-6 py-5 space-y-4">
+
+                  <ReadField label="วัตถุประสงค์ของการประมวลผล" value={sub?.purpose ?? activity.purpose} />
+                  <ReadField label="ข้อมูลส่วนบุคคลที่จัดเก็บ" value={sub?.personalDataItems ?? activity.personalData} />
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <ReadField label="หมวดหมู่ของข้อมูล" value={sub?.dataCategory} />
+                    <ReadField label="ประเภทของข้อมูล" value={sub?.dataType} />
+                  </div>
+
+                  <ReadField label="วิธีการได้มาซึ่งข้อมูล" value={sub?.collectionMethod} />
+
+                  {/* แหล่งที่มา */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 mb-1">แหล่งที่ได้มาซึ่งข้อมูล</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {['จากเจ้าของข้อมูลโดยตรง', 'จากแหล่งอื่น'].map(v => {
+                        const active = v === 'จากเจ้าของข้อมูลโดยตรง'
+                          ? sub?.sourceFromOwner === 'จากเจ้าของข้อมูลโดยตรง'
+                          : sub?.sourceFromOther === 'จากแหล่งอื่น';
+                        return (
+                          <div key={v} className={`px-4 py-2.5 rounded-lg border text-sm text-center
+                    ${active
+                              ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                              : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
+                            {v}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <ReadField label="ฐานในการประมวลผล" value={sub?.legalBasis ?? [activity.legalBasis]} />
+
+                  {/* ความยินยอมผู้เยาว์ */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 mb-1">การขอความยินยอมของผู้เยาว์</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <ReadField label="อายุไม่เกิน 10 ปี" value={sub?.minorConsentUnder10} />
+                      <ReadField label="อายุ 10–20 ปี" value={sub?.minorConsentAge10to20} />
+                    </div>
+                  </div>
+
+                  {/* การโอนต่างประเทศ */}
+                  <div>
+                    <p className="text-sm font-medium text-slate-600 mb-1">
+                      การส่งหรือโอนข้อมูลไปยังต่างประเทศ
+                    </p>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      {['มี', 'ไม่มี'].map(v => (
+                        <div key={v} className={`px-4 py-2.5 rounded-lg border text-sm text-center
+                  ${sub?.transferAbroad === v
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-medium'
+                            : 'border-slate-200 bg-slate-50 text-slate-400'}`}>
+                          {v}
+                        </div>
+                      ))}
+                    </div>
+                    {sub?.transferAbroad === 'มี' && (
+                      <div className="space-y-3 pl-2 border-l-2 border-blue-200">
+                        <ReadField label="ประเทศปลายทาง" value={sub?.transferCountry} />
+                        <ReadField label="วิธีการโอนข้อมูล" value={sub?.transferMethod} />
+                        <ReadField label="ชื่อบริษัทในเครือ" value={sub?.transferAffiliateCompany} />
+                        <ReadField label="มาตรฐานการคุ้มครองข้อมูลของประเทศปลายทาง" value={sub?.transferStandard} />
+                        <ReadField label="ข้อยกเว้นตามมาตรา 28" value={sub?.transferException28} />
+                      </div>
+                    )}
+                  </div>
+
+                  <ReadField label="วิธีการเก็บรักษาข้อมูล" value={sub?.storageMethod} />
+                  <ReadField label="ระยะเวลาการเก็บรักษาข้อมูล" value={sub?.retentionPeriod ?? activity.retentionPeriod} />
+                  <ReadField label="สิทธิและวิธีการเข้าถึงข้อมูลส่วนบุคคล" value={sub?.accessRights} />
+                  <ReadField label="วิธีการลบหรือทำลายข้อมูลเมื่อสิ้นสุดระยะเวลา" value={sub?.deletionMethod} />
+                  <ReadField label="การใช้หรือเปิดเผยข้อมูลที่ได้รับยกเว้นไม่ต้องขอความยินยอม" value={sub?.exemptDisclosure} />
+                  <ReadField label="การปฏิเสธคำขอหรือคำคัดค้านการใช้สิทธิของเจ้าของข้อมูล" value={sub?.rightsDenial} />
+
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {/* ── STEP 3: ความปลอดภัย ── */}
+        {step === 3 && (
+          <div className="bg-white border border-slate-200 rounded-xl px-6 py-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+              <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center
+        text-sm font-bold text-blue-600">3</div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800">
+                  ส่วนที่ 3: มาตรการรักษาความมั่นคงปลอดภัย
+                </p>
+              </div>
+            </div>
+
+            <ReadField label="มาตรการเชิงองค์กร (Organizational)" value={sec?.organizational} />
+            <ReadField label="มาตรการเชิงเทคนิค (Technical)" value={sec?.technical} />
+            <ReadField label="มาตรการทางกายภาพ (Physical)" value={sec?.physical} />
+            <ReadField label="การควบคุมการเข้าถึงข้อมูล (Access Control)" value={sec?.accessControl} />
+            <ReadField label="การกำหนดหน้าที่ความรับผิดชอบของผู้ใช้งาน" value={sec?.userResponsibility} />
+            <ReadField label="มาตรการตรวจสอบย้อนหลัง (Audit Trail)" value={sec?.auditTrail} />
+          </div>
+        )}
+
+        {/* ── STEP 4: สรุป ── */}
+        {step === 4 && (
+          <div className="bg-white border border-slate-200 rounded-xl px-6 py-5 shadow-sm space-y-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs
+                flex items-center justify-center font-bold">4</span>
+              <h3 className="font-semibold text-slate-700">สรุปข้อมูล</h3>
+            </div>
+            <ReadField label="สถานะ" value={activity.status} />
+            <ReadField label="ระยะเวลาเก็บรักษา" value={activity.retentionPeriod} />
+            <ReadField label="วันที่สร้าง" value={activity.createdAt} />
+            <ReadField label="อัปเดตล่าสุด" value={activity.updatedAt} />
+            {activity.reviewedBy && (
+              <ReadField label="ตรวจสอบโดย" value={activity.reviewedBy} />
+            )}
+            {activity.rejectionReason && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-xs font-semibold text-red-600 mb-1">เหตุผลที่ปฏิเสธ</p>
+                <p className="text-sm text-red-700">{activity.rejectionReason}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Footer: prev / next / actions ── */}
+        <div className="bg-white border border-slate-200 rounded-xl px-5 py-4 shadow-sm
+          flex items-center justify-between gap-3">
+
+          {/* Back */}
+          <button
+            onClick={() => router.back()}
+            className="px-4 py-2 text-sm text-slate-600 border border-slate-200
+              rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            back to my activity
+          </button>
+
+          <div className="flex items-center gap-2">
+
+            {/* Create DP Form */}
+            {/* {activity.status === 'ACTIVE' && (
+              <button
+                onClick={() => router.push(`/dc/create-dp/${activity.id}`)}
+                className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600
+                  rounded-lg hover:bg-emerald-700 transition-colors"
+              >
+                + Create DP Form
+              </button>
+            )} */}
+
+            {/* Prev */}
+            {step > 1 && (
+              <button
+                onClick={() => setStep(s => s - 1)}
+                className="px-4 py-2 text-sm text-slate-600 border border-slate-200
+                  rounded-lg hover:bg-slate-50 transition-colors"
+              >
+                ← ย้อนกลับ
+              </button>
+            )}
+
+            {/* Next */}
+            {step < TOTAL && (
+              <button
+                onClick={() => setStep(s => s + 1)}
+                className="px-5 py-2 text-sm font-semibold text-white bg-blue-600
+                  rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                ถัดไป →
+              </button>
+            )}
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
 }
