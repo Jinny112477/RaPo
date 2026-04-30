@@ -14,11 +14,14 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: ["*"],
+    origin: [
+      "https://cn-334-team07-ro-pa-2026-dluo.vercel.app",
+      "http://localhost:3000",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
-)
+);
 
 // API Routes
 app.use("/api", usersRoutes);
