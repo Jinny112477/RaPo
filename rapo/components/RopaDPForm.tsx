@@ -558,7 +558,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
       if (!editRequestId) return;
 
       try {
-        const res = await fetch(`${API_URL}/api/access/${editRequestId}`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/${editRequestId}`);
         const response = await res.json();
 
         if (!res.ok) {
@@ -677,7 +677,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
 
       const firstSub = subs[0] || newSub(0);
 
-      const res = await fetch(`${API_URL}/api/access/draft`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/draft`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -760,7 +760,7 @@ export default function RopaDPForm({ activityId, editRequestId, onSubmit, onSave
         return;
       }
 
-      const res = await fetch(`${API_URL}/api/access/request`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

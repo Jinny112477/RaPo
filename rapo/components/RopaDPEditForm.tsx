@@ -520,7 +520,7 @@ export default function RopaDPEditForm({ activity, requestId, onSubmit, onCancel
         return;
       }
 
-      const res = await fetch(`${API_URL}/api/access/${requestId}`, {
+      const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/access/${requestId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

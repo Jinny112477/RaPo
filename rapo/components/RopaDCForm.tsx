@@ -573,7 +573,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
   useEffect(() => {
     const fetchDepartments = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/departments`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/departments`);
         const data = await res.json();
         if (!res.ok) return;
         setDepartments(data.data || []);
@@ -590,7 +590,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
       if (!editActivityId) return;
 
       try {
-        const res = await fetch(`${API_URL}/api/form/${editActivityId}`);
+        const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/form/${editActivityId}`);
         const response = await res.json();
 
         if (!res.ok) {
@@ -623,7 +623,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
 
         if (rawOwner && UUID_REGEX.test(rawOwner)) {
           try {
-            const usersRes = await fetch(`${API_URL}/api/users`);
+            const usersRes = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/users`);
             if (usersRes.ok) {
               const usersJson = await usersRes.json();
               const users = Array.isArray(usersJson) ? usersJson : usersJson?.data || [];
@@ -812,7 +812,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         return;
       }
 
-      const endpoint = editingActivityId ? `${API_URL}/api/form/${editingActivityId}` : `${API_URL}/api/form`;
+      const endpoint = editingActivityId ? `https://cn334-team07-ropa-2026.onrender.com/api/form/${editingActivityId}` : `https://cn334-team07-ropa-2026.onrender.com/api/form`;
       const method = editingActivityId ? 'PUT' : 'POST';
 
       const res = await fetch(endpoint, {
@@ -853,7 +853,7 @@ export default function RopaDCForm({ editActivityId, onSubmit, onSaveDraft }: Ro
         return;
       }
 
-      const endpoint = editingActivityId ? `${API_URL}/api/form/${editingActivityId}` : `${API_URL}/api/form/submit`;
+      const endpoint = editingActivityId ? `https://cn334-team07-ropa-2026.onrender.com/api/form/${editingActivityId}` : `https://cn334-team07-ropa-2026.onrender.com/api/form/submit`;
       const method = editingActivityId ? 'PUT' : 'POST';
 
       const res = await fetch(endpoint, {

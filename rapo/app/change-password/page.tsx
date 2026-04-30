@@ -30,7 +30,7 @@ export default function ChangePasswordPage() {
     // GET: Profiles
     useEffect(() => {
         const check = async () => {
-            const res = await fetch(`${API_URL}/api/me`, {
+            const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/me`, {
                 headers: {
                     Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
                 }
@@ -72,7 +72,7 @@ export default function ChangePasswordPage() {
                 throw new Error("Session not found. Please login again.");
             }
 
-            const res = await fetch(`${API_URL}/api/change-password`, {
+            const res = await fetch(`https://cn334-team07-ropa-2026.onrender.com/api/change-password`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
